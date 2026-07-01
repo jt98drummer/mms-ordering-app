@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MMS Branded Store</title>
+<link rel="stylesheet" href="/static/style.css"></head><body>
+<div class="topbar"><div class="inner">
+  <img src="/asset/header_logo.png" alt="MMS"><div class="divider"></div>
+  <div class="brandword">Branded Store<small>Order portal</small></div>
+  <div class="nav"><a href="/">Home</a><a href="/cards">Cards</a><a href="/flyers">Documents</a></div>
+</div></div>
+<div class="redrule"></div>
+<div class="tagstrip">Your Trusted Advisor for Process Measurement &amp; Control since 1952</div>
+<div class="modebar mode-{{mode}}">ORDER MODE: {{mode|upper}} &nbsp;—&nbsp;
+  {% if mode=='dry' %}safe test: builds files + order request, does NOT contact Gelato{% elif mode=='draft' %}creates a DRAFT order in Gelato (not charged until you confirm){% else %}LIVE: real orders are charged &amp; printed{% endif %}</div>
+
+<div class="wrap">
+  <h1>The MMS Branded Store</h1><div class="bar"></div>
+  <p class="lead">Order on-brand business cards and approved print documents. Cards build themselves from your details and the right line-card back is chosen automatically; documents come straight from your approved library — printed and shipped by Gelato.</p>
+  <div class="tiles">
+    <div class="tile"><div class="cap"><svg viewBox="0 0 24 24" fill="none" stroke="#edcd1f" stroke-width="1.8"><rect x="2.5" y="5" width="19" height="14" rx="2"/><line x1="2.5" y1="9.5" x2="21.5" y2="9.5"/><line x1="6" y1="14" x2="12" y2="14"/></svg></div>
+      <div class="body"><h3>Business Cards</h3><p>Enter your details, preview your card, and order. Print-ready front + correct back generated automatically.</p>
+      <a class="btn full" href="/cards">Order business cards &rarr;</a></div></div>
+    <div class="tile"><div class="cap"><svg viewBox="0 0 24 24" fill="none" stroke="#edcd1f" stroke-width="1.8"><rect x="4" y="3" width="13" height="18" rx="2"/><line x1="7.5" y1="8" x2="13.5" y2="8"/><line x1="7.5" y1="11.5" x2="13.5" y2="11.5"/></svg></div>
+      <div class="body"><h3>Print Materials &amp; Documents</h3><p>Browse approved flyers, line cards, and sales sheets. Pick quantities and ship to your door.</p>
+      <a class="btn full" href="/flyers">Browse documents &rarr;</a></div></div>
+  </div>
+</div></body></html>

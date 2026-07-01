@@ -1,0 +1,6 @@
+.env
+__pycache__/
+files/*.pdf
+files/*.json
+orders.csv
+*.zip

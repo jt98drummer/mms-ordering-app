@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: mms-orders
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: GELATO_API_KEY
+        sync: false            # paste your key in the Render dashboard
+      - key: GELATO_MODE
+        value: draft           # draft first, then 'live'
+      - key: PUBLIC_BASE_URL
+        sync: false            # set to the URL Render gives you
+      - key: CARD_PRODUCT_UID
+        value: cards_pf_bx_pt_130-lb-cover-coated-silk_cl_4-4_hor
+      - key: FLYER_PRODUCT_UID
+        value: cards_pf_lt_pt_250-gsm-coated-silk_cl_4-4_ver
+      - key: SHIPMENT_METHOD
+        value: normal
+      - key: CURRENCY
+        value: USD

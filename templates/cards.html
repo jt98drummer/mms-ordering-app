@@ -1,0 +1,80 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Order Business Cards — MMS</title>
+<link rel="stylesheet" href="/static/style.css"></head><body>
+<div class="topbar"><div class="inner">
+  <img src="/asset/header_logo.png" alt="MMS"><div class="divider"></div>
+  <div class="brandword">Branded Store<small>Business cards</small></div>
+  <div class="nav"><a href="/">Home</a><a href="/cards">Cards</a><a href="/flyers">Documents</a></div>
+</div></div><div class="redrule"></div>
+<div class="modebar mode-{{mode}}">ORDER MODE: {{mode|upper}}</div>
+
+<div class="wrap"><div class="grid2">
+  <div class="card">
+    <h3>Your details</h3>
+    <div class="field"><label>Full name</label><input id="name" value="Jayce Tomlin" oninput="pv()"></div>
+    <div class="field"><label>Job title</label><input id="title" value="Marketing Manager" oninput="pv()"></div>
+    <div class="row2"><div class="field"><label>Email</label><input id="email" value="jtomlin@mmsinconline.com" oninput="pv()"></div>
+    <div class="field"><label>Phone</label><input id="phone" value="555-123-4567" oninput="pv()"></div></div>
+    <div class="field"><label>Role</label><div class="seg">
+      <button id="rs" class="on" onclick="setRole('sales')">Sales</button>
+      <button id="rt" onclick="setRole('technician')">Technician</button></div></div>
+    <div class="field" id="terr"><label>Territory (sales)</label><div class="seg">
+      <button id="ts" class="on" onclick="setTerr('south')">South · IA/NE/W.IL</button>
+      <button id="tn" onclick="setTerr('north')">North · MN/WI/Dak</button></div></div>
+    <div class="row2"><div class="field"><label>Quantity</label><select id="qty"><option>250</option><option selected>500</option><option>1000</option></select></div>
+    <div class="field"><label>Country</label><input id="country" value="US"></div></div>
+
+    <h3 style="margin-top:18px">Ship to</h3>
+    <div class="row2"><div class="field"><label>First name</label><input id="sfn" value="Jayce"></div>
+    <div class="field"><label>Last name</label><input id="sln" value="Tomlin"></div></div>
+    <div class="field"><label>Address line 1</label><input id="sa1" placeholder="123 Main St"></div>
+    <div class="field"><label>Address line 2</label><input id="sa2" placeholder="Apt / Suite (optional)"></div>
+    <div class="row2"><div class="field"><label>City</label><input id="sct"></div>
+    <div class="field"><label>State</label><input id="sst" placeholder="IA"></div></div>
+    <div class="row2"><div class="field"><label>ZIP</label><input id="szp"></div>
+    <div class="field"><label>Phone</label><input id="sph" value="555-123-4567"></div></div>
+
+    <button class="btn full" style="margin-top:6px" onclick="submitCard()">Submit card order</button>
+    <div class="note" id="msg"></div>
+  </div>
+
+  <div>
+    <div class="toggle"><button id="pf" class="on" onclick="flip('f')">Front</button><button id="pb" onclick="flip('b')">Back</button></div>
+    <div class="bizcard" id="front">
+      <img class="r lg" src="/asset/mms_logo.png"><div class="r redbar"></div>
+      <div class="r nm" id="pn">Jayce Tomlin</div><div class="r ti" id="pt">Marketing Manager</div>
+      <div class="r em" id="pe">jtomlin@mmsinconline.com</div><div class="r ph" id="pp">555-123-4567</div>
+      <div class="r wb">www.mmsinconline.com</div>
+      <div class="r qr">vCard QR<br>(generated<br>at order)</div><div class="r ql">Add as Contact</div>
+    </div>
+    <img class="bizcard bk" id="back" src="/asset/backs/south.png" style="display:none">
+    <div class="hint">Live preview. The print file generated at order time includes a real, scannable vCard QR.</div>
+  </div>
+</div></div>
+
+<script>
+let role='sales', terr='south';
+function pv(){pn.textContent=name.value||'Your Name';pt.textContent=title.value||'Your Title';
+  pe.textContent=email.value||'name@mmsinconline.com';pp.textContent=phone.value||'000-000-0000';}
+function setRole(r){role=r;rs.classList.toggle('on',r=='sales');rt.classList.toggle('on',r=='technician');
+  terr_el().style.opacity=r=='technician'?.4:1;terr_el().style.pointerEvents=r=='technician'?'none':'auto';back.src=bk();}
+function terr_el(){return document.getElementById('terr');}
+function setTerr(t){terr=t;ts.classList.toggle('on',t=='south');tn.classList.toggle('on',t=='north');back.src=bk();}
+function bk(){return role=='technician'?'/asset/backs/both.png':(terr=='north'?'/asset/backs/north.png':'/asset/backs/south.png');}
+function flip(s){pf.classList.toggle('on',s=='f');pb.classList.toggle('on',s=='b');
+  front.style.display=s=='f'?'block':'none';back.style.display=s=='b'?'block':'none';}
+async function submitCard(){
+  const msg=document.getElementById('msg');msg.textContent='Submitting…';
+  const body={name:name.value,title:title.value,email:email.value,phone:phone.value,role:role,territory:terr,
+    quantity:parseInt(qty.value,10),ship:{firstName:sfn.value,lastName:sln.value,addressLine1:sa1.value,
+    addressLine2:sa2.value,city:sct.value,state:sst.value,postCode:szp.value,country:country.value,
+    email:email.value,phone:sph.value}};
+  try{const r=await fetch('/api/order/card',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j=await r.json();
+    msg.innerHTML = j.ok
+      ? '✓ Order <b>'+j.order_id+'</b> ('+j.mode.toUpperCase()+'). '+(j.mode=='dry'?'Print file built; Gelato request saved for review.':(j.mode=='draft'?'Draft created in Gelato — confirm in your dashboard.':'Live order placed and charged.'))
+      : '⚠ '+(j.error||('Gelato status '+j.gelato_status));
+  }catch(e){msg.textContent='Error: '+e;}
+}
+</script></body></html>
