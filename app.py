@@ -5,8 +5,8 @@ Run:  pip install -r requirements.txt && python app.py   (open http://localhost:
 Modes (env GELATO_MODE): dry | draft | live
 """
 import os, json, csv, time, datetime
-from flask import Flask, render_template, request, jsonify, send_from_directory, abort
-import config, gelato, catalog
+from flask import Flask, render_template, request, jsonify, send_from_directory, abort, Response
+import config, gelato, catalog, card_render
 from card_engine import generate_card_pdf
 
 app = Flask(__name__)
@@ -69,6 +69,12 @@ def flyerpdf(cid):
 
 @app.route("/asset/<path:name>")
 def asset(name): return send_from_directory(config.ASSET_DIR, name)
+
+@app.route("/api/card_front.png")
+def card_front_png():
+    emp = {k: request.args.get(k, "") for k in ("name", "title", "email", "phone")}
+    png = card_render.front_png_bytes(emp, scale=2)
+    return Response(png, mimetype="image/png", headers={"Cache-Control": "no-store"})
 
 @app.route("/health")
 def health(): return jsonify(ok=True, mode=config.GELATO_MODE, base=config.PUBLIC_BASE_URL)

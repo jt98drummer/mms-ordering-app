@@ -93,8 +93,9 @@ input:focus,select:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 
 .pv-toggle button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .cardstage{display:flex;justify-content:center;padding:26px 10px;background:
   radial-gradient(circle at 50% 40%, #ffffff, #eef1f5);border-radius:var(--radius);border:1px solid var(--line)}
-.bizcard{width:430px;max-width:100%;aspect-ratio:1.75/1;background:#fff;border-radius:10px;
-  box-shadow:0 16px 34px rgba(30,45,59,.22);position:relative;overflow:hidden}
+.bizcard{width:460px;max-width:100%;aspect-ratio:513/292;background:#fff;border-radius:9px;
+  box-shadow:0 16px 34px rgba(30,45,59,.22);overflow:hidden}
+.bizcard img{display:block;width:100%;height:100%;object-fit:cover}
 .r{position:absolute}
 .cp-red{left:0;right:0;top:16.6%;height:8.6%;background:var(--red);z-index:1}
 .cp-logo{left:4%;top:5.5%;width:52%;height:auto;z-index:2}

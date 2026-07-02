@@ -28,43 +28,35 @@
     <div>
       <div class="pv-toggle"><button id="pf" class="on" onclick="flip('f')">Front</button><button id="pb" onclick="flip('b')">Back</button></div>
       <div class="cardstage">
-        <div class="bizcard" id="front">
-          <div class="r cp-red"></div>
-          <img class="r cp-logo" src="/asset/mms_logo.png">
-          <div class="r cp-name" id="pv_name">Jayce Tomlin</div>
-          <div class="r cp-title" id="pv_title">Marketing Manager</div>
-          <div class="r cp-email" id="pv_email">jtomlin@mmsinconline.com</div>
-          <div class="r cp-phone" id="pv_phone">555-123-4567</div>
-          <div class="r cp-web">www.mmsinconline.com</div>
-          <img class="r cp-qr" src="/asset/sample_qr.png">
-          <div class="r cp-ql">Add as Contact</div>
-        </div>
-        <img class="bizcard cp-back" id="back" src="/asset/backs/south.png" style="display:none">
+        <div class="bizcard" id="frontWrap"><img id="frontImg" alt="Business card front"></div>
+        <div class="bizcard" id="backWrap" style="display:none"><img id="backImg" src="/asset/backs/south.png" alt="Business card back"></div>
       </div>
-      <div class="hint">Live preview. Each card's real, scannable vCard QR is generated from these fields when the order is produced.</div>
+      <div class="hint">Exact match to the official MMS template. Each card's real, scannable vCard QR is generated from these fields.</div>
     </div>
   </div>
 </div>
 {% endblock %}
 {% block scripts %}<script>
 const $=id=>document.getElementById(id);
-let terr='south';
+let terr='south', tmr=null;
 function isTech(){ return /tech/i.test($('c_title').value); }
+function frontURL(){
+  const q=new URLSearchParams({name:$('c_name').value,title:$('c_title').value,email:$('c_email').value,phone:$('c_phone').value});
+  return '/api/card_front.png?'+q.toString();
+}
 function pv(){
-  $('pv_name').textContent=$('c_name').value||'Your Name';
-  $('pv_title').textContent=$('c_title').value||'Your Title';
-  $('pv_email').textContent=$('c_email').value||'name@mmsinconline.com';
-  $('pv_phone').textContent=$('c_phone').value||'000-000-0000';
+  clearTimeout(tmr);
+  tmr=setTimeout(()=>{ $('frontImg').src=frontURL(); }, 250);
   updateBack();
 }
 function setTerr(t){ terr=t; $('t_south').classList.toggle('on',t=='south'); $('t_north').classList.toggle('on',t=='north'); updateBack(); }
 function updateBack(){
   const tech=isTech();
-  $('back').src = tech ? '/asset/backs/both.png' : (terr=='north'?'/asset/backs/north.png':'/asset/backs/south.png');
+  $('backImg').src = tech ? '/asset/backs/both.png' : (terr=='north'?'/asset/backs/north.png':'/asset/backs/south.png');
   $('terrNote').textContent = tech ? 'Detected “technician” — this card will show BOTH line cards on the back.' : '';
 }
 function flip(s){ $('pf').classList.toggle('on',s=='f'); $('pb').classList.toggle('on',s=='b');
-  $('front').style.display=s=='f'?'block':'none'; $('back').style.display=s=='b'?'block':'none'; }
+  $('frontWrap').style.display=s=='f'?'block':'none'; $('backWrap').style.display=s=='b'?'block':'none'; }
 function addCard(){
   const tech=isTech();
   cartAdd({type:'card', name:$('c_name').value, title:$('c_title').value, email:$('c_email').value,
@@ -73,5 +65,5 @@ function addCard(){
     detail:$('c_qty').value+' cards · '+(tech?'both line cards':(terr=='north'?'MN/WI/Dakotas':'IA/NE/W.IL')), icon:'card'});
   toast('Added to cart');
 }
-pv();
+$('frontImg').src=frontURL(); updateBack();
 </script>{% endblock %}
