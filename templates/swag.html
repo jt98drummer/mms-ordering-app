@@ -3,60 +3,94 @@
 {% block content %}
 <div class="wrap">
   <div class="subhead"><a href="/"><button class="back">&larr; Hub</button></a>
-    <h2>Swag &amp; Apparel</h2><span class="sub" id="swCount"></span></div>
+    <h2>Swag &amp; Apparel</h2><span class="sub">MMS-branded gear</span></div>
 
-  <div class="filterbar">
-    <div class="filterrow"><span class="lab">Shop</span>
-      <button class="chip gold on" data-g="all" onclick="setG('all',this)">Everything</button>
-      <button class="chip" data-g="Apparel" onclick="setG('Apparel',this)">Apparel</button>
-      <button class="chip" data-g="Swag" onclick="setG('Swag',this)">Promo Swag</button>
-    </div>
-    <div class="filterrow" id="catRow"><span class="lab">Category</span></div>
+  <!-- rolling featured banner -->
+  <div class="carousel" id="carousel">
+    <div class="cslide on" style="background:linear-gradient(120deg,#1e2d3b,#33526e)">
+      <div class="cs-body"><div class="cs-tag">Featured</div><h3>MMS Softshell Jacket</h3><p>Water-resistant, embroidered logo — a crew favorite for the field.</p><button class="btn gold" onclick="goShop('Apparel','Outerwear')">Shop outerwear &rarr;</button></div>
+      <div class="cs-art">🧥</div></div>
+    <div class="cslide" style="background:linear-gradient(120deg,#7a1420,#c8102e)">
+      <div class="cs-body"><div class="cs-tag">Popular</div><h3>20oz Insulated Tumbler</h3><p>Keeps it cold for 24 hours. Great for trade shows and giveaways.</p><button class="btn gold" onclick="goShop('Swag','Drinkware')">Shop drinkware &rarr;</button></div>
+      <div class="cs-art">🥤</div></div>
+    <div class="cslide" style="background:linear-gradient(120deg,#26384a,#4a6d90)">
+      <div class="cs-body"><div class="cs-tag">Team pick</div><h3>Performance Polo</h3><p>Moisture-wicking, all-day comfort in MMS navy, black, or red.</p><button class="btn gold" onclick="goShop('Apparel','Polos')">Shop polos &rarr;</button></div>
+      <div class="cs-art">👕</div></div>
+    <div class="cdots" id="cdots"></div>
   </div>
-  <div class="pgrid" id="grid"></div>
+
+  <!-- shop by category -->
+  <div class="section"><div class="eyebrow2">Shop by category</div><h2 class="h">What are you looking for?</h2>
+    <div class="catrow">
+      <div class="catcard ap" onclick="goShop('Apparel','all')"><div class="ci">👔</div><div><h4>Apparel</h4><p>Polos, tees, outerwear, sweatshirts &amp; headwear</p></div><span class="arrow">&rarr;</span></div>
+      <div class="catcard sw" onclick="goShop('Swag','all')"><div class="ci">🎁</div><div><h4>Promo Swag</h4><p>Drinkware, bags, tech, office &amp; giveaways</p></div><span class="arrow">&rarr;</span></div>
+    </div>
+  </div>
+
+  <!-- popular picks -->
+  <div class="section"><div class="eyebrow2">Popular this month</div><h2 class="h">Crew favorites</h2>
+    <div class="pgrid" id="popular"></div></div>
+
+  <!-- full catalog -->
+  <div class="section" id="allitems"><div class="eyebrow2">Full catalog</div><h2 class="h" id="allTitle">All items</h2>
+    <div class="filterbar">
+      <div class="filterrow"><span class="lab">Shop</span>
+        <button class="chip gold on" data-g="all" onclick="setG('all',this)">Everything</button>
+        <button class="chip" data-g="Apparel" onclick="setG('Apparel',this)">Apparel</button>
+        <button class="chip" data-g="Swag" onclick="setG('Swag',this)">Promo Swag</button></div>
+      <div class="filterrow" id="catRow"><span class="lab">Category</span></div>
+    </div>
+    <div class="pgrid" id="grid"></div>
+  </div>
 </div>
 {% endblock %}
 {% block scripts %}<script>
 const SWAG = {{ swag_json|safe }};
 let G='all', C='all';
+function cardHTML(it){
+  const colors=it.colors.map(c=>'<option>'+c+'</option>').join('');
+  const sizes=it.sizes.length?'<select id="sz_'+it.id+'">'+it.sizes.map(s=>'<option'+(s==='L'?' selected':'')+'>'+s+'</option>').join('')+'</select>':'';
+  return '<div class="card2"><div class="thumb icon">'+icon(it.icon)+'</div>'+
+    '<div class="m"><div class="badges"><span class="bdg cat">'+it.category+'</span><span class="bdg type">'+it.group+'</span></div>'+
+    '<div class="nm">'+it.name+'</div><div class="price">$'+it.price.toFixed(2)+' each</div>'+
+    '<div class="opts"><select id="cl_'+it.id+'">'+colors+'</select>'+sizes+'</div>'+
+    '<div class="ctl"><select id="q_'+it.id+'"><option>1</option><option>2</option><option selected>5</option><option>10</option><option>25</option><option>50</option></select>'+
+    '<button class="add" onclick="addSwag(\''+it.id+'\')">Add</button></div></div></div>';
+}
 function cats(){ const s=SWAG.filter(i=>G==='all'||i.group===G); return [...new Set(s.map(i=>i.category))]; }
 function renderCats(){
-  const row=document.getElementById('catRow');
-  row.querySelectorAll('.chip').forEach(c=>c.remove());
+  const row=document.getElementById('catRow'); row.querySelectorAll('.chip').forEach(c=>c.remove());
   const mk=(v,label)=>{ const b=document.createElement('button'); b.className='chip'+(C===v?' on':''); b.textContent=label;
     b.onclick=()=>{C=v; renderCats(); render();}; row.appendChild(b); };
-  mk('all','All');
-  cats().forEach(c=>mk(c,c));
+  mk('all','All'); cats().forEach(c=>mk(c,c));
 }
 function setG(g,el){ G=g; C='all'; el.parentNode.querySelectorAll('[data-g]').forEach(b=>b.classList.remove('on')); el.classList.add('on'); renderCats(); render(); }
 function render(){
-  const g=document.getElementById('grid'); g.innerHTML=''; let n=0;
-  SWAG.forEach(it=>{
-    if(G!=='all'&&it.group!==G) return;
-    if(C!=='all'&&it.category!==C) return;
-    n++;
-    const colors=it.colors.map(c=>'<option>'+c+'</option>').join('');
-    const sizes=it.sizes.length?'<select id="sz_'+it.id+'">'+it.sizes.map(s=>'<option'+(s==='L'?' selected':'')+'>'+s+'</option>').join('')+'</select>':'';
-    const el=document.createElement('div'); el.className='card2';
-    el.innerHTML='<div class="thumb icon">'+icon(it.icon)+'</div>'+
-      '<div class="m"><div class="badges"><span class="bdg cat">'+it.category+'</span><span class="bdg type">'+it.group+'</span></div>'+
-      '<div class="nm">'+it.name+'</div><div class="price">$'+it.price.toFixed(2)+' each</div>'+
-      '<div class="opts"><select id="cl_'+it.id+'">'+colors+'</select>'+sizes+'</div>'+
-      '<div class="ctl"><select id="q_'+it.id+'"><option>1</option><option>2</option><option selected>5</option><option>10</option><option>25</option><option>50</option></select>'+
-      '<button class="add" onclick="addSwag(\''+it.id+'\')">Add</button></div></div>';
-    g.appendChild(el);
-  });
-  if(!n) g.innerHTML='<div class="noresult">No items match.</div>';
-  document.getElementById('swCount').textContent=n+' items';
+  const g=document.getElementById('grid'); g.innerHTML='';
+  const items=SWAG.filter(it=>(G==='all'||it.group===G)&&(C==='all'||it.category===C));
+  document.getElementById('allTitle').textContent = (G==='all'?'All items':G)+(C==='all'?'':' · '+C)+' ('+items.length+')';
+  g.innerHTML = items.length? items.map(cardHTML).join('') : '<div class="noresult">No items match.</div>';
+}
+function goShop(g,c){ G=g;C=c;
+  document.querySelectorAll('[data-g]').forEach(b=>b.classList.toggle('on',b.dataset.g===g));
+  renderCats(); render();
+  document.getElementById('allitems').scrollIntoView({behavior:'smooth'});
 }
 function addSwag(id){
-  const it=SWAG.find(x=>x.id===id);
-  const color=document.getElementById('cl_'+id).value;
-  const size=it.sizes.length?document.getElementById('sz_'+id).value:'';
-  const q=parseInt(document.getElementById('q_'+id).value,10);
+  const it=SWAG.find(x=>x.id===id); const color=document.getElementById('cl_'+id).value;
+  const size=it.sizes.length?document.getElementById('sz_'+id).value:''; const q=parseInt(document.getElementById('q_'+id).value,10);
   cartAdd({type:'swag', id:it.id, name:it.name, color, size, qty:q, price:it.price, icon:it.icon,
     label:it.name, detail:q+' × '+color+(size?' · size '+size:'')+' · $'+it.price.toFixed(2)+' ea'});
   toast('Added to cart');
 }
+// popular picks
+(function(){ const ids=['ap5','sw1','ap1','sw5','ap8']; 
+  document.getElementById('popular').innerHTML = ids.map(id=>SWAG.find(x=>x.id===id)).filter(Boolean).map(cardHTML).join(''); })();
+// carousel
+(function(){ const slides=[...document.querySelectorAll('.cslide')]; const dots=document.getElementById('cdots');
+  slides.forEach((s,i)=>{ const d=document.createElement('span'); d.className='cdot'+(i===0?' on':''); d.onclick=()=>go(i); dots.appendChild(d); });
+  let cur=0; function go(n){ slides[cur].classList.remove('on'); dots.children[cur].classList.remove('on'); cur=n; slides[cur].classList.add('on'); dots.children[cur].classList.add('on'); }
+  setInterval(()=>go((cur+1)%slides.length), 4000);
+})();
 renderCats(); render();
 </script>{% endblock %}

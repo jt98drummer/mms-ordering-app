@@ -3,50 +3,80 @@
 {% block content %}
 <div class="wrap">
   <div class="subhead"><a href="/"><button class="back">&larr; Hub</button></a>
-    <h2>Print Materials &amp; Documents</h2><span class="sub" id="docCount"></span></div>
+    <h2>Print Materials &amp; Documents</h2><span class="sub">order approved MMS &amp; Signal collateral</span></div>
 
-  <div class="filterbar">
-    <div class="filterrow"><span class="lab">Type</span>
-      <button class="chip gold on" data-f="type" data-v="all" onclick="setF('type','all',this)">All types</button>
-      <button class="chip" data-f="type" data-v="Flyers" onclick="setF('type','Flyers',this)">Flyers</button>
-      <button class="chip" data-f="type" data-v="Internal Sales Guides" onclick="setF('type','Internal Sales Guides',this)">Internal Sales Guides</button>
-      <button class="chip" data-f="type" data-v="Line Cards" onclick="setF('type','Line Cards',this)">Line Cards</button>
-    </div>
-    <div class="filterrow"><span class="lab">Division</span>
-      <button class="chip on" data-f="div" data-v="all" onclick="setF('div','all',this)">All</button>
-      <button class="chip" data-f="div" data-v="MMS" onclick="setF('div','MMS',this)">MMS</button>
-      <button class="chip sig" data-f="div" data-v="Signal" onclick="setF('div','Signal',this)">Signal</button>
+  <!-- active campaigns -->
+  <div class="section"><div class="eyebrow2">Active campaigns</div><h2 class="h">What to promote right now</h2>
+    <div class="camprow">
+      <div class="campcard" style="--c1:#1e2d3b;--c2:#3a6ea5">
+        <div class="camp-head"><span class="camp-tag">Signal</span><h4>SAM GUARD 90-Day Trial</h4></div>
+        <p>Push the free trial — grab the Signal one-pagers to leave with customers.</p>
+        <button class="btn" onclick="goDocs('all','Signal')">View Signal docs &rarr;</button></div>
+      <div class="campcard" style="--c1:#7a1420;--c2:#c8102e">
+        <div class="camp-head"><span class="camp-tag">Service</span><h4>Equipment Health Package</h4></div>
+        <p>Keep systems running at peak performance. Hand out the service flyers.</p>
+        <button class="btn" onclick="goDocs('Flyers','MMS')">View MMS flyers &rarr;</button></div>
+      <div class="campcard" style="--c1:#26384a;--c2:#556b1f">
+        <div class="camp-head"><span class="camp-tag">Training</span><h4>Instrumentation Training 2026</h4></div>
+        <p>Enrolling new technicians — share the updated training flyer.</p>
+        <button class="btn" onclick="goDocs('Flyers','all')">View flyers &rarr;</button></div>
     </div>
   </div>
-  <div class="pgrid" id="grid"></div>
+
+  <!-- recently added -->
+  <div class="section"><div class="eyebrow2">Recently added</div><h2 class="h">Fresh off the press</h2>
+    <div class="pgrid" id="recent"></div></div>
+
+  <!-- full catalog -->
+  <div class="section" id="allitems"><div class="eyebrow2">Full library</div><h2 class="h" id="docCount"></h2>
+    <div class="filterbar">
+      <div class="filterrow"><span class="lab">Type</span>
+        <button class="chip gold on" data-f="type" data-v="all" onclick="setF('type','all',this)">All types</button>
+        <button class="chip" data-f="type" data-v="Flyers" onclick="setF('type','Flyers',this)">Flyers</button>
+        <button class="chip" data-f="type" data-v="Internal Sales Guides" onclick="setF('type','Internal Sales Guides',this)">Internal Sales Guides</button>
+        <button class="chip" data-f="type" data-v="Line Cards" onclick="setF('type','Line Cards',this)">Line Cards</button></div>
+      <div class="filterrow"><span class="lab">Division</span>
+        <button class="chip on" data-f="div" data-v="all" onclick="setF('div','all',this)">All</button>
+        <button class="chip" data-f="div" data-v="MMS" onclick="setF('div','MMS',this)">MMS</button>
+        <button class="chip sig" data-f="div" data-v="Signal" onclick="setF('div','Signal',this)">Signal</button></div>
+    </div>
+    <div class="pgrid" id="grid"></div>
+  </div>
 </div>
 {% endblock %}
 {% block scripts %}<script>
 const DOCS = {{ docs_json|safe }};
 let F={type:'all',div:'all'};
+function docCard(d){
+  const divb = d.division==='Signal'?'<span class="bdg sig">Signal</span>':'<span class="bdg mms">MMS</span>';
+  return '<div class="card2"><div class="thumb"><img src="/static/thumbs/'+d.thumb+'" alt=""></div>'+
+    '<div class="m"><div class="badges">'+divb+'<span class="bdg type">'+d.doc_type+'</span></div>'+
+    '<div class="nm">'+d.title+'</div>'+
+    '<div class="ctl"><select id="q_'+d.id+'"><option>25</option><option selected>50</option><option>100</option><option>250</option></select>'+
+    '<button class="add" onclick="addDoc(\''+d.id+'\')">Add</button></div></div></div>';
+}
 function setF(k,v,el){ F[k]=v; el.parentNode.querySelectorAll('[data-f="'+k+'"]').forEach(b=>b.classList.remove('on')); el.classList.add('on'); render(); }
 function render(){
-  const g=document.getElementById('grid'); g.innerHTML=''; let n=0;
-  DOCS.forEach(d=>{
-    if(F.type!=='all' && d.doc_type!==F.type) return;
-    if(F.div!=='all' && d.division!==F.div) return;
-    n++;
-    const divb = d.division==='Signal'?'<span class="bdg sig">Signal</span>':'<span class="bdg mms">MMS</span>';
-    const el=document.createElement('div'); el.className='card2';
-    el.innerHTML='<div class="thumb"><img src="/static/thumbs/'+d.thumb+'" alt=""></div>'+
-      '<div class="m"><div class="badges">'+divb+'<span class="bdg type">'+d.doc_type+'</span></div>'+
-      '<div class="nm">'+d.title+'</div>'+
-      '<div class="ctl"><select id="q_'+d.id+'"><option>25</option><option selected>50</option><option>100</option><option>250</option></select>'+
-      '<button class="add" onclick="addDoc(\''+d.id+'\')">Add</button></div></div>';
-    g.appendChild(el);
-  });
-  if(!n) g.innerHTML='<div class="noresult">No documents match these filters.</div>';
-  document.getElementById('docCount').textContent=n+' of '+DOCS.length+' documents';
+  const g=document.getElementById('grid');
+  const items=DOCS.filter(d=>(F.type==='all'||d.doc_type===F.type)&&(F.div==='all'||d.division===F.div));
+  g.innerHTML = items.length? items.map(docCard).join('') : '<div class="noresult">No documents match these filters.</div>';
+  document.getElementById('docCount').textContent=items.length+' of '+DOCS.length+' documents';
 }
 function addDoc(id){
   const d=DOCS.find(x=>x.id===id); const q=parseInt(document.getElementById('q_'+id).value,10);
   cartAdd({type:'doc', id:d.id, qty:q, label:d.title, detail:q+' copies · '+d.division+' · '+d.doc_type, icon:'doc', thumb:d.thumb});
   toast('Added to cart');
 }
+function goDocs(type,div){
+  F.type=type; F.div=div;
+  document.querySelectorAll('[data-f="type"]').forEach(b=>b.classList.toggle('on',b.dataset.v===type));
+  document.querySelectorAll('[data-f="div"]').forEach(b=>b.classList.toggle('on',b.dataset.v===div));
+  render(); document.getElementById('allitems').scrollIntoView({behavior:'smooth'});
+}
+// recently added: prefer 2026 line lists / training / signal overview, else first 4
+(function(){ const want=['LINE LIST','Line List','Instrumentation Training','Signal Overview','SAM GUARD'];
+  let rec=DOCS.filter(d=>want.some(w=>d.title.includes(w))).slice(0,4);
+  if(rec.length<4) rec=rec.concat(DOCS.filter(d=>!rec.includes(d)).slice(0,4-rec.length));
+  document.getElementById('recent').innerHTML=rec.map(docCard).join(''); })();
 render();
 </script>{% endblock %}

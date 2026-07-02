@@ -14,15 +14,16 @@
         <div class="field"><label>Email</label><input id="c_email" value="jtomlin@mmsinconline.com" oninput="pv()"></div>
         <div class="field"><label>Phone</label><input id="c_phone" value="555-123-4567" oninput="pv()"></div>
       </div>
-      <div class="field"><label>Territory</label><div class="seg">
-        <button id="t_south" class="on" onclick="setTerr('south')">South &middot; IA/NE/W.IL</button>
-        <button id="t_north" onclick="setTerr('north')">North &middot; MN/WI/Dakotas</button></div>
+      <div class="field"><label>Territory (back of card)</label><div class="seg seg3">
+        <button id="t_south" class="on" onclick="setTerr('south')">South · IA/NE/W.IL</button>
+        <button id="t_north" onclick="setTerr('north')">North · MN/WI/Dakotas</button>
+        <button id="t_both" onclick="setTerr('both')">Both · N &amp; S</button></div>
         <div class="fineprint" id="terrNote"></div></div>
       <div class="row2">
         <div class="field"><label>Quantity</label><select id="c_qty"><option>250</option><option selected>500</option><option>1000</option></select></div>
         <div class="field"><label></label><button class="btn gold full" onclick="addCard()">Add to cart</button></div>
       </div>
-      <div class="fineprint">The correct line-card back is chosen automatically from your job title: titles containing &ldquo;technician&rdquo; get <b>both</b> territory line cards; everyone else gets their selected territory.</div>
+      <div class="fineprint">Tip: titles containing “technician” automatically get <b>both</b> line-card backs (they travel across territories).</div>
     </div>
 
     <div>
@@ -44,25 +45,24 @@ function frontURL(){
   const q=new URLSearchParams({name:$('c_name').value,title:$('c_title').value,email:$('c_email').value,phone:$('c_phone').value});
   return '/api/card_front.png?'+q.toString();
 }
-function pv(){
-  clearTimeout(tmr);
-  tmr=setTimeout(()=>{ $('frontImg').src=frontURL(); }, 250);
-  updateBack();
-}
-function setTerr(t){ terr=t; $('t_south').classList.toggle('on',t=='south'); $('t_north').classList.toggle('on',t=='north'); updateBack(); }
+function pv(){ clearTimeout(tmr); tmr=setTimeout(()=>{ $('frontImg').src=frontURL(); }, 250); updateBack(); }
+function setTerr(t){ terr=t;
+  $('t_south').classList.toggle('on',t=='south'); $('t_north').classList.toggle('on',t=='north'); $('t_both').classList.toggle('on',t=='both');
+  updateBack(); }
+function backKind(){ return (isTech()||terr=='both') ? 'both' : terr; }
 function updateBack(){
-  const tech=isTech();
-  $('backImg').src = tech ? '/asset/backs/both.png' : (terr=='north'?'/asset/backs/north.png':'/asset/backs/south.png');
-  $('terrNote').textContent = tech ? 'Detected “technician” — this card will show BOTH line cards on the back.' : '';
+  $('backImg').src = '/asset/backs/'+backKind()+'.png';
+  $('terrNote').textContent = isTech() ? 'Detected “technician” — this card shows BOTH line cards on the back.' : '';
 }
 function flip(s){ $('pf').classList.toggle('on',s=='f'); $('pb').classList.toggle('on',s=='b');
   $('frontWrap').style.display=s=='f'?'block':'none'; $('backWrap').style.display=s=='b'?'block':'none'; }
+function backLabel(k){ return k=='both'?'both line cards':(k=='north'?'MN/WI/Dakotas':'IA/NE/W.IL'); }
 function addCard(){
-  const tech=isTech();
+  const k=backKind();
   cartAdd({type:'card', name:$('c_name').value, title:$('c_title').value, email:$('c_email').value,
-    phone:$('c_phone').value, role:tech?'technician':'sales', territory:terr, qty:parseInt($('c_qty').value,10),
+    phone:$('c_phone').value, role:isTech()?'technician':'sales', territory:(k=='both'?'both':terr), qty:parseInt($('c_qty').value,10),
     label:'Business Cards — '+($('c_name').value||'You'),
-    detail:$('c_qty').value+' cards · '+(tech?'both line cards':(terr=='north'?'MN/WI/Dakotas':'IA/NE/W.IL')), icon:'card'});
+    detail:$('c_qty').value+' cards · '+backLabel(k), icon:'card'});
   toast('Added to cart');
 }
 $('frontImg').src=frontURL(); updateBack();

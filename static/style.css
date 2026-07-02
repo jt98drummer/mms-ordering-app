@@ -14,8 +14,8 @@ button{font-family:inherit}
 /* ---------- top bar ---------- */
 .topbar{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40}
 .topbar .inner{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:18px}
-.topbar .logo{height:60px;width:auto}
-.divider{width:1px;height:40px;background:var(--line)}
+.topbar .logo{height:86px;width:auto}
+.divider{width:1px;height:56px;background:var(--line)}
 .brandword{font-weight:800;color:var(--navy);font-size:18px;line-height:1.15;letter-spacing:.2px}
 .brandword small{display:block;font-weight:700;color:var(--muted);font-size:10px;letter-spacing:2.5px;text-transform:uppercase;margin-top:4px}
 .nav{margin-left:auto;display:flex;align-items:center;gap:4px}
@@ -46,7 +46,8 @@ h2.h{color:var(--navy);font-size:24px;font-weight:800;margin:6px 0 18px}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:-40px;position:relative;z-index:5}
 .tile{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;transition:.18s}
 .tile:hover{transform:translateY(-4px);box-shadow:0 18px 40px rgba(30,45,59,.16)}
-.tile .cap{height:120px;display:flex;align-items:center;justify-content:center;position:relative}
+.tile .cap{height:160px;overflow:hidden;position:relative}
+.tile .cap img{width:100%;height:100%;object-fit:cover;display:block}
 .tile.cards .cap{background:linear-gradient(135deg,#1e2d3b,#31506b)}
 .tile.docs .cap{background:linear-gradient(135deg,#22384a,#3a6ea5)}
 .tile.swag .cap{background:linear-gradient(135deg,#7a1420,#c8102e)}
@@ -173,4 +174,43 @@ input:focus,select:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 
 .modal p{font-size:14px;color:var(--muted);line-height:1.6}
 .modal .close{margin-top:20px;background:var(--navy);color:#fff;border:0;border-radius:10px;padding:12px 26px;font-weight:800;cursor:pointer}
 .foot{border-top:1px solid var(--line);padding:22px 24px 46px;color:var(--muted);font-size:12px;max-width:1180px;margin:20px auto 0}
-.demoflag{position:fixed;right:16px;bottom:16px;background:var(--gold);color:var(--navy);font-size:11px;font-weight:900;padding:7px 13px;border-radius:2
+.demoflag{position:fixed;right:16px;bottom:16px;background:var(--gold);color:var(--navy);font-size:11px;font-weight:900;padding:7px 13px;border-radius:20px;box-shadow:var(--shadow);z-index:50;letter-spacing:.5px}
+.seg3 button{font-size:11px;padding:9px 6px}
+/* ---------- store home: carousel ---------- */
+.carousel{position:relative;height:250px;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);margin:24px 0 8px}
+.cslide{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:36px 44px;opacity:0;transition:opacity .6s ease;pointer-events:none}
+.cslide.on{opacity:1;pointer-events:auto}
+.cslide .cs-body{max-width:60%;color:#fff}
+.cslide .cs-tag{display:inline-block;background:rgba(255,255,255,.18);color:#fff;font-size:11px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;padding:5px 12px;border-radius:20px;margin-bottom:12px}
+.cslide h3{margin:0 0 8px;font-size:30px;font-weight:900;line-height:1.05}
+.cslide p{margin:0 0 18px;font-size:15px;color:rgba(255,255,255,.9);line-height:1.5;max-width:420px}
+.cslide .cs-art{font-size:120px;line-height:1;filter:drop-shadow(0 12px 20px rgba(0,0,0,.3))}
+.cdots{position:absolute;bottom:16px;left:44px;display:flex;gap:8px;z-index:3}
+.cdot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.45);cursor:pointer;transition:.15s}
+.cdot.on{background:#fff;transform:scale(1.2)}
+/* ---------- store home: category cards ---------- */
+.catrow{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.catcard{display:flex;align-items:center;gap:16px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;cursor:pointer;box-shadow:var(--shadow-sm);transition:.16s}
+.catcard:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--navy)}
+.catcard .ci{font-size:42px;line-height:1}
+.catcard h4{margin:0 0 4px;color:var(--navy);font-size:18px;font-weight:800}
+.catcard p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+.catcard .arrow{margin-left:auto;color:var(--red);font-size:24px;font-weight:900;transition:.16s}
+.catcard:hover .arrow{transform:translateX(4px)}
+/* ---------- documents home: campaigns ---------- */
+.camprow{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.campcard{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;transition:.16s}
+.campcard:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.campcard .camp-head{background:linear-gradient(120deg,var(--c1),var(--c2));color:#fff;padding:20px 20px 22px}
+.campcard .camp-tag{display:inline-block;background:rgba(255,255,255,.22);font-size:10px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase;padding:4px 10px;border-radius:16px;margin-bottom:10px}
+.campcard .camp-head h4{margin:0;font-size:18px;font-weight:800;line-height:1.15}
+.campcard p{margin:0;padding:16px 20px 18px;color:var(--muted);font-size:13.5px;line-height:1.5;flex:1}
+.campcard .btn{margin:0 20px 20px;align-self:flex-start}
+@media(max-width:940px){
+  .tiles,.steps{grid-template-columns:1fr}
+  .grid2,.cartwrap{grid-template-columns:1fr}
+  .catrow{grid-template-columns:1fr}
+  .camprow{grid-template-columns:1fr}
+  .cslide .cs-art{display:none}
+  .cslide .cs-body{max-width:100%}
+}

@@ -22,7 +22,7 @@ BLEED = 4 * mm
 PAGE_W, PAGE_H = TRIM_W + 2 * BLEED, TRIM_H + 2 * BLEED
 
 def pick_back(emp):
-    if emp.get("role", "").lower() == "technician":
+    if emp.get("role", "").lower() == "technician" or emp.get("territory", "").lower() == "both":
         return BACKS["both"]
     return BACKS["north"] if emp.get("territory", "").lower() == "north" else BACKS["south"]
 
