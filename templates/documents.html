@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Print Materials & Documents — MMS{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="subhead"><a href="/"><button class="back">&larr; Hub</button></a>
+    <h2>Print Materials &amp; Documents</h2><span class="sub" id="docCount"></span></div>
+
+  <div class="filterbar">
+    <div class="filterrow"><span class="lab">Type</span>
+      <button class="chip gold on" data-f="type" data-v="all" onclick="setF('type','all',this)">All types</button>
+      <button class="chip" data-f="type" data-v="Flyers" onclick="setF('type','Flyers',this)">Flyers</button>
+      <button class="chip" data-f="type" data-v="Internal Sales Guides" onclick="setF('type','Internal Sales Guides',this)">Internal Sales Guides</button>
+      <button class="chip" data-f="type" data-v="Line Cards" onclick="setF('type','Line Cards',this)">Line Cards</button>
+    </div>
+    <div class="filterrow"><span class="lab">Division</span>
+      <button class="chip on" data-f="div" data-v="all" onclick="setF('div','all',this)">All</button>
+      <button class="chip" data-f="div" data-v="MMS" onclick="setF('div','MMS',this)">MMS</button>
+      <button class="chip sig" data-f="div" data-v="Signal" onclick="setF('div','Signal',this)">Signal</button>
+    </div>
+  </div>
+  <div class="pgrid" id="grid"></div>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+const DOCS = {{ docs_json|safe }};
+let F={type:'all',div:'all'};
+function setF(k,v,el){ F[k]=v; el.parentNode.querySelectorAll('[data-f="'+k+'"]').forEach(b=>b.classList.remove('on')); el.classList.add('on'); render(); }
+function render(){
+  const g=document.getElementById('grid'); g.innerHTML=''; let n=0;
+  DOCS.forEach(d=>{
+    if(F.type!=='all' && d.doc_type!==F.type) return;
+    if(F.div!=='all' && d.division!==F.div) return;
+    n++;
+    const divb = d.division==='Signal'?'<span class="bdg sig">Signal</span>':'<span class="bdg mms">MMS</span>';
+    const el=document.createElement('div'); el.className='card2';
+    el.innerHTML='<div class="thumb"><img src="/static/thumbs/'+d.thumb+'" alt=""></div>'+
+      '<div class="m"><div class="badges">'+divb+'<span class="bdg type">'+d.doc_type+'</span></div>'+
+      '<div class="nm">'+d.title+'</div>'+
+      '<div class="ctl"><select id="q_'+d.id+'"><option>25</option><option selected>50</option><option>100</option><option>250</option></select>'+
+      '<button class="add" onclick="addDoc(\''+d.id+'\')">Add</button></div></div>';
+    g.appendChild(el);
+  });
+  if(!n) g.innerHTML='<div class="noresult">No documents match these filters.</div>';
+  document.getElementById('docCount').textContent=n+' of '+DOCS.length+' documents';
+}
+function addDoc(id){
+  const d=DOCS.find(x=>x.id===id); const q=parseInt(document.getElementById('q_'+id).value,10);
+  cartAdd({type:'doc', id:d.id, qty:q, label:d.title, detail:q+' copies · '+d.division+' · '+d.doc_type, icon:'doc', thumb:d.thumb});
+  toast('Added to cart');
+}
+render();
+</script>{% endblock %}

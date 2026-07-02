@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Swag & Apparel — MMS{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="subhead"><a href="/"><button class="back">&larr; Hub</button></a>
+    <h2>Swag &amp; Apparel</h2><span class="sub" id="swCount"></span></div>
+
+  <div class="filterbar">
+    <div class="filterrow"><span class="lab">Shop</span>
+      <button class="chip gold on" data-g="all" onclick="setG('all',this)">Everything</button>
+      <button class="chip" data-g="Apparel" onclick="setG('Apparel',this)">Apparel</button>
+      <button class="chip" data-g="Swag" onclick="setG('Swag',this)">Promo Swag</button>
+    </div>
+    <div class="filterrow" id="catRow"><span class="lab">Category</span></div>
+  </div>
+  <div class="pgrid" id="grid"></div>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+const SWAG = {{ swag_json|safe }};
+let G='all', C='all';
+function cats(){ const s=SWAG.filter(i=>G==='all'||i.group===G); return [...new Set(s.map(i=>i.category))]; }
+function renderCats(){
+  const row=document.getElementById('catRow');
+  row.querySelectorAll('.chip').forEach(c=>c.remove());
+  const mk=(v,label)=>{ const b=document.createElement('button'); b.className='chip'+(C===v?' on':''); b.textContent=label;
+    b.onclick=()=>{C=v; renderCats(); render();}; row.appendChild(b); };
+  mk('all','All');
+  cats().forEach(c=>mk(c,c));
+}
+function setG(g,el){ G=g; C='all'; el.parentNode.querySelectorAll('[data-g]').forEach(b=>b.classList.remove('on')); el.classList.add('on'); renderCats(); render(); }
+function render(){
+  const g=document.getElementById('grid'); g.innerHTML=''; let n=0;
+  SWAG.forEach(it=>{
+    if(G!=='all'&&it.group!==G) return;
+    if(C!=='all'&&it.category!==C) return;
+    n++;
+    const colors=it.colors.map(c=>'<option>'+c+'</option>').join('');
+    const sizes=it.sizes.length?'<select id="sz_'+it.id+'">'+it.sizes.map(s=>'<option'+(s==='L'?' selected':'')+'>'+s+'</option>').join('')+'</select>':'';
+    const el=document.createElement('div'); el.className='card2';
+    el.innerHTML='<div class="thumb icon">'+icon(it.icon)+'</div>'+
+      '<div class="m"><div class="badges"><span class="bdg cat">'+it.category+'</span><span class="bdg type">'+it.group+'</span></div>'+
+      '<div class="nm">'+it.name+'</div><div class="price">$'+it.price.toFixed(2)+' each</div>'+
+      '<div class="opts"><select id="cl_'+it.id+'">'+colors+'</select>'+sizes+'</div>'+
+      '<div class="ctl"><select id="q_'+it.id+'"><option>1</option><option>2</option><option selected>5</option><option>10</option><option>25</option><option>50</option></select>'+
+      '<button class="add" onclick="addSwag(\''+it.id+'\')">Add</button></div></div>';
+    g.appendChild(el);
+  });
+  if(!n) g.innerHTML='<div class="noresult">No items match.</div>';
+  document.getElementById('swCount').textContent=n+' items';
+}
+function addSwag(id){
+  const it=SWAG.find(x=>x.id===id);
+  const color=document.getElementById('cl_'+id).value;
+  const size=it.sizes.length?document.getElementById('sz_'+id).value:'';
+  const q=parseInt(document.getElementById('q_'+id).value,10);
+  cartAdd({type:'swag', id:it.id, name:it.name, color, size, qty:q, price:it.price, icon:it.icon,
+    label:it.name, detail:q+' × '+color+(size?' · size '+size:'')+' · $'+it.price.toFixed(2)+' ea'});
+  toast('Added to cart');
+}
+renderCats(); render();
+</script>{% endblock %}

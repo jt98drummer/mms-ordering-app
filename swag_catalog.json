@@ -1,0 +1,403 @@
+[
+  {
+    "id": "ap1",
+    "name": "MMS Performance Polo",
+    "group": "Apparel",
+    "category": "Polos",
+    "icon": "shirt",
+    "colors": [
+      "Navy",
+      "Black",
+      "Red"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL",
+      "3XL"
+    ],
+    "price": 28.0
+  },
+  {
+    "id": "ap2",
+    "name": "MMS Cotton Polo",
+    "group": "Apparel",
+    "category": "Polos",
+    "icon": "shirt",
+    "colors": [
+      "Navy",
+      "White",
+      "Gray"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL",
+      "3XL"
+    ],
+    "price": 24.0
+  },
+  {
+    "id": "ap3",
+    "name": "MMS Logo T-Shirt",
+    "group": "Apparel",
+    "category": "T-Shirts",
+    "icon": "shirt",
+    "colors": [
+      "Navy",
+      "Gray",
+      "White"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL",
+      "3XL"
+    ],
+    "price": 16.0
+  },
+  {
+    "id": "ap4",
+    "name": "MMS Hi-Vis Safety Tee",
+    "group": "Apparel",
+    "category": "T-Shirts",
+    "icon": "shirt",
+    "colors": [
+      "Safety Yellow",
+      "Safety Orange"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL",
+      "3XL"
+    ],
+    "price": 19.0
+  },
+  {
+    "id": "ap5",
+    "name": "MMS Softshell Jacket",
+    "group": "Apparel",
+    "category": "Outerwear",
+    "icon": "jacket",
+    "colors": [
+      "Navy",
+      "Black"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL",
+      "3XL"
+    ],
+    "price": 62.0
+  },
+  {
+    "id": "ap6",
+    "name": "MMS Quarter-Zip Pullover",
+    "group": "Apparel",
+    "category": "Outerwear",
+    "icon": "jacket",
+    "colors": [
+      "Navy",
+      "Charcoal"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL",
+      "3XL"
+    ],
+    "price": 48.0
+  },
+  {
+    "id": "ap7",
+    "name": "MMS Insulated Vest",
+    "group": "Apparel",
+    "category": "Outerwear",
+    "icon": "jacket",
+    "colors": [
+      "Navy",
+      "Black"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL",
+      "3XL"
+    ],
+    "price": 54.0
+  },
+  {
+    "id": "ap8",
+    "name": "MMS Pullover Hoodie",
+    "group": "Apparel",
+    "category": "Sweatshirts",
+    "icon": "hoodie",
+    "colors": [
+      "Navy",
+      "Gray",
+      "Black"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL",
+      "3XL"
+    ],
+    "price": 42.0
+  },
+  {
+    "id": "ap9",
+    "name": "MMS Crewneck Sweatshirt",
+    "group": "Apparel",
+    "category": "Sweatshirts",
+    "icon": "hoodie",
+    "colors": [
+      "Navy",
+      "Gray"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL",
+      "3XL"
+    ],
+    "price": 38.0
+  },
+  {
+    "id": "ap10",
+    "name": "MMS Structured Cap",
+    "group": "Apparel",
+    "category": "Headwear",
+    "icon": "cap",
+    "colors": [
+      "Navy",
+      "Black",
+      "Red"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL",
+      "3XL"
+    ],
+    "price": 18.0
+  },
+  {
+    "id": "ap11",
+    "name": "MMS Knit Beanie",
+    "group": "Apparel",
+    "category": "Headwear",
+    "icon": "cap",
+    "colors": [
+      "Navy",
+      "Charcoal"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL",
+      "3XL"
+    ],
+    "price": 16.0
+  },
+  {
+    "id": "sw1",
+    "name": "MMS 20oz Tumbler",
+    "group": "Swag",
+    "category": "Drinkware",
+    "icon": "cup",
+    "colors": [
+      "Stainless",
+      "Navy"
+    ],
+    "sizes": [],
+    "price": 22.0
+  },
+  {
+    "id": "sw2",
+    "name": "MMS Ceramic Mug",
+    "group": "Swag",
+    "category": "Drinkware",
+    "icon": "cup",
+    "colors": [
+      "White",
+      "Navy"
+    ],
+    "sizes": [],
+    "price": 11.0
+  },
+  {
+    "id": "sw3",
+    "name": "MMS Water Bottle",
+    "group": "Swag",
+    "category": "Drinkware",
+    "icon": "cup",
+    "colors": [
+      "Stainless",
+      "White"
+    ],
+    "sizes": [],
+    "price": 19.0
+  },
+  {
+    "id": "sw4",
+    "name": "MMS Canvas Tote",
+    "group": "Swag",
+    "category": "Bags",
+    "icon": "bag",
+    "colors": [
+      "Natural",
+      "Navy"
+    ],
+    "sizes": [],
+    "price": 9.0
+  },
+  {
+    "id": "sw5",
+    "name": "MMS Laptop Backpack",
+    "group": "Swag",
+    "category": "Bags",
+    "icon": "bag",
+    "colors": [
+      "Black",
+      "Navy"
+    ],
+    "sizes": [],
+    "price": 46.0
+  },
+  {
+    "id": "sw6",
+    "name": "MMS Cooler Bag",
+    "group": "Swag",
+    "category": "Bags",
+    "icon": "bag",
+    "colors": [
+      "Gray",
+      "Navy"
+    ],
+    "sizes": [],
+    "price": 27.0
+  },
+  {
+    "id": "sw7",
+    "name": "MMS Power Bank",
+    "group": "Swag",
+    "category": "Tech",
+    "icon": "device",
+    "colors": [
+      "Black",
+      "White"
+    ],
+    "sizes": [],
+    "price": 29.0
+  },
+  {
+    "id": "sw8",
+    "name": "MMS Wireless Charger",
+    "group": "Swag",
+    "category": "Tech",
+    "icon": "device",
+    "colors": [
+      "Black"
+    ],
+    "sizes": [],
+    "price": 24.0
+  },
+  {
+    "id": "sw9",
+    "name": "MMS USB-C Drive 32GB",
+    "group": "Swag",
+    "category": "Tech",
+    "icon": "device",
+    "colors": [
+      "Silver"
+    ],
+    "sizes": [],
+    "price": 14.0
+  },
+  {
+    "id": "sw10",
+    "name": "MMS Hardcover Notebook",
+    "group": "Swag",
+    "category": "Office",
+    "icon": "notebook",
+    "colors": [
+      "Navy",
+      "Black"
+    ],
+    "sizes": [],
+    "price": 13.0
+  },
+  {
+    "id": "sw11",
+    "name": "MMS Pen Set",
+    "group": "Swag",
+    "category": "Office",
+    "icon": "notebook",
+    "colors": [
+      "Navy/Silver"
+    ],
+    "sizes": [],
+    "price": 8.0
+  },
+  {
+    "id": "sw12",
+    "name": "MMS Can Koozie",
+    "group": "Swag",
+    "category": "Misc",
+    "icon": "tag",
+    "colors": [
+      "Navy",
+      "Red"
+    ],
+    "sizes": [],
+    "price": 3.5
+  },
+  {
+    "id": "sw13",
+    "name": "MMS Metal Keychain",
+    "group": "Swag",
+    "category": "Misc",
+    "icon": "tag",
+    "colors": [
+      "Silver"
+    ],
+    "sizes": [],
+    "price": 5.0
+  }
+]

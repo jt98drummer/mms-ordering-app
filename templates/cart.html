@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Your Cart — MMS{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="subhead"><a href="/"><button class="back">&larr; Hub</button></a><h2>Your Cart</h2><span class="sub" id="ccount"></span></div>
+  <div id="cartArea"></div>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+function line(it,i){
+  const ic = it.type==='doc' ? '<img src="/static/thumbs/'+it.thumb+'">' : icon(it.icon);
+  const stepper = it.type==='swag'
+    ? '<div class="qtybox"><button onclick="chg('+i+',-1)">–</button><span>'+it.qty+'</span><button onclick="chg('+i+',1)">+</button></div>'
+    : '';
+  return '<div class="citem"><div class="ci-ic">'+ic+'</div>'+
+    '<div class="ci-main"><div class="ci-t">'+it.label+'</div><div class="ci-d">'+it.detail+'</div></div>'+
+    '<div class="ci-r"><span class="ci-x" onclick="rm('+i+')">&times;</span>'+stepper+'</div></div>';
+}
+function draw(){
+  const c=cartGet(); const a=document.getElementById('cartArea');
+  document.getElementById('ccount').textContent=c.length?c.length+' item type(s)':'';
+  if(!c.length){ a.innerHTML='<div class="empty"><h3 style="color:#1e2d3b;margin:0 0 8px">Your cart is empty</h3><p style="margin:0 0 16px">Add business cards, documents, or swag to get started.</p><a class="btn" href="/">Back to the hub</a></div>'; return; }
+  let swagSub=c.filter(i=>i.type==='swag').reduce((s,i)=>s+(i.price||0)*i.qty,0);
+  const hasPrint=c.some(i=>i.type==='card'||i.type==='doc'); const hasSwag=c.some(i=>i.type==='swag');
+  a.innerHTML='<div class="cartwrap"><div class="panel">'+c.map(line).join('')+'</div>'+
+   '<div class="summary"><h3>Checkout</h3>'+
+     '<div class="row2"><div class="field"><label>First name</label><input id="s_fn" value="Jayce"></div><div class="field"><label>Last name</label><input id="s_ln" value="Tomlin"></div></div>'+
+     '<div class="field"><label>Address line 1</label><input id="s_a1" placeholder="123 Main St"></div>'+
+     '<div class="field"><label>Address line 2</label><input id="s_a2" placeholder="Apt / Suite (optional)"></div>'+
+     '<div class="row2"><div class="field"><label>City</label><input id="s_ct"></div><div class="field"><label>State</label><input id="s_st" placeholder="IA"></div></div>'+
+     '<div class="row2"><div class="field"><label>ZIP</label><input id="s_zp"></div><div class="field"><label>Phone</label><input id="s_ph" value="555-123-4567"></div></div>'+
+     '<div class="field"><label>Email</label><input id="s_em" value="jtomlin@mmsinconline.com"></div>'+
+     '<label>Payment</label>'+
+     '<label class="pay sel" id="payCo"><input type="radio" name="pay" checked onchange="pm=\'company\';psel()"><span><span class="pt">Company card · auto-charged</span><br><span class="pd">MMS card on file — no action needed</span></span></label>'+
+     '<label class="pay" id="paySelf"><input type="radio" name="pay" onchange="pm=\'self\';psel()"><span><span class="pt">Use my own card</span><br><span class="pd">Secure checkout at the next step</span></span></label>'+
+     (hasSwag?'<div class="sumrow"><span>Swag subtotal (est.)</span><span>$'+swagSub.toFixed(2)+'</span></div>':'')+
+     (hasPrint?'<div class="sumrow"><span>Cards &amp; documents</span><span>priced by printer</span></div>':'')+
+     '<button class="btn full" style="margin-top:14px" id="placeBtn" onclick="checkout()">Place order</button>'+
+     '<div class="fineprint">One shipping address for the whole order. Cards &amp; documents are produced by Gelato; swag &amp; apparel are routed to the MMS swag vendor.</div>'+
+   '</div></div>';
+  psel();
+}
+let pm='company';
+function psel(){ const a=document.getElementById('payCo'),b=document.getElementById('paySelf'); if(a&&b){a.classList.toggle('sel',pm==='company');b.classList.toggle('sel',pm==='self');} }
+function rm(i){ const c=cartGet(); c.splice(i,1); cartSave(c); draw(); }
+function chg(i,d){ const c=cartGet(); c[i].qty=Math.max(1,(c[i].qty||1)+d); if(c[i].detail){c[i].detail=c[i].detail.replace(/^\d+/,c[i].qty);} cartSave(c); draw(); }
+function modal(t,b){ document.getElementById('mTitle').textContent=t; document.getElementById('mBody').innerHTML=b; document.getElementById('modalBg').classList.add('show'); }
+async function checkout(){
+  const g=id=>document.getElementById(id).value;
+  const ship={firstName:g('s_fn'),lastName:g('s_ln'),addressLine1:g('s_a1'),addressLine2:g('s_a2'),city:g('s_ct'),state:g('s_st'),postCode:g('s_zp'),country:'US',email:g('s_em'),phone:g('s_ph')};
+  if(!ship.addressLine1||!ship.city){ modal('Add a shipping address','Please fill in at least address line 1 and city.'); return; }
+  document.getElementById('placeBtn').textContent='Placing order…';
+  try{
+    const r=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:cartGet(),ship,payment:pm})});
+    const j=await r.json();
+    if(j.ok){
+      let msg='Order <b>'+j.order_id+'</b> ('+j.mode.toUpperCase()+'). ';
+      if(j.print_items) msg+=j.print_items+' print item(s) sent to Gelato. ';
+      if(j.swag_items) msg+=j.swag_items+' swag item(s) routed to the swag vendor. ';
+      if(pm==='self') msg+='<br><br>Because you chose your own card, a secure payment link would open next.';
+      msg+='<br><br><i>(Demo — nothing was really produced or charged.)</i>';
+      cartSave([]); modal('Order placed!',msg);
+    } else { modal('Something went wrong', j.error||('Gelato status '+j.gelato_status)); }
+  }catch(e){ modal('Error', String(e)); }
+  const b=document.getElementById('placeBtn'); if(b) b.textContent='Place order';
+}
+draw();
+</script>{% endblock %}
