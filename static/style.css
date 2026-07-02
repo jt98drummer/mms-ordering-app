@@ -150,6 +150,8 @@ input:focus,select:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 
 .citem .ci-r{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .citem .ci-x{color:#b9c0c8;cursor:pointer;font-weight:900;font-size:18px;line-height:1}
 .citem .ci-x:hover{color:var(--red)}
+.ci-remove{background:var(--red);color:#fff;border:0;border-radius:8px;padding:7px 15px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
+.ci-remove:hover{background:#a50d26}
 .qtybox{display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .qtybox button{border:0;background:#f1f4f7;width:28px;height:30px;font-weight:900;cursor:pointer;color:var(--navy)}
 .qtybox span{min-width:34px;text-align:center;font-weight:800;font-size:13px}
@@ -171,5 +173,4 @@ input:focus,select:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 
 .modal p{font-size:14px;color:var(--muted);line-height:1.6}
 .modal .close{margin-top:20px;background:var(--navy);color:#fff;border:0;border-radius:10px;padding:12px 26px;font-weight:800;cursor:pointer}
 .foot{border-top:1px solid var(--line);padding:22px 24px 46px;color:var(--muted);font-size:12px;max-width:1180px;margin:20px auto 0}
-.demoflag{position:fixed;right:16px;bottom:16px;background:var(--gold);color:var(--navy);font-size:11px;font-weight:900;padding:7px 13px;border-radius:20px;box-shadow:var(--shadow);z-index:50;letter-spacing:.5px}
-@media(max-width:940px){.tiles,.steps{grid-template-columns:1fr}.grid2,.cartwrap{grid-template-columns:1fr}.hero h1{font-size:34px}}
+.demoflag{position:fixed;right:16px;bottom:16px;background:var(--gold);color:var(--navy);font-size:11px;font-weight:900;padding:7px 13px;border-radius:2
