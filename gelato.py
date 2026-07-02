@@ -7,7 +7,7 @@ import json, urllib.request, urllib.error
 import config
 
 def _headers():
-    return {"Content-Type": "application/json", "X-API-KEY": config.GELATO_API_KEY}
+    return {"Content-Type": "application/json", "X-API-KEY": config.GELATO_API_KEY, "User-Agent": "MMS-Ordering-App/1.0"}
 
 def _post(url, payload):
     data = json.dumps(payload).encode("utf-8")
