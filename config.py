@@ -29,7 +29,7 @@ PUBLIC_BASE_URL = _get("PUBLIC_BASE_URL", "http://localhost:8000").rstrip("/")
 # Business cards: single 2-page PDF (front=page1, back=page2) sent as the 'default' file.
 CARD_PRODUCT_UID  = _get("CARD_PRODUCT_UID",  "cards_pf_bx_pt_350-gsm-coated-silk_cl_4-4_hor")
 # Default flyer product (US Letter). Each flyer can override via data_catalog.json.
-FLYER_PRODUCT_UID = _get("FLYER_PRODUCT_UID", "flyers_pf_letter_pt_100-lb-text-coated-silk_cl_4-4_ver")
+FLYER_PRODUCT_UID = _get("FLYER_PRODUCT_UID", "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-4_ver")
 
 SHIPMENT_METHOD = _get("SHIPMENT_METHOD", "normal")   # normal | standard | express
 CURRENCY        = _get("CURRENCY", "USD")
