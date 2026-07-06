@@ -13,34 +13,65 @@ GELATO_API_KEY = _get("GELATO_API_KEY", "")          # from Gelato dashboard > A
 ORDER_API      = "https://order.gelatoapis.com/v4/orders"
 QUOTE_API      = "https://order.gelatoapis.com/v4/orders:quote"
 PRODUCT_SEARCH = "https://product.gelatoapis.com/v3/catalogs/{catalog}/products:search"
+GELATO_MODE    = _get("GELATO_MODE", "dry").lower()   # dry | draft | live
 
-# Mode controls what happens when someone places an order:
-#   dry   -> generate the print files + build the Gelato request, but DO NOT call Gelato (safe, no key needed)
-#   draft -> create a DRAFT order in Gelato (shows in your dashboard, NOT charged/printed until you confirm)
-#   live  -> create a real order (charged to the card on your Gelato account, printed + shipped)
-GELATO_MODE = _get("GELATO_MODE", "dry").lower()
-
-# Public base URL where Gelato can fetch generated print files.
-# Locally this is http://localhost:8000 (Gelato can't reach that -> use 'dry').
-# When deployed, set this to your public URL, e.g. https://mms-orders.onrender.com
 PUBLIC_BASE_URL = _get("PUBLIC_BASE_URL", "http://localhost:8000").rstrip("/")
 
-# --- Product UIDs (confirm exact codes for your account with find_products.py) ---
-# Business cards: single 2-page PDF (front=page1, back=page2) sent as the 'default' file.
 CARD_PRODUCT_UID  = _get("CARD_PRODUCT_UID",  "cards_pf_bx_pt_350-gsm-coated-silk_cl_4-4_hor")
-# Default flyer product (US Letter). Each flyer can override via data_catalog.json.
 FLYER_PRODUCT_UID = _get("FLYER_PRODUCT_UID", "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-4_ver")
 
 SHIPMENT_METHOD = _get("SHIPMENT_METHOD", "normal")   # normal | standard | express
 CURRENCY        = _get("CURRENCY", "USD")
 
-# Company info baked onto cards
 COMPANY_NAME = "Miller Mechanical Specialties Inc."
 COMPANY_URL  = "www.mmsinconline.com"
-
-# Notification (optional): where order summaries are emailed. Left blank = skip.
 NOTIFY_EMAIL = _get("NOTIFY_EMAIL", "jtomlin@mmsinconline.com")
 
-BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
-FILES_DIR = os.path.join(BASE_DIR, "files")
-ASSET_DIR = os.path.join(BASE_DIR, "assets")
+# --- Flask session secret (set FLASK_SECRET in host env for production) ---
+SECRET_KEY = _get("FLASK_SECRET", "dev-only-not-secret-change-me")
+
+# --- Microsoft 365 / Entra ---
+# Sign-in uses the delegated auth-code flow; receipts/approvals use app-only Graph mail.
+MS_TENANT_ID     = _get("MS_TENANT_ID", "")
+MS_CLIENT_ID     = _get("MS_CLIENT_ID", "")
+MS_CLIENT_SECRET = _get("MS_CLIENT_SECRET", "")       # SECRET -> host env only, never in code
+MS_REDIRECT_PATH = _get("MS_REDIRECT_PATH", "/auth/callback")
+MS_AUTHORITY     = ("https://login.microsoftonline.com/" + MS_TENANT_ID) if MS_TENANT_ID else ""
+MS_SCOPES        = ["User.Read"]                      # delegated sign-in + basic profile
+GRAPH_BASE       = "https://graph.microsoft.com/v1.0"
+
+# Auth is ON only when all three Entra values are present; otherwise the app runs
+# in DEV mode (synthetic user, role switchable) so the site keeps working.
+AUTH_ENABLED = bool(MS_TENANT_ID and MS_CLIENT_ID and MS_CLIENT_SECRET)
+
+# Mailbox that Graph sends receipts/approvals *from* (needs app-only Mail.Send).
+MAIL_SENDER = _get("MAIL_SENDER", NOTIFY_EMAIL)
+MAIL_MODE   = _get("MAIL_MODE", "auto").lower()       # auto = send if creds else save to outbox
+
+# --- Where accounting receipts go ---
+ACCOUNTING_EMAIL  = _get("ACCOUNTING_EMAIL", "accounting@mmsinconline.com")
+# Where a manager's own over-limit order escalates (no self-approval).
+ESCALATION_EMAIL  = _get("ESCALATION_EMAIL", NOTIFY_EMAIL)
+
+# --- Roles / tiers ---
+ROLE_MANAGER, ROLE_FSE, ROLE_EMPLOYEE = "manager", "fse", "employee"
+PRIVILEGED_ROLES = (ROLE_MANAGER, ROLE_FSE)           # less-restricted swag tier
+ROLE_CLAIM_MAP = {   # Entra App Role "value" -> our tier
+    "Manager": ROLE_MANAGER, "manager": ROLE_MANAGER,
+    "FSE": ROLE_FSE, "fse": ROLE_FSE, "FieldSalesEngineer": ROLE_FSE,
+    "Employee": ROLE_EMPLOYEE, "employee": ROLE_EMPLOYEE,
+}
+DEFAULT_ROLE = ROLE_EMPLOYEE
+DEV_ROLE     = _get("DEV_ROLE", ROLE_EMPLOYEE).lower()  # dev-mode default view
+
+# --- Safety-net caps (all adjustable via env) ---
+DOC_MAX_QTY              = int(_get("DOC_MAX_QTY", "25"))          # sheets per document
+FSE_MGR_AUTO_APPROVE_USD = float(_get("FSE_MGR_AUTO_APPROVE_USD", "250"))
+EMPLOYEE_MAX_UNITS      = int(_get("EMPLOYEE_MAX_UNITS", "5"))
+EMPLOYEE_MAX_ORDER_USD  = float(_get("EMPLOYEE_MAX_ORDER_USD", "150"))
+
+BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
+FILES_DIR  = os.path.join(BASE_DIR, "files")
+ASSET_DIR  = os.path.join(BASE_DIR, "assets")
+OUTBOX_DIR = os.path.join(BASE_DIR, "files", "outbox")
+PENDING_DIR = os.path.join(BASE_DIR, "files", "pending")

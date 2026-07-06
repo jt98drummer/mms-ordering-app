@@ -5,25 +5,17 @@
   <div class="subhead"><a href="/"><button class="back">&larr; Hub</button></a>
     <h2>Swag &amp; Apparel</h2><span class="sub">MMS-branded gear</span></div>
 
-  <!-- rolling featured banner -->
-  <div class="carousel" id="carousel">
-    <div class="cslide on" style="background:linear-gradient(120deg,#1e2d3b,#33526e)">
-      <div class="cs-body"><div class="cs-tag">Featured</div><h3>MMS Softshell Jacket</h3><p>Water-resistant, embroidered logo - a crew favorite for the field.</p><button class="btn gold" onclick="goShop('Apparel','Outerwear')">Shop outerwear &rarr;</button></div>
-      <div class="cs-art">🧥</div></div>
-    <div class="cslide" style="background:linear-gradient(120deg,#7a1420,#c8102e)">
-      <div class="cs-body"><div class="cs-tag">Popular</div><h3>20oz Insulated Tumbler</h3><p>Keeps it cold for 24 hours. Great for trade shows and giveaways.</p><button class="btn gold" onclick="goShop('Swag','Drinkware')">Shop drinkware &rarr;</button></div>
-      <div class="cs-art">🥤</div></div>
-    <div class="cslide" style="background:linear-gradient(120deg,#26384a,#4a6d90)">
-      <div class="cs-body"><div class="cs-tag">Team pick</div><h3>Performance Polo</h3><p>Moisture-wicking, all-day comfort in MMS navy, black, or red.</p><button class="btn gold" onclick="goShop('Apparel','Polos')">Shop polos &rarr;</button></div>
-      <div class="cs-art">👕</div></div>
-    <div class="cdots" id="cdots"></div>
-  </div>
+  {% if user.role in PRIVILEGED %}
+  <div class="rolehint fse"><b>{{ user.role|upper }} store.</b> You're set up for customer visits and trade shows: company-card orders under {{ '$%.0f'|format(caps.fse_mgr_usd) }} place immediately (receipt to accounting). Larger orders need one approval. Personal card is always available - not reimbursable.</div>
+  {% else %}
+  <div class="rolehint"><b>Employee store.</b> Company-card orders route to your manager for approval (capped at {{ caps.emp_units }} units / {{ '$%.0f'|format(caps.emp_usd) }}), then place automatically once approved. Prefer no wait? Use your personal card - not reimbursable, no limit.</div>
+  {% endif %}
 
   <!-- shop by category -->
   <div class="section"><div class="eyebrow2">Shop by category</div><h2 class="h">What are you looking for?</h2>
     <div class="catrow">
-      <div class="catcard ap" onclick="goShop('Apparel','all')"><div class="ci">👔</div><div><h4>Apparel</h4><p>Polos, tees, outerwear, sweatshirts &amp; headwear</p></div><span class="arrow">&rarr;</span></div>
-      <div class="catcard sw" onclick="goShop('Swag','all')"><div class="ci">🎁</div><div><h4>Promo Swag</h4><p>Drinkware, bags, tech, office &amp; giveaways</p></div><span class="arrow">&rarr;</span></div>
+      <div class="catcard ap" onclick="goShop('Apparel','all')"><div class="ci">&#128084;</div><div><h4>Apparel</h4><p>Polos, tees, outerwear, sweatshirts &amp; headwear</p></div><span class="arrow">&rarr;</span></div>
+      <div class="catcard sw" onclick="goShop('Swag','all')"><div class="ci">&#127873;</div><div><h4>Promo Swag</h4><p>Drinkware, bags, tech, office &amp; giveaways</p></div><span class="arrow">&rarr;</span></div>
     </div>
   </div>
 
@@ -46,6 +38,8 @@
 {% endblock %}
 {% block scripts %}<script>
 const SWAG = {{ swag_json|safe }};
+const ROLE='{{ user.role }}';
+const CAPS={units:{{ caps.emp_units }}, usd:{{ caps.emp_usd }}};
 let G='all', C='all';
 function cardHTML(it){
   const colors=it.colors.map(c=>'<option>'+c+'</option>').join('');
@@ -81,16 +75,14 @@ function addSwag(id){
   const size=it.sizes.length?document.getElementById('sz_'+id).value:''; const q=parseInt(document.getElementById('q_'+id).value,10);
   cartAdd({type:'swag', id:it.id, name:it.name, color, size, qty:q, price:it.price, icon:it.icon,
     label:it.name, detail:q+' × '+color+(size?' · size '+size:'')+' · $'+it.price.toFixed(2)+' ea'});
+  if(ROLE==='employee'){
+    const c=cartGet().filter(i=>i.type==='swag');
+    const units=c.reduce((n,i)=>n+(i.qty||1),0), val=c.reduce((s,i)=>s+(i.price||0)*(i.qty||1),0);
+    if(units>CAPS.units||val>CAPS.usd){ toast('Heads up: over the company-card limit ('+CAPS.units+' units / $'+CAPS.usd+') - use personal card or trim at checkout'); return; }
+  }
   toast('Added to cart');
 }
-// popular picks
-(function(){ const ids=['ap5','sw1','ap1','sw5','ap8']; 
+(function(){ const ids=['ap5','sw1','ap1','sw5','ap8'];
   document.getElementById('popular').innerHTML = ids.map(id=>SWAG.find(x=>x.id===id)).filter(Boolean).map(cardHTML).join(''); })();
-// carousel
-(function(){ const slides=[...document.querySelectorAll('.cslide')]; const dots=document.getElementById('cdots');
-  slides.forEach((s,i)=>{ const d=document.createElement('span'); d.className='cdot'+(i===0?' on':''); d.onclick=()=>go(i); dots.appendChild(d); });
-  let cur=0; function go(n){ slides[cur].classList.remove('on'); dots.children[cur].classList.remove('on'); cur=n; slides[cur].classList.add('on'); dots.children[cur].classList.add('on'); }
-  setInterval(()=>go((cur+1)%slides.length), 4000);
-})();
 renderCats(); render();
 </script>{% endblock %}

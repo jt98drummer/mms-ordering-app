@@ -13,18 +13,36 @@
     <a href="/cards">Business Cards</a>
     <a href="/documents">Documents</a>
     <a href="/swag">Swag &amp; Apparel</a>
-    <a href="/cart"><button class="cartbtn">Cart <span class="badge" data-cart-count style="display:none">0</span></button></a>
+    {% if show_cart %}<a href="/cart"><button class="cartbtn">Cart <span class="badge" data-cart-count style="display:none">0</span></button></a>{% endif %}
+    {% if user %}
+    <div class="profile" tabindex="0">
+      <div class="avatar" title="{{user.name}}">{{ user.initials }}</div>
+      <div class="pcard">
+        <div class="pn">{{ user.name }}</div>
+        <div class="pe">{{ user.email }}</div>
+        <span class="prole role-{{ user.role }}">{{ user.role|upper }}</span>
+        {% if user.dev %}
+        <div class="pdev">Preview role:
+          <a href="/setrole/manager?next={{ request.path }}">Manager</a> &middot;
+          <a href="/setrole/fse?next={{ request.path }}">FSE</a> &middot;
+          <a href="/setrole/employee?next={{ request.path }}">Employee</a>
+        </div>{% endif %}
+        <a class="plogout" href="/logout">Sign out</a>
+      </div>
+    </div>
+    {% endif %}
   </div>
 </div></div>
 <div class="redrule"></div>
 <div class="tagstrip">Your Trusted Advisor for Process Measurement &amp; Control since 1952</div>
+{% if user and user.dev %}<div class="devbar">DEV MODE - M365 sign-in not wired yet &middot; viewing as <b>{{ user.role|upper }}</b> &middot; add Entra creds to turn on real sign-in</div>{% endif %}
 <div class="modebar mode-{{mode}}">ORDER MODE: {{mode|upper}}
   {% if mode=='dry' %}- safe test, no order sent to Gelato{% elif mode=='draft' %}- creates a draft order in Gelato (not charged until confirmed){% else %}- LIVE: orders are charged &amp; printed{% endif %}
 </div>
 
 {% block content %}{% endblock %}
 
-<div class="foot">MMS Material Ordering Hub &middot; Miller Mechanical Specialties &amp; Signal Process Solutions &middot; printed &amp; shipped by Gelato.</div>
+<div class="foot">MMS Material Ordering Hub &middot; Miller Mechanical Specialties &amp; Signal Process Solutions &middot; business cards &amp; documents printed by Gelato.</div>
 <div class="modal-bg" id="modalBg"><div class="modal">
   <div class="ic">&#10003;</div><h3 id="mTitle">Done</h3><p id="mBody"></p>
   <button class="close" onclick="document.getElementById('modalBg').classList.remove('show')">Close</button>

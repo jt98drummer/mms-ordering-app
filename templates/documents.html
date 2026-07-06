@@ -3,31 +3,8 @@
 {% block content %}
 <div class="wrap">
   <div class="subhead"><a href="/"><button class="back">&larr; Hub</button></a>
-    <h2>Print Materials &amp; Documents</h2><span class="sub">order approved MMS &amp; Signal collateral</span></div>
+    <h2>Print Materials &amp; Documents</h2><span class="sub">approved MMS &amp; Signal collateral &middot; company card only &middot; max {{ doc_max }} sheets each</span></div>
 
-  <!-- active campaigns -->
-  <div class="section"><div class="eyebrow2">Active campaigns</div><h2 class="h">What to promote right now</h2>
-    <div class="camprow">
-      <div class="campcard" style="--c1:#1e2d3b;--c2:#3a6ea5">
-        <div class="camp-head"><span class="camp-tag">Signal</span><h4>SAM GUARD 90-Day Trial</h4></div>
-        <p>Push the free trial - grab the Signal one-pagers to leave with customers.</p>
-        <button class="btn" onclick="goDocs('all','Signal')">View Signal docs &rarr;</button></div>
-      <div class="campcard" style="--c1:#7a1420;--c2:#c8102e">
-        <div class="camp-head"><span class="camp-tag">Service</span><h4>Equipment Health Package</h4></div>
-        <p>Keep systems running at peak performance. Hand out the service flyers.</p>
-        <button class="btn" onclick="goDocs('Flyers','MMS')">View MMS flyers &rarr;</button></div>
-      <div class="campcard" style="--c1:#26384a;--c2:#556b1f">
-        <div class="camp-head"><span class="camp-tag">Training</span><h4>Instrumentation Training 2026</h4></div>
-        <p>Enrolling new technicians - share the updated training flyer.</p>
-        <button class="btn" onclick="goDocs('Flyers','all')">View flyers &rarr;</button></div>
-    </div>
-  </div>
-
-  <!-- recently added -->
-  <div class="section"><div class="eyebrow2">Recently added</div><h2 class="h">Fresh off the press</h2>
-    <div class="pgrid" id="recent"></div></div>
-
-  <!-- full catalog -->
   <div class="section" id="allitems"><div class="eyebrow2">Full library</div><h2 class="h" id="docCount"></h2>
     <div class="filterbar">
       <div class="filterrow"><span class="lab">Type</span>
@@ -43,17 +20,43 @@
     <div class="pgrid" id="grid"></div>
   </div>
 </div>
+
+<!-- checkout drawer -->
+<div class="drawer-bg" id="dbg"><div class="drawer">
+  <div class="dhead"><h3 id="dTitle">Order document</h3><button class="dx" onclick="closeD()">&times;</button></div>
+  <div class="dbody">
+    <div class="drow"><img id="dThumb" src=""><div><div class="dnm" id="dName"></div><div class="dsub" id="dSub"></div></div></div>
+    <div class="field"><label>Quantity (max {{ doc_max }} sheets)</label>
+      <input id="d_qty" type="number" min="1" max="{{ doc_max }}" value="25" oninput="capQty()"></div>
+    <div class="ctxbox">
+      <h4>Order context <span class="req">*required</span></h4>
+      <div class="field"><label>Purpose</label>
+        <select id="d_purpose"><option value="">Select a purpose...</option>
+          <option>Customer visit / leave-behind</option><option>Trade show / event</option>
+          <option>Sales follow-up</option><option>Internal use</option><option>Restock</option><option>Other</option></select></div>
+      <div class="field"><label>For whom / event</label><input id="d_recipient" placeholder="e.g. Process Expo booth"></div>
+      <div class="field"><label>Justification</label><textarea id="d_just" rows="2" placeholder="Why these are needed"></textarea></div>
+    </div>
+    <h3 style="margin:4px 0 10px">Ship to</h3>
+    <div class="row2"><div class="field"><label>First name</label><input id="s_fn" value="Jayce"></div><div class="field"><label>Last name</label><input id="s_ln" value="Tomlin"></div></div>
+    <div class="field"><label>Address line 1</label><input id="s_a1" placeholder="123 Main St"></div>
+    <div class="row2"><div class="field"><label>City</label><input id="s_ct"></div><div class="field"><label>State</label><input id="s_st" placeholder="IA"></div></div>
+    <div class="row2"><div class="field"><label>ZIP</label><input id="s_zp"></div><div class="field"><label>Phone</label><input id="s_ph" value="555-123-4567"></div></div>
+    <div class="paynote">Company card (MMS) &middot; auto-charged. Receipt emailed to accounting automatically.</div>
+    <button class="btn gold full" style="margin-top:12px" id="dPlace" onclick="placeDoc()">Place document order</button>
+  </div>
+</div></div>
 {% endblock %}
 {% block scripts %}<script>
 const DOCS = {{ docs_json|safe }};
-let F={type:'all',div:'all'};
+const DOC_MAX = {{ doc_max }};
+let F={type:'all',div:'all'}, cur=null;
 function docCard(d){
   const divb = d.division==='Signal'?'<span class="bdg sig">Signal</span>':'<span class="bdg mms">MMS</span>';
   return '<div class="card2"><div class="thumb"><img src="/static/thumbs/'+d.thumb+'" alt=""></div>'+
     '<div class="m"><div class="badges">'+divb+'<span class="bdg type">'+d.doc_type+'</span></div>'+
     '<div class="nm">'+d.title+'</div>'+
-    '<div class="ctl"><select id="q_'+d.id+'"><option>25</option><option selected>50</option><option>100</option><option>250</option></select>'+
-    '<button class="add" onclick="addDoc(\''+d.id+'\')">Add</button></div></div></div>';
+    '<div class="ctl"><button class="add" onclick="openD(\''+d.id+'\')">Order &rarr;</button></div></div></div>';
 }
 function setF(k,v,el){ F[k]=v; el.parentNode.querySelectorAll('[data-f="'+k+'"]').forEach(b=>b.classList.remove('on')); el.classList.add('on'); render(); }
 function render(){
@@ -62,21 +65,34 @@ function render(){
   g.innerHTML = items.length? items.map(docCard).join('') : '<div class="noresult">No documents match these filters.</div>';
   document.getElementById('docCount').textContent=items.length+' of '+DOCS.length+' documents';
 }
-function addDoc(id){
-  const d=DOCS.find(x=>x.id===id); const q=parseInt(document.getElementById('q_'+id).value,10);
-  cartAdd({type:'doc', id:d.id, qty:q, label:d.title, detail:q+' copies · '+d.division+' · '+d.doc_type, icon:'doc', thumb:d.thumb});
-  toast('Added to cart');
+function capQty(){ const el=document.getElementById('d_qty'); let v=parseInt(el.value||'1',10); if(v>DOC_MAX)el.value=DOC_MAX; if(v<1)el.value=1; }
+function openD(id){ cur=DOCS.find(x=>x.id===id);
+  document.getElementById('dTitle').textContent='Order: '+cur.title;
+  document.getElementById('dThumb').src='/static/thumbs/'+cur.thumb;
+  document.getElementById('dName').textContent=cur.title;
+  document.getElementById('dSub').textContent=cur.division+' · '+cur.doc_type;
+  document.getElementById('d_qty').value=Math.min(25,DOC_MAX);
+  document.getElementById('dbg').classList.add('show');
 }
-function goDocs(type,div){
-  F.type=type; F.div=div;
-  document.querySelectorAll('[data-f="type"]').forEach(b=>b.classList.toggle('on',b.dataset.v===type));
-  document.querySelectorAll('[data-f="div"]').forEach(b=>b.classList.toggle('on',b.dataset.v===div));
-  render(); document.getElementById('allitems').scrollIntoView({behavior:'smooth'});
+function closeD(){ document.getElementById('dbg').classList.remove('show'); }
+function modal(t,b){ document.getElementById('mTitle').textContent=t; document.getElementById('mBody').innerHTML=b; document.getElementById('modalBg').classList.add('show'); }
+async function placeDoc(){
+  if(!cur) return;
+  const g=id=>document.getElementById(id).value;
+  const qty=parseInt(g('d_qty'),10);
+  if(!qty||qty<1||qty>DOC_MAX){ modal('Check quantity','Enter between 1 and '+DOC_MAX+' sheets.'); return; }
+  const ctx={purpose:g('d_purpose'),recipient:g('d_recipient'),justification:g('d_just')};
+  if(!ctx.purpose||!ctx.justification.trim()){ modal('Context required','Please choose a purpose and add a short justification.'); return; }
+  const ship={firstName:g('s_fn'),lastName:g('s_ln'),addressLine1:g('s_a1'),city:g('s_ct'),state:g('s_st'),postCode:g('s_zp'),country:'US',email:'{{ user.email }}',phone:g('s_ph')};
+  if(!ship.addressLine1||!ship.city){ modal('Add a shipping address','Please fill in at least address line 1 and city.'); return; }
+  document.getElementById('dPlace').textContent='Placing order...';
+  try{
+    const r=await fetch('/api/checkout/documents',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:cur.id,qty,context:ctx,ship})});
+    const j=await r.json();
+    if(j.ok){ closeD(); modal('Order placed!','Document order <b>'+j.order_id+'</b> ('+'{{mode|upper}}'+').<br><br>A receipt was routed to <b>accounting</b> with your name, quantity, pricing, and reason.<br><br><i>(Demo - nothing was really produced or charged.)</i>'); }
+    else { modal('Could not place order', j.error||('Gelato status '+j.gelato_status)); }
+  }catch(e){ modal('Error', String(e)); }
+  document.getElementById('dPlace').textContent='Place document order';
 }
-// recently added: prefer 2026 line lists / training / signal overview, else first 4
-(function(){ const want=['LINE LIST','Line List','Instrumentation Training','Signal Overview','SAM GUARD'];
-  let rec=DOCS.filter(d=>want.some(w=>d.title.includes(w))).slice(0,4);
-  if(rec.length<4) rec=rec.concat(DOCS.filter(d=>!rec.includes(d)).slice(0,4-rec.length));
-  document.getElementById('recent').innerHTML=rec.map(docCard).join(''); })();
 render();
 </script>{% endblock %}

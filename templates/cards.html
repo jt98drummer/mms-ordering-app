@@ -3,7 +3,7 @@
 {% block content %}
 <div class="wrap">
   <div class="subhead"><a href="/"><button class="back">&larr; Hub</button></a>
-    <h2>Business Cards</h2><span class="sub">personalized &amp; auto-branded</span></div>
+    <h2>Business Cards</h2><span class="sub">personalized, auto-branded &middot; company card only</span></div>
 
   <div class="grid2">
     <div class="panel">
@@ -15,15 +15,36 @@
         <div class="field"><label>Phone</label><input id="c_phone" value="555-123-4567" oninput="pv()"></div>
       </div>
       <div class="field"><label>Territory (back of card)</label><div class="seg seg3">
-        <button id="t_south" class="on" onclick="setTerr('south')">South · IA/NE/W.IL</button>
-        <button id="t_north" onclick="setTerr('north')">North · MN/WI/Dakotas</button>
-        <button id="t_both" onclick="setTerr('both')">Both · N &amp; S</button></div>
+        <button id="t_south" class="on" onclick="setTerr('south')">South &middot; IA/NE/W.IL</button>
+        <button id="t_north" onclick="setTerr('north')">North &middot; MN/WI/Dakotas</button>
+        <button id="t_both" onclick="setTerr('both')">Both &middot; N &amp; S</button></div>
         <div class="fineprint" id="terrNote"></div></div>
-      <div class="row2">
-        <div class="field"><label>Quantity</label><select id="c_qty"><option>250</option><option selected>500</option><option>1000</option></select></div>
-        <div class="field"><label></label><button class="btn gold full" onclick="addCard()">Add to cart</button></div>
+      <div class="field"><label>Quantity</label><select id="c_qty"><option>250</option><option selected>500</option><option>1000</option></select></div>
+
+      <div class="ctxbox">
+        <h4>Order context <span class="req">*required</span></h4>
+        <div class="field"><label>Purpose</label>
+          <select id="x_purpose">
+            <option value="">Select a purpose...</option>
+            <option>New hire / onboarding</option>
+            <option>Replacement / reprint</option>
+            <option>Ran out of cards</option>
+            <option>Title or info change</option>
+            <option>Other</option>
+          </select></div>
+        <div class="field"><label>For whom (name / role)</label><input id="x_recipient" placeholder="e.g. new AE starting 8/1"></div>
+        <div class="field"><label>Justification</label><textarea id="x_just" rows="2" placeholder="Why these cards are needed"></textarea></div>
       </div>
-      <div class="fineprint">Tip: titles containing “technician” automatically get <b>both</b> line-card backs (they travel across territories).</div>
+
+      <h3 style="margin-top:6px">Ship to</h3>
+      <div class="row2"><div class="field"><label>First name</label><input id="s_fn" value="Jayce"></div><div class="field"><label>Last name</label><input id="s_ln" value="Tomlin"></div></div>
+      <div class="field"><label>Address line 1</label><input id="s_a1" placeholder="123 Main St"></div>
+      <div class="field"><label>Address line 2</label><input id="s_a2" placeholder="Suite (optional)"></div>
+      <div class="row2"><div class="field"><label>City</label><input id="s_ct"></div><div class="field"><label>State</label><input id="s_st" placeholder="IA"></div></div>
+      <div class="row2"><div class="field"><label>ZIP</label><input id="s_zp"></div><div class="field"><label>Phone</label><input id="s_ph" value="555-123-4567"></div></div>
+
+      <div class="paynote">Company card (MMS) &middot; auto-charged. A receipt is emailed to accounting automatically. Personal cards are not accepted for business cards.</div>
+      <button class="btn gold full" style="margin-top:12px" id="placeBtn" onclick="placeOrder()">Place card order</button>
     </div>
 
     <div>
@@ -52,18 +73,26 @@ function setTerr(t){ terr=t;
 function backKind(){ return (isTech()||terr=='both') ? 'both' : terr; }
 function updateBack(){
   $('backImg').src = '/asset/backs/'+backKind()+'.png';
-  $('terrNote').textContent = isTech() ? 'Detected “technician” - this card shows BOTH line cards on the back.' : '';
+  $('terrNote').textContent = isTech() ? 'Detected "technician" - this card shows BOTH line cards on the back.' : '';
 }
 function flip(s){ $('pf').classList.toggle('on',s=='f'); $('pb').classList.toggle('on',s=='b');
   $('frontWrap').style.display=s=='f'?'block':'none'; $('backWrap').style.display=s=='b'?'block':'none'; }
-function backLabel(k){ return k=='both'?'both line cards':(k=='north'?'MN/WI/Dakotas':'IA/NE/W.IL'); }
-function addCard(){
-  const k=backKind();
-  cartAdd({type:'card', name:$('c_name').value, title:$('c_title').value, email:$('c_email').value,
-    phone:$('c_phone').value, role:isTech()?'technician':'sales', territory:(k=='both'?'both':terr), qty:parseInt($('c_qty').value,10),
-    label:'Business Cards - '+($('c_name').value||'You'),
-    detail:$('c_qty').value+' cards · '+backLabel(k), icon:'card'});
-  toast('Added to cart');
+function modal(t,b){ $('mTitle').textContent=t; $('mBody').innerHTML=b; $('modalBg').classList.add('show'); }
+async function placeOrder(){
+  const g=id=>$(id).value;
+  const ctx={purpose:g('x_purpose'),recipient:g('x_recipient'),justification:g('x_just')};
+  if(!ctx.purpose || !ctx.justification.trim()){ modal('Context required','Please choose a purpose and add a short justification so accounting has the reason on file.'); return; }
+  const ship={firstName:g('s_fn'),lastName:g('s_ln'),addressLine1:g('s_a1'),addressLine2:g('s_a2'),city:g('s_ct'),state:g('s_st'),postCode:g('s_zp'),country:'US',email:'{{ user.email }}',phone:g('s_ph')};
+  if(!ship.addressLine1||!ship.city){ modal('Add a shipping address','Please fill in at least address line 1 and city.'); return; }
+  const card={name:g('c_name'),title:g('c_title'),email:g('c_email'),phone:g('c_phone'),role:isTech()?'technician':'sales',territory:backKind(),qty:parseInt(g('c_qty'),10)};
+  $('placeBtn').textContent='Placing order...';
+  try{
+    const r=await fetch('/api/checkout/cards',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({card,context:ctx,ship})});
+    const j=await r.json();
+    if(j.ok){ modal('Order placed!','Business card order <b>'+j.order_id+'</b> ('+'{{mode|upper}}'+').<br><br>A receipt was routed to <b>accounting</b> with your name, quantity, pricing, and reason.<br><br><i>(Demo - nothing was really produced or charged.)</i>'); }
+    else { modal('Could not place order', j.error||('Gelato status '+j.gelato_status)); }
+  }catch(e){ modal('Error', String(e)); }
+  $('placeBtn').textContent='Place card order';
 }
 $('frontImg').src=frontURL(); updateBack();
 </script>{% endblock %}
