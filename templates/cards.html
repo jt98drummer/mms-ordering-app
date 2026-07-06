@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Business Cards — MMS{% endblock %}
+{% block title %}Business Cards - MMS{% endblock %}
 {% block content %}
 <div class="wrap">
   <div class="subhead"><a href="/"><button class="back">&larr; Hub</button></a>
@@ -8,10 +8,10 @@
   <div class="grid2">
     <div class="panel">
       <h3>Your details</h3>
-      <div class="field"><label>Full name</label><input id="c_name" value="Jayce Tomlin" oninput="pv()"></div>
-      <div class="field"><label>Job title</label><input id="c_title" value="Marketing Manager" oninput="pv()"></div>
+      <div class="field"><label>Full name</label><input id="c_name" value="John Doe" oninput="pv()"></div>
+      <div class="field"><label>Job title</label><input id="c_title" value="Account Manager" oninput="pv()"></div>
       <div class="row2">
-        <div class="field"><label>Email</label><input id="c_email" value="jtomlin@mmsinconline.com" oninput="pv()"></div>
+        <div class="field"><label>Email</label><input id="c_email" value="jdoe@mmsinconline.com" oninput="pv()"></div>
         <div class="field"><label>Phone</label><input id="c_phone" value="555-123-4567" oninput="pv()"></div>
       </div>
       <div class="field"><label>Territory (back of card)</label><div class="seg seg3">
@@ -52,7 +52,7 @@ function setTerr(t){ terr=t;
 function backKind(){ return (isTech()||terr=='both') ? 'both' : terr; }
 function updateBack(){
   $('backImg').src = '/asset/backs/'+backKind()+'.png';
-  $('terrNote').textContent = isTech() ? 'Detected “technician” — this card shows BOTH line cards on the back.' : '';
+  $('terrNote').textContent = isTech() ? 'Detected “technician” - this card shows BOTH line cards on the back.' : '';
 }
 function flip(s){ $('pf').classList.toggle('on',s=='f'); $('pb').classList.toggle('on',s=='b');
   $('frontWrap').style.display=s=='f'?'block':'none'; $('backWrap').style.display=s=='b'?'block':'none'; }
@@ -61,7 +61,7 @@ function addCard(){
   const k=backKind();
   cartAdd({type:'card', name:$('c_name').value, title:$('c_title').value, email:$('c_email').value,
     phone:$('c_phone').value, role:isTech()?'technician':'sales', territory:(k=='both'?'both':terr), qty:parseInt($('c_qty').value,10),
-    label:'Business Cards — '+($('c_name').value||'You'),
+    label:'Business Cards - '+($('c_name').value||'You'),
     detail:$('c_qty').value+' cards · '+backLabel(k), icon:'card'});
   toast('Added to cart');
 }

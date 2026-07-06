@@ -14,7 +14,7 @@ button{font-family:inherit}
 /* ---------- top bar ---------- */
 .topbar{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40}
 .topbar .inner{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:18px}
-.topbar .logo{height:86px;width:auto}
+.topbar .logo{height:74px;width:auto}
 .divider{width:1px;height:56px;background:var(--line)}
 .brandword{font-weight:800;color:var(--navy);font-size:18px;line-height:1.15;letter-spacing:.2px}
 .brandword small{display:block;font-weight:700;color:var(--muted);font-size:10px;letter-spacing:2.5px;text-transform:uppercase;margin-top:4px}
@@ -46,7 +46,7 @@ h2.h{color:var(--navy);font-size:24px;font-weight:800;margin:6px 0 18px}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:-40px;position:relative;z-index:5}
 .tile{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;transition:.18s}
 .tile:hover{transform:translateY(-4px);box-shadow:0 18px 40px rgba(30,45,59,.16)}
-.tile .cap{height:160px;overflow:hidden;position:relative}
+.tile .cap{aspect-ratio:2/1;overflow:hidden;position:relative}
 .tile .cap img{width:100%;height:100%;object-fit:cover;display:block}
 .tile.cards .cap{background:linear-gradient(135deg,#1e2d3b,#31506b)}
 .tile.docs .cap{background:linear-gradient(135deg,#22384a,#3a6ea5)}
@@ -213,4 +213,58 @@ input:focus,select:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 
   .camprow{grid-template-columns:1fr}
   .cslide .cs-art{display:none}
   .cslide .cs-body{max-width:100%}
+}
+/* ---------- responsive: tablet ---------- */
+@media(max-width:760px){
+  .topbar .inner{flex-wrap:wrap;gap:10px 14px;padding:11px 16px}
+  .topbar .logo{height:60px}
+  .divider{display:none}
+  .brandword{font-size:15px}
+  .brandword small{font-size:9px;letter-spacing:2px}
+  .nav{width:100%;margin-left:0;gap:3px;justify-content:flex-start;flex-wrap:wrap}
+  .nav a{padding:7px 9px;font-size:12.5px}
+  .cartbtn{padding:8px 13px;font-size:12.5px}
+  .tagstrip{font-size:9.5px;letter-spacing:1.2px;padding:7px 10px}
+  .modebar{font-size:10.5px;padding:6px 10px;line-height:1.4}
+  .hero .inner{padding:32px 18px 38px}
+  .hero h1{font-size:29px}
+  .hero .eyebrow{font-size:11px;letter-spacing:2px;margin-bottom:10px}
+  .hero .bar{margin:16px 0 14px}
+  .hero p{font-size:14.5px}
+  .wrap{padding:0 16px}
+  .tiles{margin-top:18px;gap:16px}
+  .section{margin:26px auto}
+  h2.h{font-size:20px}
+  .carousel{height:240px;margin:18px 0 6px}
+  .cslide{padding:24px 22px}
+  .cslide h3{font-size:23px}
+  .cslide p{font-size:13.5px}
+  .cslide .cs-tag{font-size:10px;margin-bottom:9px}
+  .cdots{left:22px;bottom:14px}
+  .subhead{padding:20px 0 6px;gap:10px;flex-wrap:wrap}
+  .subhead h2{font-size:21px}
+  .grid2{gap:16px;padding-bottom:36px}
+  .panel{padding:18px}
+  .cardstage{padding:18px 8px}
+  .cartwrap{gap:16px;padding-bottom:40px}
+  .summary{position:static}
+  .catcard{padding:18px}
+  .step{padding:16px 18px}
+  .foot{padding:20px 16px 38px}
+  .demoflag{right:10px;bottom:10px;font-size:10px;padding:6px 10px}
+}
+/* ---------- responsive: phone ---------- */
+@media(max-width:430px){
+  .topbar .logo{height:54px}
+  .brandword{font-size:14px}
+  .nav a{font-size:12px;padding:6px 7px}
+  .cartbtn{padding:7px 11px;font-size:12px}
+  .hero h1{font-size:25px}
+  .hero p{font-size:14px}
+  .carousel{height:250px}
+  .cslide h3{font-size:20px}
+  .cslide p{font-size:13px}
+  .pv-toggle button{padding:8px 16px}
+  .bizcard{width:100%}
+  .card2 .thumb{height:170px}
 }

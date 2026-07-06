@@ -10,7 +10,7 @@
   <div class="brandword">Material Ordering Hub<small>MMS Order Portal</small></div>
   <div class="nav">
     <a href="/">Home</a>
-    <a href="/cards">Cards</a>
+    <a href="/cards">Business Cards</a>
     <a href="/documents">Documents</a>
     <a href="/swag">Swag &amp; Apparel</a>
     <a href="/cart"><button class="cartbtn">Cart <span class="badge" data-cart-count style="display:none">0</span></button></a>
@@ -19,7 +19,7 @@
 <div class="redrule"></div>
 <div class="tagstrip">Your Trusted Advisor for Process Measurement &amp; Control since 1952</div>
 <div class="modebar mode-{{mode}}">ORDER MODE: {{mode|upper}}
-  {% if mode=='dry' %}— safe test, no order sent to Gelato{% elif mode=='draft' %}— creates a draft order in Gelato (not charged until confirmed){% else %}— LIVE: orders are charged &amp; printed{% endif %}
+  {% if mode=='dry' %}- safe test, no order sent to Gelato{% elif mode=='draft' %}- creates a draft order in Gelato (not charged until confirmed){% else %}- LIVE: orders are charged &amp; printed{% endif %}
 </div>
 
 {% block content %}{% endblock %}

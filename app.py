@@ -1,5 +1,5 @@
 """
-MMS Material Ordering Hub — ordering app (v2).
+MMS Material Ordering Hub - ordering app (v2).
 Cards + Documents + Swag/Apparel, shared cart, single checkout.
 Run:  pip install -r requirements.txt && python app.py   (open http://localhost:8000)
 Modes (env GELATO_MODE): dry | draft | live

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Your Cart — MMS{% endblock %}
+{% block title %}Your Cart - MMS{% endblock %}
 {% block content %}
 <div class="wrap">
   <div class="subhead"><a href="/"><button class="back">&larr; Hub</button></a><h2>Your Cart</h2><span class="sub" id="ccount"></span></div>
@@ -10,7 +10,7 @@
 function line(it,i){
   const ic = it.type==='doc' ? '<img src="/static/thumbs/'+it.thumb+'">' : icon(it.icon);
   const stepper = it.type==='swag'
-    ? '<div class="qtybox"><button onclick="chg('+i+',-1)">–</button><span>'+it.qty+'</span><button onclick="chg('+i+',1)">+</button></div>'
+    ? '<div class="qtybox"><button onclick="chg('+i+',-1)">-</button><span>'+it.qty+'</span><button onclick="chg('+i+',1)">+</button></div>'
     : '';
   return '<div class="citem"><div class="ci-ic">'+ic+'</div>'+
     '<div class="ci-main"><div class="ci-t">'+it.label+'</div><div class="ci-d">'+it.detail+'</div></div>'+
@@ -31,7 +31,7 @@ function draw(){
      '<div class="row2"><div class="field"><label>ZIP</label><input id="s_zp"></div><div class="field"><label>Phone</label><input id="s_ph" value="555-123-4567"></div></div>'+
      '<div class="field"><label>Email (for receipt)</label><input id="s_em" type="email" placeholder="you@mmsinconline.com" value="jtomlin@mmsinconline.com"></div>'+
      '<label>Payment</label>'+
-     '<label class="pay sel" id="payCo"><input type="radio" name="pay" checked onchange="pm=\'company\';psel()"><span><span class="pt">Company card · auto-charged</span><br><span class="pd">MMS card on file — receipt emailed to you</span></span></label>'+
+     '<label class="pay sel" id="payCo"><input type="radio" name="pay" checked onchange="pm=\'company\';psel()"><span><span class="pt">Company card · auto-charged</span><br><span class="pd">MMS card on file - receipt emailed to you</span></span></label>'+
      '<label class="pay" id="paySelf"><input type="radio" name="pay" onchange="pm=\'self\';psel()"><span><span class="pt">Use my own card</span><br><span class="pd">Secure checkout at the next step</span></span></label>'+
      (hasSwag?'<div class="sumrow"><span>Swag subtotal (est.)</span><span>$'+swagSub.toFixed(2)+'</span></div>':'')+
      (hasPrint?'<div class="sumrow"><span>Cards &amp; documents</span><span>priced by printer</span></div>':'')+
@@ -60,8 +60,8 @@ async function checkout(){
       if(j.swag_items) msg+=j.swag_items+' swag item(s) routed to the swag vendor. ';
       msg+='<br><br>A receipt will be sent to <b>'+ship.email+'</b>.';
       if(pm==='company') msg+='<br><br><b>Please forward your receipt to accounting.</b>';
-      else msg+='<br><br>You chose your own card — a secure payment page would open next.<br><b>Be sure to log your expense in Expensify.</b>';
-      msg+='<br><br><i>(Demo — nothing was really produced or charged.)</i>';
+      else msg+='<br><br>You chose your own card - a secure payment page would open next.<br><b>Be sure to log your expense in Expensify.</b>';
+      msg+='<br><br><i>(Demo - nothing was really produced or charged.)</i>';
       cartSave([]); modal('Order placed!',msg);
     } else { modal('Something went wrong', j.error||('Gelato status '+j.gelato_status)); }
   }catch(e){ modal('Error', String(e)); }

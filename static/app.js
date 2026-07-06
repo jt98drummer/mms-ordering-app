@@ -1,4 +1,4 @@
-/* MMS Material Ordering Hub — shared cart + icons */
+/* MMS Material Ordering Hub - shared cart + icons */
 const CART_KEY = "mms_cart_v2";
 function cartGet(){ try{return JSON.parse(localStorage.getItem(CART_KEY))||[];}catch(e){return [];} }
 function cartSave(c){ localStorage.setItem(CART_KEY, JSON.stringify(c)); renderCartBadge(); }

@@ -1,5 +1,5 @@
 """
-MMS Order App — configuration.
+MMS Order App - configuration.
 All settings come from environment variables so no secrets live in code.
 Copy .env.example to .env and fill in your values, OR set env vars in your host.
 """
