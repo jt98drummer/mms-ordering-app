@@ -70,6 +70,18 @@ FSE_MGR_AUTO_APPROVE_USD = float(_get("FSE_MGR_AUTO_APPROVE_USD", "250"))
 EMPLOYEE_MAX_UNITS      = int(_get("EMPLOYEE_MAX_UNITS", "5"))
 EMPLOYEE_MAX_ORDER_USD  = float(_get("EMPLOYEE_MAX_ORDER_USD", "150"))
 
+# --- Archive / audit mirror ---
+ARCHIVE_EMAIL = _get("ARCHIVE_EMAIL", "")            # optional hidden BCC on every receipt (durable mail archive)
+SP_SITE_ID    = _get("SP_SITE_ID", "")               # Graph site id for the order-log list
+SP_LIST_ID    = _get("SP_LIST_ID", "")               # Graph list id or display name
+SP_ENABLED    = bool(SP_SITE_ID and SP_LIST_ID)      # SharePoint mirror on when both set
+
+# --- Stripe (personal-card swag checkout; wired in a later phase) ---
+STRIPE_SECRET_KEY      = _get("STRIPE_SECRET_KEY", "")
+STRIPE_PUBLISHABLE_KEY = _get("STRIPE_PUBLISHABLE_KEY", "")
+STRIPE_WEBHOOK_SECRET  = _get("STRIPE_WEBHOOK_SECRET", "")
+STRIPE_ENABLED         = bool(STRIPE_SECRET_KEY)
+
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 FILES_DIR  = os.path.join(BASE_DIR, "files")
 ASSET_DIR  = os.path.join(BASE_DIR, "assets")

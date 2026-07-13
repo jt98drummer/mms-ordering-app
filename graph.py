@@ -42,10 +42,11 @@ def _save_outbox(subject, html, to, cc=None):
     return fn
 
 
-def send_mail(subject, html, to, cc=None, sender=None):
+def send_mail(subject, html, to, cc=None, bcc=None, sender=None):
     """Returns (sent: bool, detail). Falls back to outbox file when Graph unavailable."""
     to = [t for t in (to or []) if t]
     cc = [c for c in (cc or []) if c]
+    bcc = [b for b in (bcc or []) if b]
     sender = sender or config.MAIL_SENDER
     tok = _app_token() if config.MAIL_MODE in ("auto", "send") else None
     if not tok:
@@ -55,6 +56,7 @@ def send_mail(subject, html, to, cc=None, sender=None):
         "body": {"contentType": "HTML", "content": html},
         "toRecipients": [{"emailAddress": {"address": a}} for a in to],
         "ccRecipients": [{"emailAddress": {"address": a}} for a in cc],
+        "bccRecipients": [{"emailAddress": {"address": a}} for a in bcc],
     }, "saveToSentItems": True}
     try:
         r = requests.post("%s/users/%s/sendMail" % (config.GRAPH_BASE, sender),
@@ -97,3 +99,29 @@ def diag():
         except Exception as e:
             d["sender_status"] = "err: %s" % e
     return d
+
+
+def log_to_sharepoint(order):
+    """Mirror an order to a SharePoint list (durable audit log). No-op unless SP_ENABLED."""
+    if not (config.SP_ENABLED and requests):
+        return False, "sp-disabled"
+    tok = _app_token()
+    if not tok:
+        return False, "no-token"
+    fields = {
+        "Title": order.get("oid", ""), "Store": order.get("store", ""),
+        "Orderer": order.get("orderer", ""), "Email": order.get("orderer_email", ""),
+        "Role": order.get("role", ""), "Payment": order.get("payment", ""),
+        "Qty": order.get("qty", 0), "Amount": str(order.get("total", "")),
+        "Purpose": order.get("purpose", ""), "ForWhom": order.get("recipient_ctx", ""),
+        "Justification": order.get("justification", ""), "Status": order.get("status", ""),
+        "Approver": order.get("approver", ""),
+    }
+    try:
+        r = requests.post(
+            "%s/sites/%s/lists/%s/items" % (config.GRAPH_BASE, config.SP_SITE_ID, config.SP_LIST_ID),
+            headers={"Authorization": "Bearer " + tok, "Content-Type": "application/json"},
+            data=json.dumps({"fields": fields}), timeout=25)
+        return (r.status_code in (200, 201)), ("sp %s" % r.status_code)
+    except Exception as e:
+        return False, "sp-err: %s" % e

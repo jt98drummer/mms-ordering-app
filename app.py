@@ -64,6 +64,10 @@ def _log(order, gstatus="", gid=""):
                     order["payment"], order["qty"], order.get("total", ""), order["purpose"],
                     order.get("recipient_ctx", ""), order.get("justification", ""),
                     order["status"], order.get("approver", ""), config.GELATO_MODE, gstatus, gid])
+    try:
+        graph.log_to_sharepoint(order)
+    except Exception:
+        pass
 
 def _recipient(d):
     nm = (d.get("firstName", "") + " " + d.get("lastName", "")).strip()
@@ -133,7 +137,7 @@ def _receipt_html(o):
 
 def _send_receipt(o):
     subj = "[MMS Order] %s - %s - %s (%s)" % (o["store"], o["orderer"], o["oid"], o["status"])
-    sent, detail = graph.send_mail(subj, _receipt_html(o), [config.ACCOUNTING_EMAIL], cc=[o["orderer_email"]])
+    sent, detail = graph.send_mail(subj, _receipt_html(o), [config.ACCOUNTING_EMAIL], cc=[o["orderer_email"]], bcc=[config.ARCHIVE_EMAIL])
     o["receipt_sent"] = sent
     o["receipt_detail"] = detail
     return sent
