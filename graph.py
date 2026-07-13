@@ -81,3 +81,19 @@ def get_manager_email(user):
     except Exception:
         pass
     return ""
+
+
+def diag():
+    """Diagnostic: verify app-only credentials (client secret) + sender mailbox.
+    Returns booleans / HTTP status only - never a token or secret."""
+    d = {"app_token_ok": False, "sender": config.MAIL_SENDER, "sender_status": None}
+    tok = _app_token()
+    d["app_token_ok"] = bool(tok)
+    if tok and requests:
+        try:
+            r = requests.get("%s/users/%s" % (config.GRAPH_BASE, config.MAIL_SENDER),
+                             headers={"Authorization": "Bearer " + tok}, timeout=20)
+            d["sender_status"] = r.status_code
+        except Exception as e:
+            d["sender_status"] = "err: %s" % e
+    return d

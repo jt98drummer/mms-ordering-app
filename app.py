@@ -432,6 +432,11 @@ def reject(oid, sig):
     return _approval_page("Rejected", "Order %s was rejected. The requester has been notified." % oid, "#c8102e")
 
 
+@app.route("/health/graph")
+def health_graph():
+    return jsonify(auth_enabled=config.AUTH_ENABLED, **graph.diag())
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     print("MMS Material Ordering Hub | mode=%s | auth=%s | base=%s"
