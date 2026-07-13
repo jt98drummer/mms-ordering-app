@@ -61,3 +61,17 @@ def search_products(catalog, attribute_filters=None, limit=50):
     url = config.PRODUCT_SEARCH.format(catalog=catalog)
     payload = {"attributeFilters": attribute_filters or {}, "limit": limit, "offset": 0}
     return _post(url, payload)
+
+
+def _get(url):
+    req = urllib.request.Request(url, headers=_headers(), method="GET")
+    try:
+        with urllib.request.urlopen(req, timeout=40) as r:
+            return r.status, json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        return e.code, {"error": e.read().decode("utf-8", "ignore")}
+    except Exception as e:
+        return 0, {"error": str(e)}
+
+def list_catalogs():
+    return _get("https://product.gelatoapis.com/v3/catalogs")

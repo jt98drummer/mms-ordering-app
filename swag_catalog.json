@@ -19,7 +19,9 @@
       "2XL",
       "3XL"
     ],
-    "price": 28.0
+    "price": 28.0,
+    "decoration": "embroidery",
+    "fulfillment": "vendor"
   },
   {
     "id": "ap2",
@@ -41,7 +43,9 @@
       "2XL",
       "3XL"
     ],
-    "price": 24.0
+    "price": 24.0,
+    "decoration": "embroidery",
+    "fulfillment": "vendor"
   },
   {
     "id": "ap3",
@@ -63,7 +67,15 @@
       "2XL",
       "3XL"
     ],
-    "price": 16.0
+    "price": 16.0,
+    "decoration": "print",
+    "fulfillment": "gelato",
+    "gelato": {
+      "catalog": "apparel",
+      "product_uid": "TBD",
+      "print_file": "mms_logo.png",
+      "placement": "front"
+    }
   },
   {
     "id": "ap4",
@@ -84,7 +96,9 @@
       "2XL",
       "3XL"
     ],
-    "price": 19.0
+    "price": 19.0,
+    "decoration": "print",
+    "fulfillment": "vendor"
   },
   {
     "id": "ap5",
@@ -105,7 +119,9 @@
       "2XL",
       "3XL"
     ],
-    "price": 62.0
+    "price": 62.0,
+    "decoration": "embroidery",
+    "fulfillment": "vendor"
   },
   {
     "id": "ap6",
@@ -126,7 +142,9 @@
       "2XL",
       "3XL"
     ],
-    "price": 48.0
+    "price": 48.0,
+    "decoration": "embroidery",
+    "fulfillment": "vendor"
   },
   {
     "id": "ap7",
@@ -147,7 +165,9 @@
       "2XL",
       "3XL"
     ],
-    "price": 54.0
+    "price": 54.0,
+    "decoration": "embroidery",
+    "fulfillment": "vendor"
   },
   {
     "id": "ap8",
@@ -169,7 +189,15 @@
       "2XL",
       "3XL"
     ],
-    "price": 42.0
+    "price": 42.0,
+    "decoration": "print",
+    "fulfillment": "gelato",
+    "gelato": {
+      "catalog": "apparel",
+      "product_uid": "TBD",
+      "print_file": "mms_logo.png",
+      "placement": "front"
+    }
   },
   {
     "id": "ap9",
@@ -190,7 +218,15 @@
       "2XL",
       "3XL"
     ],
-    "price": 38.0
+    "price": 38.0,
+    "decoration": "print",
+    "fulfillment": "gelato",
+    "gelato": {
+      "catalog": "apparel",
+      "product_uid": "TBD",
+      "print_file": "mms_logo.png",
+      "placement": "front"
+    }
   },
   {
     "id": "ap10",
@@ -212,7 +248,9 @@
       "2XL",
       "3XL"
     ],
-    "price": 18.0
+    "price": 18.0,
+    "decoration": "embroidery",
+    "fulfillment": "vendor"
   },
   {
     "id": "ap11",
@@ -233,7 +271,9 @@
       "2XL",
       "3XL"
     ],
-    "price": 16.0
+    "price": 16.0,
+    "decoration": "embroidery",
+    "fulfillment": "vendor"
   },
   {
     "id": "sw1",
@@ -246,7 +286,9 @@
       "Navy"
     ],
     "sizes": [],
-    "price": 22.0
+    "price": 22.0,
+    "decoration": "promo",
+    "fulfillment": "vendor"
   },
   {
     "id": "sw2",
@@ -259,7 +301,15 @@
       "Navy"
     ],
     "sizes": [],
-    "price": 11.0
+    "price": 11.0,
+    "decoration": "print",
+    "fulfillment": "gelato",
+    "gelato": {
+      "catalog": "mugs",
+      "product_uid": "TBD",
+      "print_file": "mms_logo.png",
+      "placement": "front"
+    }
   },
   {
     "id": "sw3",
@@ -272,7 +322,9 @@
       "White"
     ],
     "sizes": [],
-    "price": 19.0
+    "price": 19.0,
+    "decoration": "promo",
+    "fulfillment": "vendor"
   },
   {
     "id": "sw4",
@@ -285,7 +337,15 @@
       "Navy"
     ],
     "sizes": [],
-    "price": 9.0
+    "price": 9.0,
+    "decoration": "print",
+    "fulfillment": "gelato",
+    "gelato": {
+      "catalog": "tote-bags",
+      "product_uid": "TBD",
+      "print_file": "mms_logo.png",
+      "placement": "front"
+    }
   },
   {
     "id": "sw5",
@@ -298,7 +358,9 @@
       "Navy"
     ],
     "sizes": [],
-    "price": 46.0
+    "price": 46.0,
+    "decoration": "promo",
+    "fulfillment": "vendor"
   },
   {
     "id": "sw6",
@@ -311,7 +373,9 @@
       "Navy"
     ],
     "sizes": [],
-    "price": 27.0
+    "price": 27.0,
+    "decoration": "promo",
+    "fulfillment": "vendor"
   },
   {
     "id": "sw7",
@@ -324,7 +388,9 @@
       "White"
     ],
     "sizes": [],
-    "price": 29.0
+    "price": 29.0,
+    "decoration": "promo",
+    "fulfillment": "vendor"
   },
   {
     "id": "sw8",
@@ -336,7 +402,9 @@
       "Black"
     ],
     "sizes": [],
-    "price": 24.0
+    "price": 24.0,
+    "decoration": "promo",
+    "fulfillment": "vendor"
   },
   {
     "id": "sw9",
@@ -348,7 +416,9 @@
       "Silver"
     ],
     "sizes": [],
-    "price": 14.0
+    "price": 14.0,
+    "decoration": "promo",
+    "fulfillment": "vendor"
   },
   {
     "id": "sw10",
@@ -361,7 +431,9 @@
       "Black"
     ],
     "sizes": [],
-    "price": 13.0
+    "price": 13.0,
+    "decoration": "promo",
+    "fulfillment": "vendor"
   },
   {
     "id": "sw11",
@@ -373,7 +445,9 @@
       "Navy/Silver"
     ],
     "sizes": [],
-    "price": 8.0
+    "price": 8.0,
+    "decoration": "promo",
+    "fulfillment": "vendor"
   },
   {
     "id": "sw12",
@@ -386,7 +460,9 @@
       "Red"
     ],
     "sizes": [],
-    "price": 3.5
+    "price": 3.5,
+    "decoration": "promo",
+    "fulfillment": "vendor"
   },
   {
     "id": "sw13",
@@ -398,6 +474,8 @@
       "Silver"
     ],
     "sizes": [],
-    "price": 5.0
+    "price": 5.0,
+    "decoration": "promo",
+    "fulfillment": "vendor"
   }
 ]

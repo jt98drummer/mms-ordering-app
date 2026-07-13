@@ -441,6 +441,21 @@ def health_graph():
     return jsonify(auth_enabled=config.AUTH_ENABLED, **graph.diag())
 
 
+@app.route("/admin/gelato")
+def admin_gelato():
+    if request.args.get("token") != os.environ.get("ADMIN_TOKEN", "mms-discover"):
+        abort(403)
+    if request.args.get("what", "catalogs") == "catalogs":
+        status, data = gelato.list_catalogs()
+        return jsonify(status=status, data=data)
+    cat = request.args.get("catalog", "apparel")
+    status, data = gelato.search_products(cat, {}, limit=int(request.args.get("limit", "80")))
+    prods = [{"uid": p.get("productUid"), "attrs": p.get("attributes", {})}
+             for p in (data.get("products") or [])]
+    return jsonify(status=status, catalog=cat, count=len(prods),
+                   products=prods, raw=(None if prods else data))
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     print("MMS Material Ordering Hub | mode=%s | auth=%s | base=%s"
