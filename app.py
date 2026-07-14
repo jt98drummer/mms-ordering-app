@@ -488,8 +488,12 @@ def admin_printful():
     if request.args.get("token") != os.environ.get("ADMIN_TOKEN", "mms-discover"):
         abort(403)
     what = request.args.get("what", "store")
-    status, data = (printful.store_products() if what == "store"
-                    else printful.catalog_products(limit=int(request.args.get("limit", "100"))))
+    if what == "stores":
+        status, data = printful.stores()
+    elif what == "store":
+        status, data = printful.store_products()
+    else:
+        status, data = printful.catalog_products(limit=int(request.args.get("limit", "100")))
     return jsonify(status=status, what=what, data=data)
 
 

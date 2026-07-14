@@ -29,13 +29,44 @@ def _req(method, path, payload=None):
     except Exception as e:
         return 0, {"error": str(e)}
 
+_store_cache = {"id": None}
+
+def stores():
+    """List stores on the account (needs stores_list/read)."""
+    return _req("GET", "/stores")
+
+def store_id():
+    """Resolve the store id: env override, else first store on the account (cached)."""
+    if config.PRINTFUL_STORE_ID:
+        return str(config.PRINTFUL_STORE_ID)
+    if _store_cache["id"]:
+        return _store_cache["id"]
+    _st, data = stores()
+    lst = (data or {}).get("result") or []
+    if lst:
+        _store_cache["id"] = str(lst[0].get("id"))
+    return _store_cache["id"]
+
 def create_order(items, recipient):
     """items: [{variant_id, quantity, files:[{url}]}]. Honors config.PRINTFUL_MODE."""
     mode = config.PRINTFUL_MODE
     if mode == "dry" or not config.PRINTFUL_API_KEY:
         return 0, {"mode": "dry", "note": "No Printful call made.", "items": items}
     payload = {"recipient": recipient, "items": items, "confirm": (mode == "live")}
-    return _req("POST", "/orders", payload)
+    hdrs = _headers()
+    sid = store_id()
+    if sid:
+        hdrs["X-PF-Store-Id"] = sid
+    import urllib.request, urllib.error
+    try:
+        req = urllib.request.Request(API + "/orders", data=json.dumps(payload).encode("utf-8"),
+                                     headers=hdrs, method="POST")
+        with urllib.request.urlopen(req, timeout=40) as r:
+            return r.status, json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        return e.code, {"error": e.read().decode("utf-8", "ignore")}
+    except Exception as e:
+        return 0, {"error": str(e)}
 
 def store_products(limit=100):
     """Products already set up in your Printful store (with variant ids + files)."""
