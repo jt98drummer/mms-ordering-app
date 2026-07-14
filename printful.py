@@ -14,6 +14,8 @@ def _headers():
     h = {"Content-Type": "application/json", "User-Agent": "MMS-Ordering-App/1.0"}
     if config.PRINTFUL_API_KEY:
         h["Authorization"] = "Bearer " + config.PRINTFUL_API_KEY
+    if config.PRINTFUL_STORE_ID:
+        h["X-PF-Store-Id"] = str(config.PRINTFUL_STORE_ID)
     return h
 
 def _req(method, path, payload=None):
@@ -42,3 +44,11 @@ def store_products(limit=100):
 def catalog_products(limit=100, offset=0):
     """Printful blank catalog (garments you can choose)."""
     return _req("GET", "/products?limit=%d&offset=%d" % (limit, offset))
+
+
+DARK_COLORS = {"navy", "black", "charcoal", "red"}
+
+def logo_url_for(color):
+    """Pick the print file by garment color: white logo on dark garments, brand logo on light."""
+    fn = "mms_logo_dark.png" if (color or "").strip().lower() in DARK_COLORS else "mms_logo_light.png"
+    return config.PUBLIC_BASE_URL + "/asset/print/" + fn

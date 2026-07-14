@@ -86,6 +86,7 @@ STRIPE_ENABLED         = bool(STRIPE_SECRET_KEY)
 PRINTFUL_API_KEY = _get("PRINTFUL_API_KEY", "")
 PRINTFUL_MODE    = _get("PRINTFUL_MODE", "dry").lower()   # dry | draft | live
 PRINTFUL_ENABLED = bool(PRINTFUL_API_KEY)
+PRINTFUL_STORE_ID = _get("PRINTFUL_STORE_ID", "")   # account-level token needs a store id
 
 # --- Promo/other swag vendor (emailed PO for items neither Gelato nor Printful makes) ---
 VENDOR_EMAIL = _get("VENDOR_EMAIL", "")
