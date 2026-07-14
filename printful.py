@@ -1,0 +1,44 @@
+"""
+Minimal Printful API client (Orders API v1) for ALL apparel (print + embroidery).
+Key from env (PRINTFUL_API_KEY). Mode dry|draft|live mirrors gelato.py:
+  dry   -> build payload, no API call
+  draft -> create order with confirm=false (not fulfilled/charged)
+  live  -> confirm=true (submitted for fulfillment)
+"""
+import json, urllib.request, urllib.error
+import config
+
+API = "https://api.printful.com"
+
+def _headers():
+    h = {"Content-Type": "application/json", "User-Agent": "MMS-Ordering-App/1.0"}
+    if config.PRINTFUL_API_KEY:
+        h["Authorization"] = "Bearer " + config.PRINTFUL_API_KEY
+    return h
+
+def _req(method, path, payload=None):
+    data = json.dumps(payload).encode("utf-8") if payload is not None else None
+    req = urllib.request.Request(API + path, data=data, headers=_headers(), method=method)
+    try:
+        with urllib.request.urlopen(req, timeout=40) as r:
+            return r.status, json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        return e.code, {"error": e.read().decode("utf-8", "ignore")}
+    except Exception as e:
+        return 0, {"error": str(e)}
+
+def create_order(items, recipient):
+    """items: [{variant_id, quantity, files:[{url}]}]. Honors config.PRINTFUL_MODE."""
+    mode = config.PRINTFUL_MODE
+    if mode == "dry" or not config.PRINTFUL_API_KEY:
+        return 0, {"mode": "dry", "note": "No Printful call made.", "items": items}
+    payload = {"recipient": recipient, "items": items, "confirm": (mode == "live")}
+    return _req("POST", "/orders", payload)
+
+def store_products(limit=100):
+    """Products already set up in your Printful store (with variant ids + files)."""
+    return _req("GET", "/store/products?limit=%d" % limit)
+
+def catalog_products(limit=100, offset=0):
+    """Printful blank catalog (garments you can choose)."""
+    return _req("GET", "/products?limit=%d&offset=%d" % (limit, offset))

@@ -21,7 +21,14 @@
     ],
     "price": 28.0,
     "decoration": "embroidery",
-    "fulfillment": "vendor"
+    "fulfillment": "printful",
+    "printful": {
+      "product_uid": "TBD",
+      "variant_map": {},
+      "decoration": "embroidery",
+      "file": "mms_logo.png",
+      "placement": "front"
+    }
   },
   {
     "id": "ap2",
@@ -45,7 +52,14 @@
     ],
     "price": 24.0,
     "decoration": "embroidery",
-    "fulfillment": "vendor"
+    "fulfillment": "printful",
+    "printful": {
+      "product_uid": "TBD",
+      "variant_map": {},
+      "decoration": "embroidery",
+      "file": "mms_logo.png",
+      "placement": "front"
+    }
   },
   {
     "id": "ap3",
@@ -69,12 +83,13 @@
     ],
     "price": 16.0,
     "decoration": "print",
-    "fulfillment": "gelato",
-    "gelato": {
-      "catalog": "apparel",
+    "fulfillment": "printful",
+    "printful": {
       "product_uid": "TBD",
-      "print_file": "mms_logo.png",
-      "placement": "front"
+      "variant_map": {},
+      "decoration": "print",
+      "file": "mms_logo.png",
+      "placement": "left_chest"
     }
   },
   {
@@ -121,7 +136,14 @@
     ],
     "price": 62.0,
     "decoration": "embroidery",
-    "fulfillment": "vendor"
+    "fulfillment": "printful",
+    "printful": {
+      "product_uid": "TBD",
+      "variant_map": {},
+      "decoration": "embroidery",
+      "file": "mms_logo.png",
+      "placement": "front"
+    }
   },
   {
     "id": "ap6",
@@ -144,7 +166,14 @@
     ],
     "price": 48.0,
     "decoration": "embroidery",
-    "fulfillment": "vendor"
+    "fulfillment": "printful",
+    "printful": {
+      "product_uid": "TBD",
+      "variant_map": {},
+      "decoration": "embroidery",
+      "file": "mms_logo.png",
+      "placement": "front"
+    }
   },
   {
     "id": "ap7",
@@ -167,7 +196,14 @@
     ],
     "price": 54.0,
     "decoration": "embroidery",
-    "fulfillment": "vendor"
+    "fulfillment": "printful",
+    "printful": {
+      "product_uid": "TBD",
+      "variant_map": {},
+      "decoration": "embroidery",
+      "file": "mms_logo.png",
+      "placement": "front"
+    }
   },
   {
     "id": "ap8",
@@ -191,12 +227,13 @@
     ],
     "price": 42.0,
     "decoration": "print",
-    "fulfillment": "gelato",
-    "gelato": {
-      "catalog": "apparel",
+    "fulfillment": "printful",
+    "printful": {
       "product_uid": "TBD",
-      "print_file": "mms_logo.png",
-      "placement": "front"
+      "variant_map": {},
+      "decoration": "print",
+      "file": "mms_logo.png",
+      "placement": "left_chest"
     }
   },
   {
@@ -220,12 +257,13 @@
     ],
     "price": 38.0,
     "decoration": "print",
-    "fulfillment": "gelato",
-    "gelato": {
-      "catalog": "apparel",
+    "fulfillment": "printful",
+    "printful": {
       "product_uid": "TBD",
-      "print_file": "mms_logo.png",
-      "placement": "front"
+      "variant_map": {},
+      "decoration": "print",
+      "file": "mms_logo.png",
+      "placement": "left_chest"
     }
   },
   {
@@ -250,7 +288,14 @@
     ],
     "price": 18.0,
     "decoration": "embroidery",
-    "fulfillment": "vendor"
+    "fulfillment": "printful",
+    "printful": {
+      "product_uid": "TBD",
+      "variant_map": {},
+      "decoration": "embroidery",
+      "file": "mms_logo.png",
+      "placement": "front"
+    }
   },
   {
     "id": "ap11",
@@ -273,7 +318,14 @@
     ],
     "price": 16.0,
     "decoration": "embroidery",
-    "fulfillment": "vendor"
+    "fulfillment": "printful",
+    "printful": {
+      "product_uid": "TBD",
+      "variant_map": {},
+      "decoration": "embroidery",
+      "file": "mms_logo.png",
+      "placement": "front"
+    }
   },
   {
     "id": "sw1",

@@ -82,6 +82,14 @@ STRIPE_PUBLISHABLE_KEY = _get("STRIPE_PUBLISHABLE_KEY", "")
 STRIPE_WEBHOOK_SECRET  = _get("STRIPE_WEBHOOK_SECRET", "")
 STRIPE_ENABLED         = bool(STRIPE_SECRET_KEY)
 
+# --- Printful (ALL apparel: print + embroidery) ---
+PRINTFUL_API_KEY = _get("PRINTFUL_API_KEY", "")
+PRINTFUL_MODE    = _get("PRINTFUL_MODE", "dry").lower()   # dry | draft | live
+PRINTFUL_ENABLED = bool(PRINTFUL_API_KEY)
+
+# --- Promo/other swag vendor (emailed PO for items neither Gelato nor Printful makes) ---
+VENDOR_EMAIL = _get("VENDOR_EMAIL", "")
+
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 FILES_DIR  = os.path.join(BASE_DIR, "files")
 ASSET_DIR  = os.path.join(BASE_DIR, "assets")

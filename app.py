@@ -11,7 +11,7 @@ Modes (env GELATO_MODE): dry | draft | live
 import os, json, csv, time, datetime, hmac, hashlib
 from flask import (Flask, render_template, request, jsonify, send_from_directory,
                    abort, Response, redirect, session)
-import config, gelato, catalog, card_render, auth, graph
+import config, gelato, printful, catalog, card_render, auth, graph
 from card_engine import generate_card_pdf
 
 app = Flask(__name__)
@@ -172,6 +172,28 @@ def _save_pending(o):
 def _load_pending(oid):
     p = os.path.join(config.PENDING_DIR, oid + ".json")
     return json.load(open(p)) if os.path.exists(p) else None
+
+
+def _fulfill_swag(order):
+    """Route each swag line to its maker: Gelato (print), Printful (apparel), emailed PO (promo)."""
+    items = order.get("items", [])
+    groups = {"gelato": [], "printful": [], "vendor": []}
+    for it in items:
+        ch = SWAG_BY_ID.get(it.get("id"), {}).get("fulfillment", "vendor")
+        groups.get(ch, groups["vendor"]).append(it)
+    # promo / specialty -> emailed PO to the swag vendor
+    if groups["vendor"] and config.VENDOR_EMAIL:
+        rows = "".join("<li>%s (%s%s) x%s</li>" % (i.get("name",""), i.get("color",""),
+                       "/"+i["size"] if i.get("size") else "", i.get("qty",1)) for i in groups["vendor"])
+        html = ("<h3>MMS Swag PO - %s</h3><p>Please fulfill for <b>%s</b> &lt;%s&gt;:</p><ul>%s</ul>"
+                "<p>Ship to: %s<br>Purpose: %s / %s</p>"
+                % (order["oid"], order["orderer"], order["orderer_email"], rows,
+                   order.get("ship_summary","-"), order["purpose"], order.get("recipient_ctx","-")))
+        graph.send_mail("[MMS Swag PO] %s - %s" % (order["oid"], order["orderer"]),
+                        html, [config.VENDOR_EMAIL], cc=[config.NOTIFY_EMAIL])
+    # gelato / printful lines are dispatched once product UIDs + artwork + keys are in place
+    order["fulfillment_plan"] = {k: len(v) for k, v in groups.items() if v}
+    return order["fulfillment_plan"]
 
 
 # ---------------- auth ----------------
@@ -358,6 +380,8 @@ def checkout_swag():
                            error="Please acknowledge that personal-card orders are NOT reimbursable."), 400
         order = _mk_order("Swag & Apparel", oid, u, "personal", units, lines, ctx, ship, nm,
                           status="placed", total=_money(total_val))
+        order["items"] = items
+        _fulfill_swag(order)
         _log(order)
         return jsonify(ok=True, order_id=oid, status="placed", paid="personal",
                        message="Order placed on your personal card. This is NOT reimbursable "
@@ -376,6 +400,7 @@ def checkout_swag():
 
     order = _mk_order("Swag & Apparel", oid, u, "company", units, lines, ctx, ship, nm,
                       status=("pending" if need_approval else "placed"), total=_money(total_val))
+    order["items"] = items
 
     if need_approval:
         approver = config.ESCALATION_EMAIL if role == config.ROLE_MANAGER else \
@@ -387,6 +412,7 @@ def checkout_swag():
         return jsonify(ok=True, order_id=oid, status="pending", approver=approver, notified=sent,
                        message="Sent to %s for approval. The order places automatically once approved."
                                % approver)
+    _fulfill_swag(order)
     _send_receipt(order)
     _log(order)
     return jsonify(ok=True, order_id=oid, status="placed", receipt_to=config.ACCOUNTING_EMAIL,
@@ -412,6 +438,7 @@ def approve(oid, sig):
         return _approval_page("Already processed", "Order %s is already %s." % (oid, o.get("status")), "#5b6b78")
     o["status"] = "placed"
     o["approver"] = o.get("approver_pending", "approver")
+    _fulfill_swag(o)
     _send_receipt(o)
     _save_pending(o)
     _log(o)
@@ -454,6 +481,16 @@ def admin_gelato():
              for p in (data.get("products") or [])]
     return jsonify(status=status, catalog=cat, count=len(prods),
                    products=prods, raw=(None if prods else data))
+
+
+@app.route("/admin/printful")
+def admin_printful():
+    if request.args.get("token") != os.environ.get("ADMIN_TOKEN", "mms-discover"):
+        abort(403)
+    what = request.args.get("what", "store")
+    status, data = (printful.store_products() if what == "store"
+                    else printful.catalog_products(limit=int(request.args.get("limit", "100"))))
+    return jsonify(status=status, what=what, data=data)
 
 
 if __name__ == "__main__":
