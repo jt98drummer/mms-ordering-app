@@ -72,6 +72,10 @@ def store_products(limit=100):
     """Products already set up in your Printful store (with variant ids + files)."""
     return _req("GET", "/store/products?limit=%d" % limit)
 
+def product(pid):
+    """Catalog product + its variant ids (GET /products/{id})."""
+    return _req("GET", "/products/%s" % pid)
+
 def catalog_products(limit=100, offset=0):
     """Printful blank catalog (garments you can choose)."""
     return _req("GET", "/products?limit=%d&offset=%d" % (limit, offset))

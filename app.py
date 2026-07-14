@@ -490,10 +490,29 @@ def admin_printful():
     what = request.args.get("what", "store")
     if what == "stores":
         status, data = printful.stores()
-    elif what == "store":
+        return jsonify(status=status, what=what, data=data)
+    if what == "find":
+        q = request.args.get("q", "").lower()
+        status, data = printful.catalog_products(limit=500)
+        out = []
+        for p in (data.get("result") or []):
+            hay = ((p.get("brand") or "") + " " + (p.get("model") or "") + " " + (p.get("type_name") or "")).lower()
+            if all(w in hay for w in q.split()):
+                out.append({"id": p.get("id"), "type": p.get("type"), "brand": p.get("brand"),
+                            "model": p.get("model"), "type_name": p.get("type_name"),
+                            "variant_count": p.get("variant_count")})
+        return jsonify(status=status, q=q, count=len(out), products=out)
+    if what == "variants":
+        pid = request.args.get("id")
+        status, data = printful.product(pid)
+        res = data.get("result") or {}
+        variants = [{"id": v.get("id"), "size": v.get("size"), "color": v.get("color"),
+                     "in_stock": v.get("in_stock")} for v in (res.get("variants") or [])]
+        return jsonify(status=status, id=pid, count=len(variants), variants=variants)
+    if what == "store":
         status, data = printful.store_products()
-    else:
-        status, data = printful.catalog_products(limit=int(request.args.get("limit", "100")))
+        return jsonify(status=status, what=what, data=data)
+    status, data = printful.catalog_products(limit=int(request.args.get("limit", "100")))
     return jsonify(status=status, what=what, data=data)
 
 
