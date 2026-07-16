@@ -1,0 +1,10 @@
+name: keep-alive
+on:
+  schedule:
+    - cron: "*/10 12-23 * * 1-5"   # every 10 min, ~7am-7pm US Central, Mon-Fri
+  workflow_dispatch: {}
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsSL --max-time 90 https://mms-ordering-app.onrender.com/health || true
