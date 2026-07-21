@@ -125,4 +125,8 @@ def resolve_variant(product_id, color, size):
         vc = (v.get("color") or "").strip().lower()
         if any(x and (x in vc or vc in x) for x in cands) and (v.get("size") or "").strip().upper() == s:
             return v.get("id")
+    for v in vs:  # one-size items (caps/beanies): match color, ignore size
+        vc = (v.get("color") or "").strip().lower()
+        if any(x and (x in vc or vc in x) for x in cands):
+            return v.get("id")
     return None

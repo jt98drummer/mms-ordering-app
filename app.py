@@ -191,6 +191,25 @@ def _fulfill_swag(order):
                    order.get("ship_summary","-"), order["purpose"], order.get("recipient_ctx","-")))
         graph.send_mail("[MMS Swag PO] %s - %s" % (order["oid"], order["orderer"]),
                         html, [config.VENDOR_EMAIL], cc=[config.NOTIFY_EMAIL])
+    # printful (apparel) -> resolve variants + create order (honors PRINTFUL_MODE; dry = no call)
+    if groups["printful"] and config.PRINTFUL_ENABLED:
+        pf_items = []
+        for i in groups["printful"]:
+            pf = SWAG_BY_ID.get(i.get("id"), {}).get("printful", {})
+            pid = pf.get("product_id")
+            color = (pf.get("color_map") or {}).get(i.get("color"), i.get("color"))
+            vid = printful.resolve_variant(pid, color, i.get("size")) if pid else None
+            if vid:
+                pf_items.append({"variant_id": vid, "quantity": int(i.get("qty", 1)),
+                                 "files": [{"type": "default", "url": printful.logo_url_for(i.get("color"))}]})
+        if pf_items:
+            sh = order.get("_ship", {})
+            rcpt = {"name": (sh.get("firstName","")+" "+sh.get("lastName","")).strip() or "MMS Team",
+                    "address1": sh.get("addressLine1",""), "city": sh.get("city",""),
+                    "state_code": sh.get("state",""), "country_code": (sh.get("country") or "US"),
+                    "zip": sh.get("postCode",""), "email": sh.get("email",""), "phone": sh.get("phone","")}
+            st, res = printful.create_order(pf_items, rcpt)
+            order["printful_result"] = {"status": st, "line_items": len(pf_items)}
     # gelato / printful lines are dispatched once product UIDs + artwork + keys are in place
     order["fulfillment_plan"] = {k: len(v) for k, v in groups.items() if v}
     return order["fulfillment_plan"]
@@ -381,6 +400,8 @@ def checkout_swag():
         order = _mk_order("Swag & Apparel", oid, u, "personal", units, lines, ctx, ship, nm,
                           status="placed", total=_money(total_val))
         order["items"] = items
+    order["_ship"] = ship
+        order["_ship"] = ship
         _fulfill_swag(order)
         _log(order)
         return jsonify(ok=True, order_id=oid, status="placed", paid="personal",
