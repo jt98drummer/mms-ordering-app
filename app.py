@@ -210,6 +210,21 @@ def _fulfill_swag(order):
                     "zip": sh.get("postCode",""), "email": sh.get("email",""), "phone": sh.get("phone","")}
             st, _res = printful.create_order(pf_items, rcpt)
             order["printful_result"] = {"status": st, "line_items": len(pf_items)}
+    if groups["gelato"]:
+        g_items = []; n = 0
+        for i in groups["gelato"]:
+            g = SWAG_BY_ID.get(i.get("id"), {}).get("gelato", {})
+            uid = (g.get("color_map") or {}).get(i.get("color")) or g.get("product_uid")
+            if uid and uid != "TBD":
+                n += 1
+                g_items.append({"itemReferenceId": "%s-g%d" % (order["oid"], n), "productUid": uid,
+                                "files": [{"type": "default", "url": printful.logo_url_for(i.get("color"))}],
+                                "quantity": int(i.get("qty", 1))})
+        if g_items:
+            sh = order.get("_ship", {})
+            payload = gelato.build_order_payload(order["oid"], sh.get("email") or "mms", g_items, sh)
+            st, _r = gelato.create_order(payload)
+            order["gelato_result"] = {"status": st, "line_items": len(g_items)}
     # gelato / printful lines are dispatched once product UIDs + artwork + keys are in place
     order["fulfillment_plan"] = {k: len(v) for k, v in groups.items() if v}
     return order["fulfillment_plan"]
@@ -533,6 +548,37 @@ def admin_printful():
         return jsonify(status=status, what=what, data=data)
     status, data = printful.catalog_products(limit=int(request.args.get("limit", "100")))
     return jsonify(status=status, what=what, data=data)
+
+
+@app.route("/admin/testorder")
+def admin_testorder():
+    if request.args.get("token") != os.environ.get("ADMIN_TOKEN", "mms-discover"):
+        abort(403)
+    ship = {"firstName": "MMS", "lastName": "Test", "companyName": config.COMPANY_NAME,
+            "addressLine1": "1501 42nd St", "addressLine2": "", "city": "West Des Moines",
+            "state": "IA", "postCode": "50266", "country": "US",
+            "email": config.NOTIFY_EMAIL, "phone": "5155551234"}
+    if request.args.get("kind", "printful") == "printful":
+        pid = int(request.args.get("product", "422"))
+        color = request.args.get("color", "Black"); size = request.args.get("size", "OSFA")
+        vid = printful.resolve_variant(pid, color, size)
+        if not vid:
+            return jsonify(ok=False, error="no matching variant", product=pid, color=color, size=size)
+        items = [{"variant_id": vid, "quantity": 1,
+                  "files": [{"type": "default", "url": printful.logo_url_for(color)}]}]
+        rcpt = {"name": "MMS Test", "address1": ship["addressLine1"], "city": ship["city"],
+                "state_code": ship["state"], "country_code": "US", "zip": ship["postCode"],
+                "email": ship["email"], "phone": ship["phone"]}
+        st, res = printful.create_order(items, rcpt)
+        return jsonify(ok=st in (0, 200, 201), kind="printful", product=pid, variant=vid,
+                       mode=config.PRINTFUL_MODE, status=st, result=res)
+    uid = request.args.get("uid", "")
+    items = [{"itemReferenceId": "MMS-TEST-g1", "productUid": uid,
+              "files": [{"type": "default", "url": printful.logo_url_for("White")}], "quantity": 1}]
+    payload = gelato.build_order_payload("MMS-TEST", ship["email"], items, ship)
+    st, res = gelato.create_order(payload)
+    return jsonify(ok=st in (0, 200, 201), kind="gelato", uid=uid, mode=config.GELATO_MODE,
+                   status=st, result=res)
 
 
 if __name__ == "__main__":

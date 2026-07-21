@@ -363,9 +363,12 @@
     "fulfillment": "gelato",
     "gelato": {
       "catalog": "mugs",
-      "product_uid": "TBD",
-      "print_file": "mms_logo.png",
-      "placement": "front"
+      "placement": "default",
+      "print_file": "mms_logo_light.png",
+      "color_map": {
+        "White": "mug_product_msz_11-oz_mmat_ceramic-white_cl_4-0",
+        "Navy": "mug_product_msz_11-oz_mmat_ceramic-blue_cl_4-0"
+      }
     }
   },
   {
@@ -399,9 +402,12 @@
     "fulfillment": "gelato",
     "gelato": {
       "catalog": "tote-bags",
-      "product_uid": "TBD",
-      "print_file": "mms_logo.png",
-      "placement": "front"
+      "placement": "default",
+      "print_file": "mms_logo_light.png",
+      "color_map": {
+        "Natural": "bag_product_bsc_tote-bag_bqa_clc_bsi_std-t_bco_natural_bpr_4-0",
+        "Navy": "bag_product_bsc_tote-bag_bqa_clc_bsi_std-t_bco_black_bpr_4-0"
+      }
     }
   },
   {
