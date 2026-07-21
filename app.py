@@ -493,15 +493,25 @@ def admin_printful():
         return jsonify(status=status, what=what, data=data)
     if what == "find":
         q = request.args.get("q", "").lower()
-        status, data = printful.catalog_products(limit=500)
-        out = []
-        for p in (data.get("result") or []):
-            hay = ((p.get("brand") or "") + " " + (p.get("model") or "") + " " + (p.get("type_name") or "")).lower()
-            if all(w in hay for w in q.split()):
-                out.append({"id": p.get("id"), "type": p.get("type"), "brand": p.get("brand"),
-                            "model": p.get("model"), "type_name": p.get("type_name"),
-                            "variant_count": p.get("variant_count")})
-        return jsonify(status=status, q=q, count=len(out), products=out)
+        out = []; seen = set(); status = 0; offset = 0
+        while offset <= 900:
+            status, data = printful.catalog_products(limit=100, offset=offset)
+            batch = data.get("result") or []
+            newn = 0
+            for p in batch:
+                pid = p.get("id")
+                if pid in seen:
+                    continue
+                seen.add(pid); newn += 1
+                hay = ((p.get("brand") or "") + " " + (p.get("model") or "") + " " + (p.get("type_name") or "")).lower()
+                if all(w in hay for w in q.split()):
+                    out.append({"id": pid, "brand": p.get("brand"),
+                                "model": p.get("model"), "type_name": p.get("type_name"),
+                                "variant_count": p.get("variant_count")})
+            if newn == 0 or len(batch) < 100:
+                break
+            offset += 100
+        return jsonify(status=status, q=q, count=len(out), scanned=len(seen), products=out)
     if what == "variants":
         pid = request.args.get("id")
         status, data = printful.product(pid)
