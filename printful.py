@@ -87,3 +87,42 @@ def logo_url_for(color):
     """Pick the print file by garment color: white logo on dark garments, brand logo on light."""
     fn = "mms_logo_dark.png" if (color or "").strip().lower() in DARK_COLORS else "mms_logo_light.png"
     return config.PUBLIC_BASE_URL + "/asset/print/" + fn
+
+
+_variant_cache = {}
+COLOR_ALIASES = {
+    "gray": ["athletic heather", "dark grey heather", "sport grey", "graphite heather", "grey"],
+    "grey": ["athletic heather", "dark grey heather", "sport grey"],
+    "navy": ["navy", "true navy", "heather navy", "heather midnight navy"],
+    "charcoal": ["dark grey heather", "charcoal", "graphite heather"],
+    "white": ["white", "vintage white"],
+    "black": ["black", "black heather", "vintage black"],
+    "red": ["red", "cardinal", "true red", "heather red"],
+    "natural": ["natural", "heather natural", "tan"],
+}
+
+def _variants(product_id):
+    pid = str(product_id)
+    if pid in _variant_cache:
+        return _variant_cache[pid]
+    _st, data = product(pid)
+    vs = ((data or {}).get("result") or {}).get("variants") or []
+    _variant_cache[pid] = vs
+    return vs
+
+def resolve_variant(product_id, color, size):
+    """Return the Printful variant id for a product + color + size, or None."""
+    if not product_id:
+        return None
+    vs = _variants(product_id)
+    c = (color or "").strip().lower()
+    s = (size or "").strip().upper()
+    cands = [c] + COLOR_ALIASES.get(c, [])
+    for v in vs:
+        if (v.get("color") or "").strip().lower() in cands and (v.get("size") or "").strip().upper() == s:
+            return v.get("id")
+    for v in vs:  # looser contains match
+        vc = (v.get("color") or "").strip().lower()
+        if any(x and (x in vc or vc in x) for x in cands) and (v.get("size") or "").strip().upper() == s:
+            return v.get("id")
+    return None

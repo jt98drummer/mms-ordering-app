@@ -27,7 +27,13 @@
       "variant_map": {},
       "decoration": "embroidery",
       "file": "mms_logo.png",
-      "placement": "front"
+      "placement": "front",
+      "color_map": {
+        "Navy": "Navy",
+        "Black": "Black",
+        "Red": "Red"
+      },
+      "product_id": null
     }
   },
   {
@@ -58,7 +64,13 @@
       "variant_map": {},
       "decoration": "embroidery",
       "file": "mms_logo.png",
-      "placement": "front"
+      "placement": "front",
+      "color_map": {
+        "Navy": "Navy",
+        "White": "White",
+        "Gray": "Gray"
+      },
+      "product_id": null
     }
   },
   {
@@ -89,7 +101,13 @@
       "variant_map": {},
       "decoration": "print",
       "file": "mms_logo.png",
-      "placement": "left_chest"
+      "placement": "front",
+      "color_map": {
+        "Navy": "Navy",
+        "Gray": "Athletic Heather",
+        "White": "White"
+      },
+      "product_id": 71
     }
   },
   {
@@ -142,7 +160,12 @@
       "variant_map": {},
       "decoration": "embroidery",
       "file": "mms_logo.png",
-      "placement": "front"
+      "placement": "front",
+      "color_map": {
+        "Navy": "Navy",
+        "Black": "Black"
+      },
+      "product_id": null
     }
   },
   {
@@ -172,7 +195,12 @@
       "variant_map": {},
       "decoration": "embroidery",
       "file": "mms_logo.png",
-      "placement": "front"
+      "placement": "front",
+      "color_map": {
+        "Navy": "Navy",
+        "Charcoal": "Charcoal"
+      },
+      "product_id": null
     }
   },
   {
@@ -202,7 +230,12 @@
       "variant_map": {},
       "decoration": "embroidery",
       "file": "mms_logo.png",
-      "placement": "front"
+      "placement": "front",
+      "color_map": {
+        "Navy": "Navy",
+        "Black": "Black"
+      },
+      "product_id": null
     }
   },
   {
@@ -233,7 +266,13 @@
       "variant_map": {},
       "decoration": "print",
       "file": "mms_logo.png",
-      "placement": "left_chest"
+      "placement": "left_chest",
+      "color_map": {
+        "Navy": "Navy",
+        "Gray": "Gray",
+        "Black": "Black"
+      },
+      "product_id": null
     }
   },
   {
@@ -263,7 +302,12 @@
       "variant_map": {},
       "decoration": "print",
       "file": "mms_logo.png",
-      "placement": "left_chest"
+      "placement": "left_chest",
+      "color_map": {
+        "Navy": "Navy",
+        "Gray": "Gray"
+      },
+      "product_id": null
     }
   },
   {
@@ -294,7 +338,13 @@
       "variant_map": {},
       "decoration": "embroidery",
       "file": "mms_logo.png",
-      "placement": "front"
+      "placement": "front",
+      "color_map": {
+        "Navy": "Navy",
+        "Black": "Black",
+        "Red": "Red"
+      },
+      "product_id": null
     }
   },
   {
@@ -324,7 +374,12 @@
       "variant_map": {},
       "decoration": "embroidery",
       "file": "mms_logo.png",
-      "placement": "front"
+      "placement": "front",
+      "color_map": {
+        "Navy": "Navy",
+        "Charcoal": "Charcoal"
+      },
+      "product_id": null
     }
   },
   {
