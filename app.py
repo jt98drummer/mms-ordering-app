@@ -200,8 +200,11 @@ def _fulfill_swag(order):
             color = (pf.get("color_map") or {}).get(i.get("color"), i.get("color"))
             vid = printful.resolve_variant(pid, color, i.get("size")) if pid else None
             if vid:
-                pf_items.append({"variant_id": vid, "quantity": int(i.get("qty", 1)),
-                                 "files": [{"type": "default", "url": printful.logo_url_for(i.get("color"))}]})
+                it_item = {"variant_id": vid, "quantity": int(i.get("qty", 1)),
+                           "files": [{"type": "default", "url": printful.logo_url_for(i.get("color"))}]}
+                if SWAG_BY_ID.get(i.get("id"), {}).get("decoration") == "embroidery":
+                    it_item["options"] = [{"id": "thread_colors", "value": printful.thread_colors_for(i.get("color"))}]
+                pf_items.append(it_item)
         if pf_items:
             sh = order.get("_ship", {})
             rcpt = {"name": (sh.get("firstName","") + " " + sh.get("lastName","")).strip() or "MMS Team",
@@ -564,8 +567,12 @@ def admin_testorder():
         vid = printful.resolve_variant(pid, color, size)
         if not vid:
             return jsonify(ok=False, error="no matching variant", product=pid, color=color, size=size)
-        items = [{"variant_id": vid, "quantity": 1,
-                  "files": [{"type": "default", "url": printful.logo_url_for(color)}]}]
+        item = {"variant_id": vid, "quantity": 1,
+                "files": [{"type": "default", "url": printful.logo_url_for(color)}]}
+        thr = request.args.get("thread")
+        if thr:
+            item["options"] = [{"id": "thread_colors", "value": ["#" + t.lstrip("#") for t in thr.split(",")]}]
+        items = [item]
         rcpt = {"name": "MMS Test", "address1": ship["addressLine1"], "city": ship["city"],
                 "state_code": ship["state"], "country_code": "US", "zip": ship["postCode"],
                 "email": ship["email"], "phone": ship["phone"]}

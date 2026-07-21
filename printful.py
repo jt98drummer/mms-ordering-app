@@ -88,6 +88,10 @@ def logo_url_for(color):
     fn = "mms_logo_dark.png" if (color or "").strip().lower() in DARK_COLORS else "mms_logo_light.png"
     return config.PUBLIC_BASE_URL + "/asset/print/" + fn
 
+def thread_colors_for(color):
+    """Embroidery thread palette: white on dark garments, MMS navy on light."""
+    return ["#FFFFFF"] if (color or "").strip().lower() in DARK_COLORS else ["#333366"]
+
 
 _variant_cache = {}
 COLOR_ALIASES = {
