@@ -494,9 +494,11 @@ def admin_printful():
     if what == "find":
         q = request.args.get("q", "").lower()
         out = []; seen = set(); status = 0; offset = 0
-        while offset <= 900:
+        while offset <= 4000:
             status, data = printful.catalog_products(limit=100, offset=offset)
             batch = data.get("result") or []
+            if not batch:
+                break
             newn = 0
             for p in batch:
                 pid = p.get("id")
@@ -508,9 +510,9 @@ def admin_printful():
                     out.append({"id": pid, "brand": p.get("brand"),
                                 "model": p.get("model"), "type_name": p.get("type_name"),
                                 "variant_count": p.get("variant_count")})
-            if newn == 0 or len(batch) < 100:
+            if newn == 0:
                 break
-            offset += 100
+            offset += len(batch)
         return jsonify(status=status, q=q, count=len(out), scanned=len(seen), products=out)
     if what == "variants":
         pid = request.args.get("id")
