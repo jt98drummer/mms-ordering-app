@@ -10,6 +10,7 @@
 const ROLE='{{ user.role }}';
 const PRIV={{ 'true' if user.role in PRIVILEGED else 'false' }};
 const CAPS={units:{{ caps.emp_units }}, usd:{{ caps.emp_usd }}, fseUsd:{{ caps.fse_mgr_usd }}};
+const STRIPE_ON={{ 'true' if stripe_enabled else 'false' }};
 let pm='company', ack=false;
 
 function line(it,i){
@@ -32,6 +33,9 @@ function draw(){
     : 'Sent to your manager for approval, then places automatically. Receipt to accounting.';
   const empCapMsg = (!PRIV && overEmp)
     ? '<div class="capwarn">This order is over the employee company-card limit ('+CAPS.units+' units / $'+CAPS.usd+'). Trim the cart, or switch to your personal card.</div>' : '';
+  const selfDesc = STRIPE_ON
+    ? 'Pay now by card on Stripe (secure) - <b>NOT reimbursable</b>, no approval needed'
+    : 'Instant - <b>NOT reimbursable</b>, no approval needed';
 
   a.innerHTML='<div class="cartwrap"><div class="panel">'+c.map(line).join('')+'</div>'+
    '<div class="summary"><h3>Checkout</h3>'+
@@ -44,7 +48,7 @@ function draw(){
      '</div>'+
      '<label style="font-weight:800;color:#1e2d3b;font-size:13px">Payment</label>'+
      '<label class="pay sel" id="payCo"><input type="radio" name="pay" checked onchange="setPm(\'company\')"><span><span class="pt">Company card (MMS)</span><br><span class="pd">'+coDesc+'</span></span></label>'+
-     '<label class="pay" id="paySelf"><input type="radio" name="pay" onchange="setPm(\'personal\')"><span><span class="pt">My own card</span><br><span class="pd">Instant - <b>NOT reimbursable</b>, no approval needed</span></span></label>'+
+     '<label class="pay" id="paySelf"><input type="radio" name="pay" onchange="setPm(\'personal\')"><span><span class="pt">My own card</span><br><span class="pd">'+selfDesc+'</span></span></label>'+
      '<div id="ackWrap" style="display:none"><label class="ack"><input type="checkbox" id="ackBox" onchange="ack=this.checked"><span>I understand a personal-card order is <b>NOT reimbursable</b> and will not be sent to accounting for repayment.</span></label></div>'+
      empCapMsg+
      '<h3 style="margin:14px 0 8px">Ship to</h3>'+
@@ -70,11 +74,13 @@ async function checkout(){
   if(pm==='personal' && !ack){ modal('Please acknowledge','Tick the box confirming personal-card orders are NOT reimbursable.'); return; }
   const ship={firstName:g('s_fn'),lastName:g('s_ln'),addressLine1:g('s_a1'),city:g('s_ct'),state:g('s_st'),postCode:g('s_zp'),country:'US',email:'{{ user.email }}',phone:g('s_ph')};
   if(!ship.addressLine1||!ship.city){ modal('Add a shipping address','Please fill in at least address line 1 and city.'); return; }
-  document.getElementById('placeBtn').textContent='Placing order...';
+  const goStripe=(pm==='personal' && STRIPE_ON);
+  document.getElementById('placeBtn').textContent=goStripe?'Redirecting to secure checkout...':'Placing order...';
   try{
     const r=await fetch('/api/checkout/swag',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({items:swagItems(),context:ctx,payment:pm,ack_not_reimbursable:ack,ship})});
     const j=await r.json();
+    if(j.ok && j.stripe && j.checkout_url){ window.location.href=j.checkout_url; return; }
     if(j.ok){
       let msg='Order <b>'+j.order_id+'</b>. ';
       if(j.status==='pending') msg+='<br><br>'+j.message;

@@ -33,13 +33,14 @@ See `.env.example` for the full list. Key ones:
 - **Microsoft 365 / Entra:** `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET`. Sign-in turns on only when all three are set. App-registration needs: redirect URI `https://mms-ordering-app.onrender.com/auth/callback`; delegated `User.Read`; **application** `Mail.Send` + `User.Read.All` (admin-consented); App Roles `Manager`/`FSE`/`Employee`.
 - **Routing/email:** `ACCOUNTING_EMAIL` (default `accounting@mmsinconline.com`), `NOTIFY_EMAIL`, `ESCALATION_EMAIL`, `VENDOR_EMAIL` (**not set → emailed POs won't send until you add it**), `ARCHIVE_EMAIL` (optional receipt BCC).
 - **SharePoint audit (built, inactive):** `SP_SITE_ID`, `SP_LIST_ID` (needs a `Sites.Selected` app permission + a list).
-- **Stripe (not built yet):** `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`.
+- **Stripe (personal-card swag checkout — built):** `STRIPE_SECRET_KEY` (setting it turns the real charge ON; unset → personal card stays in demo mode), `STRIPE_WEBHOOK_SECRET` (`whsec_…`, required to trust the webhook), `STRIPE_PUBLISHABLE_KEY` (unused server-side — hosted Checkout). Test vs live is the key prefix (`sk_test_`/`sk_live_`); no separate mode flag. Webhook URL: `<PUBLIC_BASE_URL>/api/stripe/webhook`, event `checkout.session.completed`.
 - **Caps:** `FSE_MGR_AUTO_APPROVE_USD`=250, `EMPLOYEE_MAX_UNITS`=5, `EMPLOYEE_MAX_ORDER_USD`=150, `DOC_MAX_QTY`=25.
 - **`ADMIN_TOKEN`** (default `mms-discover`) gates the `/admin/*` diagnostic endpoints.
 
 ## How ordering + approvals work
 - **Cards / Documents:** checkout on their own page, company card only, receipt auto-emailed to `ACCOUNTING_EMAIL` via Microsoft Graph with orderer/qty/price/purpose/justification.
 - **Swag:** cart + role-aware checkout. FSE/managers auto-approve under $250 (over → one approval); employees always route to their manager, then auto-place, capped 5 units/$150; personal card requires a "NOT reimbursable" acknowledgment and creates no accounting receipt; no self-approval. Approvals use HMAC-signed links `/approve/<oid>/<sig>` and `/reject/<oid>/<sig>`.
+- **Personal-card Stripe flow** (`stripe_pay.py`): when `STRIPE_SECRET_KEY` is set, the personal-card path saves the order as `awaiting_payment` and returns a Stripe **hosted Checkout** URL (no card data touches the app). Fulfillment (`_fulfill_swag`) fires only after payment is confirmed, via `_finalize_paid()` — which is **idempotent** and reached two ways: the `checkout.session.completed` webhook (`/api/stripe/webhook`, signature-verified) and a server-side session re-fetch on the success return (`/swag/pay/return`). Cancel → `/swag/pay/cancel`. With no key set, the path falls back to the original demo behavior (places directly, nothing charged).
 - **Fulfillment routing** comes from each item's `fulfillment` field in `swag_catalog.json`:
   - `printful` → apparel; `_fulfill_swag()` resolves the variant by color/size and creates a Printful order. Embroidery items (`decoration:"embroidery"`) automatically add a `thread_colors` option.
   - `gelato` → mug (`sw2`) + tote (`sw4`).
@@ -66,19 +67,19 @@ Draft = orders appear in the Printful/Gelato dashboards for review; not produced
 - `git` operations failed on the Cowork Windows-mounted folder; clone into a native path to work. (Not an issue in Claude Code on your machine.)
 
 ## Open / remaining work
-1. **Remove the `/admin/testorder` endpoint** in `app.py` — it's token-gated but can create real (draft) orders; only added for verification.
+1. ✅ **DONE — Removed the `/admin/testorder` endpoint** from `app.py` (2026-07-22). `/admin/gelato` + `/admin/printful` diagnostics remain (read-only, token-gated).
 2. **Delete the test draft orders** (~4 in Printful, 1 in Gelato) from those dashboards.
 3. **Reconnect Render ↔ GitHub** so auto-deploy works again.
-4. **Set `VENDOR_EMAIL`** so promo/embroidery-vendor POs actually send; optionally `ARCHIVE_EMAIL`.
-5. **Stripe personal-card swag checkout** — not built; config seams exist.
+4. **Set `VENDOR_EMAIL`** so promo/embroidery-vendor POs actually send; optionally `ARCHIVE_EMAIL`. (Code already reads it; just set the env var in Render — no key = no PO sent.)
+5. ✅ **DONE — Stripe personal-card swag checkout built** (2026-07-22) — `stripe_pay.py` + hosted Checkout + webhook + return/cancel pages; see "Personal-card Stripe flow" above. **To activate:** set `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` in Render, create the Stripe webhook (`/api/stripe/webhook`, `checkout.session.completed`), redeploy. Until then the personal-card path stays in safe demo mode. Verified locally with the Flask test client (demo path + Stripe branch + webhook signature rejection).
 6. **SharePoint audit list** — `graph.log_to_sharepoint()` is built and gated; add the `Sites.Selected` app permission, create the list (columns in `.env.example`), set `SP_SITE_ID`/`SP_LIST_ID`.
 7. **Add apparel product photos** to the swag storefront (team feedback: "no pictures yet for apparel").
 8. **Refinements:** tighten color maps (e.g., "Navy" resolves to Bella "Heather Midnight Navy"); set proper embroidery placements (polo left-chest, cap front, beanie cuff) + per-garment thread palette; scope app-only `Mail.Send` with an Exchange Application Access Policy.
 9. **Go live:** flip `PRINTFUL_MODE` and `GELATO_MODE` to `live` when ready for real fulfillment.
 
 ## File map
-- `app.py` — routes, per-store checkout, `_fulfill_swag()` dispatch, `/admin/*` discovery + `/health`.
+- `app.py` — routes, per-store checkout, `_fulfill_swag()` dispatch, `_finalize_paid()` (Stripe), `/admin/*` discovery + `/health`.
 - `config.py` — all env-var config + caps.
-- `auth.py` — MSAL M365 sign-in; `graph.py` — Graph mail + SharePoint; `printful.py` — Printful client + `resolve_variant()` + `logo_url_for()` + `thread_colors_for()`; `gelato.py` — Gelato client.
+- `auth.py` — MSAL M365 sign-in; `graph.py` — Graph mail + SharePoint; `printful.py` — Printful client + `resolve_variant()` + `logo_url_for()` + `thread_colors_for()`; `gelato.py` — Gelato client; `stripe_pay.py` — Stripe hosted-Checkout client + webhook verify (personal-card swag).
 - `catalog.py` + `data_catalog.json` — documents; `swag_catalog.json` — apparel/swag + fulfillment mappings.
 - `templates/`, `static/`, `assets/` (`assets/print/` = logos), `.github/workflows/keepalive.yml`.

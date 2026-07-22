@@ -11,7 +11,7 @@ Modes (env GELATO_MODE): dry | draft | live
 import os, json, csv, time, datetime, hmac, hashlib
 from flask import (Flask, render_template, request, jsonify, send_from_directory,
                    abort, Response, redirect, session)
-import config, gelato, printful, catalog, card_render, auth, graph
+import config, gelato, printful, catalog, card_render, auth, graph, stripe_pay
 from card_engine import generate_card_pdf
 
 app = Flask(__name__)
@@ -29,6 +29,7 @@ def inject_globals():
         "mode": config.GELATO_MODE,
         "user": auth.current_user(),
         "auth_enabled": config.AUTH_ENABLED,
+        "stripe_enabled": config.STRIPE_ENABLED,
         "PRIVILEGED": list(config.PRIVILEGED_ROLES),
         "caps": {"fse_mgr_usd": config.FSE_MGR_AUTO_APPROVE_USD,
                  "emp_units": config.EMPLOYEE_MAX_UNITS,
@@ -233,6 +234,28 @@ def _fulfill_swag(order):
     return order["fulfillment_plan"]
 
 
+def _finalize_paid(oid, session=None):
+    """Fulfill a personal-card order once Stripe has confirmed payment.
+    Idempotent: safe to call from both the webhook and the success redirect;
+    the `fulfilled` flag guarantees the order is only placed (and logged) once.
+    Personal-card orders create NO accounting receipt (matches the demo path)."""
+    o = _load_pending(oid)
+    if not o or o.get("payment") != "personal":
+        return None
+    if o.get("fulfilled"):
+        return o
+    o["status"] = "paid"
+    o["fulfilled"] = True
+    if session is not None:
+        o["stripe_session_id"] = session.get("id", o.get("stripe_session_id", ""))
+        if session.get("payment_intent"):
+            o["stripe_payment_intent"] = session.get("payment_intent")
+    _fulfill_swag(o)
+    _save_pending(o)
+    _log(o)
+    return o
+
+
 # ---------------- auth ----------------
 @app.route("/login")
 def login():
@@ -415,6 +438,33 @@ def checkout_swag():
         if not body.get("ack_not_reimbursable"):
             return jsonify(ok=False,
                            error="Please acknowledge that personal-card orders are NOT reimbursable."), 400
+
+        # When Stripe is configured, actually charge the card via hosted Checkout;
+        # the order is fulfilled only after Stripe confirms payment (see _finalize_paid).
+        if stripe_pay.enabled():
+            if total_val < 0.50:
+                return jsonify(ok=False,
+                               error="Card checkout needs an order total of at least $0.50. "
+                                     "Add items or use the company card."), 400
+            order = _mk_order("Swag & Apparel", oid, u, "personal", units, lines, ctx, ship, nm,
+                              status="awaiting_payment", total=_money(total_val))
+            order["items"] = items
+            success_url = (config.PUBLIC_BASE_URL + "/swag/pay/return?oid=" + oid
+                           + "&session_id={CHECKOUT_SESSION_ID}")
+            cancel_url = config.PUBLIC_BASE_URL + "/swag/pay/cancel?oid=" + oid
+            checkout_url, ref = stripe_pay.create_checkout_session(order, success_url, cancel_url)
+            if not checkout_url:
+                return jsonify(ok=False,
+                               error="Card checkout is temporarily unavailable. Please try again "
+                                     "or use the company card."), 502
+            order["stripe_session_id"] = ref
+            _save_pending(order)
+            _log(order)
+            return jsonify(ok=True, order_id=oid, status="awaiting_payment", stripe=True,
+                           checkout_url=checkout_url,
+                           message="Redirecting you to secure card checkout...")
+
+        # No Stripe configured -> demo path: place directly, nothing is charged.
         order = _mk_order("Swag & Apparel", oid, u, "personal", units, lines, ctx, ship, nm,
                           status="placed", total=_money(total_val))
         order["items"] = items
@@ -500,6 +550,55 @@ def reject(oid, sig):
     return _approval_page("Rejected", "Order %s was rejected. The requester has been notified." % oid, "#c8102e")
 
 
+# ---------------- Stripe (personal-card swag checkout) ----------------
+@app.route("/api/stripe/webhook", methods=["POST"])
+def stripe_webhook():
+    """Primary payment confirmation. Stripe POSTs here; we verify the signature
+    against the RAW body (never parse it first) and fulfill on a paid session."""
+    event = stripe_pay.verify_webhook(request.get_data(), request.headers.get("Stripe-Signature", ""))
+    if event is None:
+        abort(400)
+    if event.get("type") == "checkout.session.completed":
+        session = event["data"]["object"]
+        if stripe_pay.is_paid(session):
+            oid = (session.get("metadata") or {}).get("oid") or session.get("client_reference_id")
+            if oid:
+                _finalize_paid(oid, session)
+    return jsonify(received=True)
+
+
+@app.route("/swag/pay/return")
+@auth.login_required
+def swag_pay_return():
+    """Where Stripe redirects the shopper after a successful payment. Acts as a
+    fallback confirmation: re-fetch the session from Stripe and finalize if the
+    webhook hasn't landed yet (idempotent)."""
+    oid = request.args.get("oid", "")
+    session_id = request.args.get("session_id", "")
+    o = _load_pending(oid)
+    if o and not o.get("fulfilled") and session_id:
+        session = stripe_pay.retrieve_session(session_id)
+        if session and stripe_pay.is_paid(session):
+            o = _finalize_paid(oid, session)
+    paid = bool(o and o.get("fulfilled"))
+    return render_template("pay_result.html", result=("success" if paid else "pending"),
+                           oid=oid, session_id=session_id, total=(o or {}).get("total", ""))
+
+
+@app.route("/swag/pay/cancel")
+@auth.login_required
+def swag_pay_cancel():
+    """Shopper backed out of Stripe Checkout. Nothing was charged; mark the
+    pending order canceled so it doesn't linger as awaiting_payment."""
+    oid = request.args.get("oid", "")
+    o = _load_pending(oid)
+    if o and not o.get("fulfilled") and o.get("status") == "awaiting_payment":
+        o["status"] = "canceled"
+        _save_pending(o)
+    return render_template("pay_result.html", result="cancel", oid=oid,
+                           session_id="", total=(o or {}).get("total", ""))
+
+
 @app.route("/health/graph")
 def health_graph():
     return jsonify(auth_enabled=config.AUTH_ENABLED, **graph.diag())
@@ -551,41 +650,6 @@ def admin_printful():
         return jsonify(status=status, what=what, data=data)
     status, data = printful.catalog_products(limit=int(request.args.get("limit", "100")))
     return jsonify(status=status, what=what, data=data)
-
-
-@app.route("/admin/testorder")
-def admin_testorder():
-    if request.args.get("token") != os.environ.get("ADMIN_TOKEN", "mms-discover"):
-        abort(403)
-    ship = {"firstName": "MMS", "lastName": "Test", "companyName": config.COMPANY_NAME,
-            "addressLine1": "1501 42nd St", "addressLine2": "", "city": "West Des Moines",
-            "state": "IA", "postCode": "50266", "country": "US",
-            "email": config.NOTIFY_EMAIL, "phone": "5155551234"}
-    if request.args.get("kind", "printful") == "printful":
-        pid = int(request.args.get("product", "422"))
-        color = request.args.get("color", "Black"); size = request.args.get("size", "OSFA")
-        vid = printful.resolve_variant(pid, color, size)
-        if not vid:
-            return jsonify(ok=False, error="no matching variant", product=pid, color=color, size=size)
-        item = {"variant_id": vid, "quantity": 1,
-                "files": [{"type": "default", "url": printful.logo_url_for(color)}]}
-        thr = request.args.get("thread")
-        if thr:
-            item["options"] = [{"id": "thread_colors", "value": ["#" + t.lstrip("#") for t in thr.split(",")]}]
-        items = [item]
-        rcpt = {"name": "MMS Test", "address1": ship["addressLine1"], "city": ship["city"],
-                "state_code": ship["state"], "country_code": "US", "zip": ship["postCode"],
-                "email": ship["email"], "phone": ship["phone"]}
-        st, res = printful.create_order(items, rcpt)
-        return jsonify(ok=st in (0, 200, 201), kind="printful", product=pid, variant=vid,
-                       mode=config.PRINTFUL_MODE, status=st, result=res)
-    uid = request.args.get("uid", "")
-    items = [{"itemReferenceId": "MMS-TEST-g1", "productUid": uid,
-              "files": [{"type": "default", "url": printful.logo_url_for("White")}], "quantity": 1}]
-    payload = gelato.build_order_payload("MMS-TEST", ship["email"], items, ship)
-    st, res = gelato.create_order(payload)
-    return jsonify(ok=st in (0, 200, 201), kind="gelato", uid=uid, mode=config.GELATO_MODE,
-                   status=st, result=res)
 
 
 if __name__ == "__main__":

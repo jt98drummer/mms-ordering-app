@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Card checkout - MMS{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="subhead"><a href="/swag"><button class="back">&larr; Swag</button></a><h2>Card checkout</h2></div>
+  <div class="panel" style="max-width:560px;margin:24px auto;text-align:center;padding:34px">
+  {% if result == 'success' %}
+    <div style="width:56px;height:56px;border-radius:50%;background:#2f7a34;color:#fff;font-size:32px;line-height:56px;margin:0 auto 14px">&#10003;</div>
+    <h3 style="color:#1e2d3b;margin:0 0 8px">Payment received</h3>
+    <p style="color:#4a5763">Your personal-card order <b>{{ oid }}</b>{% if total %} ({{ total }}){% endif %} is paid and now being fulfilled.</p>
+    <p style="color:#c8102e;font-weight:700">This order is NOT reimbursable and was not sent to accounting.</p>
+    <p style="color:#6b7884;font-size:12px"><i>Demo &middot; nothing was really produced or shipped.</i></p>
+    <a class="btn" href="/swag">Back to swag</a>
+  {% elif result == 'cancel' %}
+    <div style="width:56px;height:56px;border-radius:50%;background:#c8102e;color:#fff;font-size:32px;line-height:56px;margin:0 auto 14px">&times;</div>
+    <h3 style="color:#1e2d3b;margin:0 0 8px">Checkout canceled</h3>
+    <p style="color:#4a5763">Order <b>{{ oid }}</b> was <b>not charged</b>. Your cart is still saved.</p>
+    <a class="btn" href="/cart">Return to cart</a>
+  {% else %}
+    <div style="width:56px;height:56px;border-radius:50%;background:#6b7884;color:#fff;font-size:32px;line-height:56px;margin:0 auto 14px">&hellip;</div>
+    <h3 style="color:#1e2d3b;margin:0 0 8px">Confirming your payment</h3>
+    <p style="color:#4a5763">Order <b>{{ oid }}</b>: we're finalizing your payment. This can take a moment.</p>
+    <a class="btn" href="/swag/pay/return?oid={{ oid }}{% if session_id %}&session_id={{ session_id }}{% endif %}">Refresh status</a>
+  {% endif %}
+  </div>
+</div>
+{% if result == 'success' %}
+<script>
+  // Payment succeeded: clear only the swag items from the saved cart.
+  try { cartSave(cartGet().filter(function(i){ return i.type !== 'swag'; })); } catch (e) {}
+</script>
+{% endif %}
+{% endblock %}
