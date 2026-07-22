@@ -81,16 +81,15 @@ def catalog_products(limit=100, offset=0):
     return _req("GET", "/products?limit=%d&offset=%d" % (limit, offset))
 
 
-DARK_COLORS = {"navy", "black", "charcoal", "red"}
-
 def logo_url_for(color):
-    """Pick the print file by garment color: white logo on dark garments, brand logo on light."""
-    fn = "mms_logo_dark.png" if (color or "").strip().lower() in DARK_COLORS else "mms_logo_light.png"
-    return config.PUBLIC_BASE_URL + "/asset/print/" + fn
+    """Default logo print-file URL for a garment colour (delegates to branding)."""
+    import branding
+    return branding.logo_url(branding.default_logo(color))
 
 def thread_colors_for(color):
-    """Embroidery thread palette: white on dark garments, MMS navy on light."""
-    return ["#FFFFFF"] if (color or "").strip().lower() in DARK_COLORS else ["#333366"]
+    """Default embroidery thread palette for a garment colour (delegates to branding)."""
+    import branding
+    return branding.threads(branding.default_logo(color))
 
 
 _variant_cache = {}

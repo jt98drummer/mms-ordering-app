@@ -20,11 +20,16 @@ Usage:
 """
 import os, sys, json
 from PIL import Image, ImageDraw, ImageFilter
+import branding
 
 APP = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(APP, "assets", "products"); os.makedirs(OUT, exist_ok=True)
 PRINT_DIR = os.path.join(APP, "assets", "print")
 CATALOG = os.path.join(APP, "swag_catalog.json")
+# Public base Printful fetches the NEW logo files from during mockup generation.
+# raw.githubusercontent serves pushed repo assets even before Render redeploys.
+MOCKUP_LOGO_BASE = os.environ.get(
+    "MOCKUP_LOGO_BASE", "https://raw.githubusercontent.com/jt98drummer/mms-ordering-app/main")
 
 
 def _load_env(path):
@@ -270,13 +275,12 @@ SHAPES = {
 _logo_cache = {}
 
 
-def load_logo(color_name):
-    dark = (color_name or "").strip().lower() in DARK
-    key = "dark" if dark else "light"
-    if key not in _logo_cache:
-        fn = "mms_logo_dark.png" if dark else "mms_logo_light.png"
-        _logo_cache[key] = Image.open(os.path.join(PRINT_DIR, fn)).convert("RGBA")
-    return _logo_cache[key]
+def load_logo(logo_key):
+    """Load a brand logo variant (by branding key) from assets/print."""
+    if logo_key not in _logo_cache:
+        fn = branding.LOGOS.get(logo_key, branding.LOGOS["white"])["file"]
+        _logo_cache[logo_key] = Image.open(os.path.join(PRINT_DIR, fn)).convert("RGBA")
+    return _logo_cache[logo_key]
 
 
 def studio_bg(px=W):
@@ -324,7 +328,7 @@ def compose(item):
     base.alpha_composite(sprite, (ox, oy))
     # logo
     lw_frac, (fx, fy) = PLACE.get(shape, (0.4, (0.5, 0.5)))
-    logo = load_logo(color_name)
+    logo = load_logo(branding.default_logo(color_name))
     lw = int(sprite.width * lw_frac)
     lh = int(logo.height * (lw / logo.width))
     lg = logo.resize((lw, lh), Image.LANCZOS)
@@ -407,7 +411,8 @@ def build_printful(items, only_ids=None):
         placement = pm.choose_placement(pid, prefer_chest=prefer_chest)
         aw, ah = pm.area_for(pid, vid, placement)
         position = pm.make_position(aw, ah, pm.placement_style(placement))
-        logo_url = printful.logo_url_for(color)
+        logo_key = branding.default_logo(color)
+        logo_url = MOCKUP_LOGO_BASE.rstrip("/") + "/assets/print/" + branding.LOGOS[logo_key]["file"]
         print("  %s: product %s variant %s color %s placement %s area %sx%s ..." %
               (it["id"], pid, vid, color, placement, aw, ah))
         url, info = pm.generate(pid, vid, placement, logo_url, position=position)

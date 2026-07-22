@@ -8,16 +8,15 @@
     "colors": [
       "Navy",
       "Black",
-      "Red"
+      "Grey",
+      "White"
     ],
     "sizes": [
-      "XS",
       "S",
       "M",
       "L",
       "XL",
-      "2XL",
-      "3XL"
+      "2XL"
     ],
     "price": 28.0,
     "decoration": "embroidery",
@@ -29,7 +28,8 @@
       "color_map": {
         "Navy": "Navy",
         "Black": "Black",
-        "Red": "Red"
+        "Grey": "Grey",
+        "White": "White"
       },
       "product_id": 766
     },
@@ -43,11 +43,12 @@
     "icon": "shirt",
     "colors": [
       "Navy",
+      "Black",
+      "Grey",
       "White",
-      "Gray"
+      "Red"
     ],
     "sizes": [
-      "XS",
       "S",
       "M",
       "L",
@@ -64,8 +65,10 @@
       "placement": "left_chest",
       "color_map": {
         "Navy": "Navy",
+        "Black": "Black",
+        "Grey": "Steel Grey",
         "White": "White",
-        "Gray": "Gray"
+        "Red": "Red"
       },
       "product_id": 340
     },
@@ -79,11 +82,12 @@
     "icon": "shirt",
     "colors": [
       "Navy",
-      "Gray",
-      "White"
+      "Black",
+      "Grey",
+      "White",
+      "Red"
     ],
     "sizes": [
-      "XS",
       "S",
       "M",
       "L",
@@ -100,8 +104,10 @@
       "placement": "front",
       "color_map": {
         "Navy": "Navy",
-        "Gray": "Athletic Heather",
-        "White": "White"
+        "Black": "Black",
+        "Grey": "Athletic Heather",
+        "White": "White",
+        "Red": "Red"
       },
       "product_id": 71
     },
@@ -211,11 +217,11 @@
     "icon": "hoodie",
     "colors": [
       "Navy",
-      "Gray",
-      "Black"
+      "Black",
+      "Grey",
+      "Red"
     ],
     "sizes": [
-      "XS",
       "S",
       "M",
       "L",
@@ -232,8 +238,9 @@
       "placement": "front",
       "color_map": {
         "Navy": "Navy",
-        "Gray": "Gray",
-        "Black": "Black"
+        "Black": "Black",
+        "Grey": "Sport Grey",
+        "Red": "Red"
       },
       "product_id": 146
     },
@@ -247,10 +254,11 @@
     "icon": "hoodie",
     "colors": [
       "Navy",
-      "Gray"
+      "Black",
+      "Grey",
+      "Red"
     ],
     "sizes": [
-      "XS",
       "S",
       "M",
       "L",
@@ -267,7 +275,9 @@
       "placement": "front",
       "color_map": {
         "Navy": "Navy",
-        "Gray": "Gray"
+        "Black": "Black",
+        "Grey": "Sport Grey",
+        "Red": "Red"
       },
       "product_id": 145
     },
@@ -280,19 +290,11 @@
     "category": "Headwear",
     "icon": "cap",
     "colors": [
-      "Navy",
       "Black",
-      "Red"
+      "Charcoal",
+      "Heather Grey"
     ],
-    "sizes": [
-      "XS",
-      "S",
-      "M",
-      "L",
-      "XL",
-      "2XL",
-      "3XL"
-    ],
+    "sizes": [],
     "price": 18.0,
     "decoration": "embroidery",
     "fulfillment": "printful",
@@ -301,9 +303,9 @@
       "file": "mms_logo.png",
       "placement": "front",
       "color_map": {
-        "Navy": "Navy",
         "Black": "Black",
-        "Red": "Red"
+        "Charcoal": "Charcoal/Black",
+        "Heather Grey": "Heather Grey / Black"
       },
       "product_id": 422
     },
@@ -317,17 +319,11 @@
     "icon": "cap",
     "colors": [
       "Navy",
-      "Charcoal"
+      "Black",
+      "Heather Charcoal",
+      "Heather Grey"
     ],
-    "sizes": [
-      "XS",
-      "S",
-      "M",
-      "L",
-      "XL",
-      "2XL",
-      "3XL"
-    ],
+    "sizes": [],
     "price": 16.0,
     "decoration": "embroidery",
     "fulfillment": "printful",
@@ -337,7 +333,9 @@
       "placement": "front",
       "color_map": {
         "Navy": "Navy",
-        "Charcoal": "Charcoal"
+        "Black": "Black",
+        "Heather Charcoal": "Heather Charcoal",
+        "Heather Grey": "Heather Grey"
       },
       "product_id": 637
     },
@@ -376,7 +374,7 @@
     "gelato": {
       "catalog": "mugs",
       "placement": "default",
-      "print_file": "mms_logo_light.png",
+      "print_file": "mms_white.png",
       "color_map": {
         "White": "mug_product_msz_11-oz_mmat_ceramic-white_cl_4-0",
         "Navy": "mug_product_msz_11-oz_mmat_ceramic-blue_cl_4-0"
@@ -417,7 +415,7 @@
     "gelato": {
       "catalog": "tote-bags",
       "placement": "default",
-      "print_file": "mms_logo_light.png",
+      "print_file": "mms_white.png",
       "color_map": {
         "Natural": "bag_product_bsc_tote-bag_bqa_clc_bsi_std-t_bco_natural_bpr_4-0",
         "Navy": "bag_product_bsc_tote-bag_bqa_clc_bsi_std-t_bco_black_bpr_4-0"

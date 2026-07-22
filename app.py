@@ -11,7 +11,7 @@ Modes (env GELATO_MODE): dry | draft | live
 import os, json, csv, time, datetime, hmac, hashlib
 from flask import (Flask, render_template, request, jsonify, send_from_directory,
                    abort, Response, redirect, session)
-import config, gelato, printful, catalog, card_render, auth, graph, stripe_pay
+import config, gelato, printful, catalog, card_render, auth, graph, stripe_pay, branding
 from card_engine import generate_card_pdf
 
 app = Flask(__name__)
@@ -21,6 +21,13 @@ for d in (config.FILES_DIR, config.OUTBOX_DIR, config.PENDING_DIR):
 ORDER_LOG = os.path.join(config.BASE_DIR, "orders.csv")
 SWAG = json.load(open(os.path.join(config.BASE_DIR, "swag_catalog.json")))
 SWAG_BY_ID = {s["id"]: s for s in SWAG}
+# precompute the storefront's per-colour logo choices + colour chips so the
+# swag grid can offer a colour-aware logo picker with a live swatch preview
+for _s in SWAG:
+    _cols = _s.get("colors", [])
+    _s["logo_by_color"] = {c: branding.logo_options(c) for c in _cols}
+    _s["logo_default"] = {c: branding.default_logo(c) for c in _cols}
+    _s["color_hex"] = {c: branding.color_hex(c) for c in _cols}
 
 
 @app.context_processor
@@ -30,6 +37,7 @@ def inject_globals():
         "user": auth.current_user(),
         "auth_enabled": config.AUTH_ENABLED,
         "stripe_enabled": config.STRIPE_ENABLED,
+        "brand_logos": branding.client_logos(),
         "PRIVILEGED": list(config.PRIVILEGED_ROLES),
         "caps": {"fse_mgr_usd": config.FSE_MGR_AUTO_APPROVE_USD,
                  "emp_units": config.EMPLOYEE_MAX_UNITS,
@@ -185,8 +193,10 @@ def _fulfill_swag(order):
         groups.get(ch, groups["vendor"]).append(it)
     # promo / specialty -> emailed PO to the swag vendor
     if groups["vendor"] and config.VENDOR_EMAIL:
-        rows = "".join("<li>%s (%s%s) x%s</li>" % (i.get("name",""), i.get("color",""),
-                       "/"+i["size"] if i.get("size") else "", i.get("qty",1)) for i in groups["vendor"])
+        rows = "".join("<li>%s (%s%s) &mdash; logo: %s &times;%s</li>" % (
+                       i.get("name",""), i.get("color",""), "/"+i["size"] if i.get("size") else "",
+                       branding.label(branding.valid_logo(i.get("color"), i.get("logo"))), i.get("qty",1))
+                       for i in groups["vendor"])
         html = ("<h3>MMS Swag PO - %s</h3><p>Please fulfill for <b>%s</b> &lt;%s&gt;:</p><ul>%s</ul>"
                 "<p>Ship to: %s<br>Purpose: %s / %s</p>"
                 % (order["oid"], order["orderer"], order["orderer_email"], rows,
@@ -198,13 +208,14 @@ def _fulfill_swag(order):
         for i in groups["printful"]:
             pf = SWAG_BY_ID.get(i.get("id"), {}).get("printful", {})
             pid = pf.get("product_id")
+            logo_key = branding.valid_logo(i.get("color"), i.get("logo"))
             color = (pf.get("color_map") or {}).get(i.get("color"), i.get("color"))
             vid = printful.resolve_variant(pid, color, i.get("size")) if pid else None
             if vid:
                 it_item = {"variant_id": vid, "quantity": int(i.get("qty", 1)),
-                           "files": [{"type": "default", "url": printful.logo_url_for(i.get("color"))}]}
+                           "files": [{"type": "default", "url": branding.logo_url(logo_key)}]}
                 if SWAG_BY_ID.get(i.get("id"), {}).get("decoration") == "embroidery":
-                    it_item["options"] = [{"id": "thread_colors", "value": printful.thread_colors_for(i.get("color"))}]
+                    it_item["options"] = [{"id": "thread_colors", "value": branding.threads(logo_key)}]
                 pf_items.append(it_item)
         if pf_items:
             sh = order.get("_ship", {})
@@ -221,8 +232,9 @@ def _fulfill_swag(order):
             uid = (g.get("color_map") or {}).get(i.get("color")) or g.get("product_uid")
             if uid and uid != "TBD":
                 n += 1
+                logo_key = branding.valid_logo(i.get("color"), i.get("logo"))
                 g_items.append({"itemReferenceId": "%s-g%d" % (order["oid"], n), "productUid": uid,
-                                "files": [{"type": "default", "url": printful.logo_url_for(i.get("color"))}],
+                                "files": [{"type": "default", "url": branding.logo_url(logo_key)}],
                                 "quantity": int(i.get("qty", 1))})
         if g_items:
             sh = order.get("_ship", {})
@@ -425,10 +437,15 @@ def checkout_swag():
     if not ship["addressLine1"] or not ship["city"]:
         return jsonify(ok=False, error="Please add at least a shipping address line 1 and city."), 400
 
+    # normalise the chosen logo to one valid for the garment colour (so the
+    # receipt, approval and fulfillment all agree with what the shopper saw)
+    for i in items:
+        i["logo"] = branding.valid_logo(i.get("color"), i.get("logo"))
     units = sum(int(i.get("qty", 1)) for i in items)
     total_val = sum(float(i.get("price", 0)) * int(i.get("qty", 1)) for i in items)
-    lines = [{"desc": "%s (%s%s)" % (i.get("name", ""), i.get("color", ""),
-                                     "/" + i["size"] if i.get("size") else ""),
+    lines = [{"desc": "%s (%s%s · %s)" % (i.get("name", ""), i.get("color", ""),
+                                          "/" + i["size"] if i.get("size") else "",
+                                          branding.label(i.get("logo"))),
               "qty": int(i.get("qty", 1)),
               "line": _money(float(i.get("price", 0)) * int(i.get("qty", 1)))} for i in items]
     oid = _oid("SWAG")
