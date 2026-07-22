@@ -20,7 +20,6 @@ Usage:
 """
 import os, sys, json
 from PIL import Image, ImageDraw, ImageFilter
-import branding
 
 APP = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(APP, "assets", "products"); os.makedirs(OUT, exist_ok=True)
@@ -42,6 +41,8 @@ def _load_env(path):
 
 
 _load_env(os.path.join(APP, ".env"))
+
+import branding                 # imported AFTER .env so config reads the real values
 
 FINAL = 820                     # output px (square)
 SS = 2                          # supersample factor
