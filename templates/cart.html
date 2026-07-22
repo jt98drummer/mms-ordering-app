@@ -13,9 +13,13 @@ const CAPS={units:{{ caps.emp_units }}, usd:{{ caps.emp_usd }}, fseUsd:{{ caps.f
 const STRIPE_ON={{ 'true' if stripe_enabled else 'false' }};
 let pm='company', ack=false;
 
+function imgFallback(img,ic){ const p=img.parentNode; if(p){ p.innerHTML=icon(ic); } }
 function line(it,i){
   const stepper='<div class="qtybox"><button onclick="chg('+i+',-1)">-</button><span>'+it.qty+'</span><button onclick="chg('+i+',1)">+</button></div>';
-  return '<div class="citem"><div class="ci-ic">'+icon(it.icon)+'</div>'+
+  const ic = it.image
+    ? '<img src="'+it.image+'" alt="'+(it.label||'')+'" onerror="imgFallback(this,\''+(it.icon||'tag')+'\')">'
+    : icon(it.icon);
+  return '<div class="citem"><div class="ci-ic">'+ic+'</div>'+
     '<div class="ci-main"><div class="ci-t">'+it.label+'</div><div class="ci-d">'+it.detail+'</div></div>'+
     '<div class="ci-r">'+stepper+'<button class="ci-remove" onclick="rm('+i+')">Remove</button></div></div>';
 }
