@@ -33,7 +33,9 @@
       },
       "product_id": 766
     },
-    "image": "/asset/products/ap1.png"
+    "image": "/asset/products/ap1.png",
+    "published": true,
+    "desc": "Moisture-wicking Under Armour Tech performance polo \u2014 a sharp, breathable layer for customer visits and trade shows. MMS embroidered on the left chest."
   },
   {
     "id": "ap2",
@@ -72,7 +74,9 @@
       },
       "product_id": 340
     },
-    "image": "/asset/products/ap2.png"
+    "image": "/asset/products/ap2.png",
+    "published": true,
+    "desc": "Classic Port Authority cotton-blend polo with a soft hand and clean drape. MMS embroidered on the left chest."
   },
   {
     "id": "ap3",
@@ -111,7 +115,9 @@
       },
       "product_id": 71
     },
-    "image": "/asset/products/ap3.png"
+    "image": "/asset/products/ap3.png",
+    "published": true,
+    "desc": "Bella+Canvas 3001 unisex tee \u2014 soft ringspun cotton built for everyday comfort. MMS printed on the front."
   },
   {
     "id": "ap4",
@@ -135,7 +141,8 @@
     "price": 19.0,
     "decoration": "print",
     "fulfillment": "vendor",
-    "image": "/asset/products/ap4.png"
+    "image": "/asset/products/ap4.png",
+    "published": false
   },
   {
     "id": "ap5",
@@ -159,7 +166,8 @@
     "price": 62.0,
     "decoration": "embroidery",
     "fulfillment": "vendor",
-    "image": "/asset/products/ap5.png"
+    "image": "/asset/products/ap5.png",
+    "published": false
   },
   {
     "id": "ap6",
@@ -183,7 +191,8 @@
     "price": 48.0,
     "decoration": "embroidery",
     "fulfillment": "vendor",
-    "image": "/asset/products/ap6.png"
+    "image": "/asset/products/ap6.png",
+    "published": false
   },
   {
     "id": "ap7",
@@ -207,7 +216,8 @@
     "price": 54.0,
     "decoration": "embroidery",
     "fulfillment": "vendor",
-    "image": "/asset/products/ap7.png"
+    "image": "/asset/products/ap7.png",
+    "published": false
   },
   {
     "id": "ap8",
@@ -244,7 +254,9 @@
       },
       "product_id": 146
     },
-    "image": "/asset/products/ap8.png"
+    "image": "/asset/products/ap8.png",
+    "published": true,
+    "desc": "Heavy-blend fleece pullover hoodie with a roomy front pouch pocket and drawstring hood. MMS printed on the front."
   },
   {
     "id": "ap9",
@@ -281,7 +293,9 @@
       },
       "product_id": 145
     },
-    "image": "/asset/products/ap9.png"
+    "image": "/asset/products/ap9.png",
+    "published": true,
+    "desc": "Classic heavy-blend crewneck sweatshirt \u2014 warm, durable and no-fuss. MMS printed on the front."
   },
   {
     "id": "ap10",
@@ -309,7 +323,9 @@
       },
       "product_id": 422
     },
-    "image": "/asset/products/ap10.png"
+    "image": "/asset/products/ap10.png",
+    "published": true,
+    "desc": "Richardson 112 trucker cap \u2014 structured front panel, breathable mesh back, adjustable snapback. MMS embroidered on the front. One size fits most."
   },
   {
     "id": "ap11",
@@ -339,7 +355,9 @@
       },
       "product_id": 637
     },
-    "image": "/asset/products/ap11.png"
+    "image": "/asset/products/ap11.png",
+    "published": true,
+    "desc": "Cuffed knit beanie in a warm ribbed knit for cold job sites. MMS embroidered on the cuff. One size fits most."
   },
   {
     "id": "sw1",
@@ -355,7 +373,8 @@
     "price": 22.0,
     "decoration": "promo",
     "fulfillment": "vendor",
-    "image": "/asset/products/sw1.png"
+    "image": "/asset/products/sw1.png",
+    "published": false
   },
   {
     "id": "sw2",
@@ -380,7 +399,9 @@
         "Navy": "mug_product_msz_11-oz_mmat_ceramic-blue_cl_4-0"
       }
     },
-    "image": "/asset/products/sw2.png"
+    "image": "/asset/products/sw2.png",
+    "published": false,
+    "desc": "11 oz ceramic mug, dishwasher and microwave safe. MMS printed wrap \u2014 perfect for the office or as a customer gift."
   },
   {
     "id": "sw3",
@@ -396,7 +417,8 @@
     "price": 19.0,
     "decoration": "promo",
     "fulfillment": "vendor",
-    "image": "/asset/products/sw3.png"
+    "image": "/asset/products/sw3.png",
+    "published": false
   },
   {
     "id": "sw4",
@@ -421,7 +443,9 @@
         "Navy": "bag_product_bsc_tote-bag_bqa_clc_bsi_std-t_bco_black_bpr_4-0"
       }
     },
-    "image": "/asset/products/sw4.png"
+    "image": "/asset/products/sw4.png",
+    "published": true,
+    "desc": "Sturdy natural canvas tote with long handles for easy carrying. MMS printed on the front \u2014 a popular trade-show giveaway."
   },
   {
     "id": "sw5",
@@ -437,7 +461,8 @@
     "price": 46.0,
     "decoration": "promo",
     "fulfillment": "vendor",
-    "image": "/asset/products/sw5.png"
+    "image": "/asset/products/sw5.png",
+    "published": false
   },
   {
     "id": "sw6",
@@ -453,7 +478,8 @@
     "price": 27.0,
     "decoration": "promo",
     "fulfillment": "vendor",
-    "image": "/asset/products/sw6.png"
+    "image": "/asset/products/sw6.png",
+    "published": false
   },
   {
     "id": "sw7",
@@ -469,7 +495,8 @@
     "price": 29.0,
     "decoration": "promo",
     "fulfillment": "vendor",
-    "image": "/asset/products/sw7.png"
+    "image": "/asset/products/sw7.png",
+    "published": false
   },
   {
     "id": "sw8",
@@ -484,7 +511,8 @@
     "price": 24.0,
     "decoration": "promo",
     "fulfillment": "vendor",
-    "image": "/asset/products/sw8.png"
+    "image": "/asset/products/sw8.png",
+    "published": false
   },
   {
     "id": "sw9",
@@ -499,7 +527,8 @@
     "price": 14.0,
     "decoration": "promo",
     "fulfillment": "vendor",
-    "image": "/asset/products/sw9.png"
+    "image": "/asset/products/sw9.png",
+    "published": false
   },
   {
     "id": "sw10",
@@ -515,7 +544,8 @@
     "price": 13.0,
     "decoration": "promo",
     "fulfillment": "vendor",
-    "image": "/asset/products/sw10.png"
+    "image": "/asset/products/sw10.png",
+    "published": false
   },
   {
     "id": "sw11",
@@ -530,7 +560,8 @@
     "price": 8.0,
     "decoration": "promo",
     "fulfillment": "vendor",
-    "image": "/asset/products/sw11.png"
+    "image": "/asset/products/sw11.png",
+    "published": false
   },
   {
     "id": "sw12",
@@ -546,7 +577,8 @@
     "price": 3.5,
     "decoration": "promo",
     "fulfillment": "vendor",
-    "image": "/asset/products/sw12.png"
+    "image": "/asset/products/sw12.png",
+    "published": false
   },
   {
     "id": "sw13",
@@ -561,6 +593,7 @@
     "price": 5.0,
     "decoration": "promo",
     "fulfillment": "vendor",
-    "image": "/asset/products/sw13.png"
+    "image": "/asset/products/sw13.png",
+    "published": false
   }
 ]

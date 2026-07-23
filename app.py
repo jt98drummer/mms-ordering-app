@@ -8,7 +8,7 @@ M365 (Entra) sign-in gates the store; the signed-in role drives the swag rules.
 Run:  pip install -r requirements.txt && python app.py   (http://localhost:8000)
 Modes (env GELATO_MODE): dry | draft | live
 """
-import os, json, csv, time, datetime, hmac, hashlib
+import os, json, csv, time, datetime, hmac, hashlib, re
 from flask import (Flask, render_template, request, jsonify, send_from_directory,
                    abort, Response, redirect, session)
 import config, gelato, printful, catalog, card_render, auth, graph, stripe_pay, branding
@@ -21,13 +21,28 @@ for d in (config.FILES_DIR, config.OUTBOX_DIR, config.PENDING_DIR):
 ORDER_LOG = os.path.join(config.BASE_DIR, "orders.csv")
 SWAG = json.load(open(os.path.join(config.BASE_DIR, "swag_catalog.json")))
 SWAG_BY_ID = {s["id"]: s for s in SWAG}
-# precompute the storefront's per-colour logo choices + colour chips so the
-# swag grid can offer a colour-aware logo picker with a live swatch preview
+# precompute the per-colour logo choices, colour chips, and the pre-rendered
+# colour x logo mockup image map so the product page can preview any combination.
+_VAR_DIR = os.path.join(config.ASSET_DIR, "products", "variants")
+
+def _slug(s):
+    return re.sub(r"[^a-z0-9]+", "-", (s or "").lower()).strip("-")
+
 for _s in SWAG:
     _cols = _s.get("colors", [])
     _s["logo_by_color"] = {c: branding.logo_options(c) for c in _cols}
     _s["logo_default"] = {c: branding.default_logo(c) for c in _cols}
     _s["color_hex"] = {c: branding.color_hex(c) for c in _cols}
+    _iv = {}
+    for _c in _cols:
+        _m = {}
+        for _lk in branding.logo_options(_c):
+            _fn = "%s__%s__%s.png" % (_s["id"], _slug(_c), _lk)
+            if os.path.exists(os.path.join(_VAR_DIR, _fn)):
+                _m[_lk] = "/asset/products/variants/" + _fn
+        if _m:
+            _iv[_c] = _m
+    _s["img_variants"] = _iv
 
 
 @app.context_processor
@@ -313,7 +328,16 @@ def flyers_redirect():
 @app.route("/swag")
 @auth.login_required
 def swag():
-    return render_template("swag.html", swag_json=json.dumps(SWAG), show_cart=True)
+    published = [s for s in SWAG if s.get("published")]
+    return render_template("swag.html", swag_json=json.dumps(published), show_cart=True)
+
+@app.route("/swag/product/<pid>")
+@auth.login_required
+def swag_product(pid):
+    it = SWAG_BY_ID.get(pid)
+    if not it or not it.get("published"):
+        abort(404)
+    return render_template("product.html", item=it, item_json=json.dumps(it), show_cart=True)
 
 @app.route("/cart")
 @auth.login_required

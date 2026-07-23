@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}{{ item.name }} - MMS{% endblock %}
+{% block content %}
+<style>
+  .pdp{max-width:1080px;margin:14px auto;padding:0 18px;display:grid;grid-template-columns:1fr 1fr;gap:34px}
+  @media(max-width:820px){.pdp{grid-template-columns:1fr;gap:20px}}
+  .pdp-media{background:#eef1f5;border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative;aspect-ratio:1/1}
+  .pdp-media img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;transition:opacity .12s}
+  .pdp-name{font-size:26px;font-weight:800;color:var(--navy);margin:2px 0 4px;line-height:1.15}
+  .pdp-sub{color:var(--muted);font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  .pdp-price{color:#c8102e;font-weight:800;font-size:20px;margin:10px 0 6px}
+  .pdp-desc{color:#4a5763;font-size:14px;line-height:1.55;margin:0 0 18px}
+  .pf{margin:0 0 16px}
+  .pf > label{display:block;font-weight:800;color:var(--navy);font-size:12.5px;margin-bottom:8px}
+  .pf .cur{color:var(--muted);font-weight:600}
+  .swrow{display:flex;flex-wrap:wrap;gap:9px}
+  .chip{cursor:pointer;border:2px solid var(--line);border-radius:10px;background:#fff;padding:0;transition:.14s}
+  .chip.sel{border-color:var(--navy);box-shadow:0 0 0 2px rgba(30,45,59,.12)}
+  .cc{width:40px;height:40px;border-radius:8px;display:block}
+  .lchip{display:flex;align-items:center;gap:8px;padding:7px 11px;font-size:12.5px;font-weight:700;color:var(--navy)}
+  .lchip .lg{width:44px;height:28px;border-radius:5px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .lchip .lg img{max-width:86%;max-height:74%;object-fit:contain}
+  .szchip{min-width:44px;padding:9px 12px;font-weight:800;font-size:12.5px;color:var(--navy);text-align:center}
+  .szchip.sel{background:var(--navy);color:#fff}
+  .qtyrow{display:flex;align-items:center;gap:12px}
+  .qtyrow input{width:84px;padding:10px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit}
+  .addbtn{background:var(--navy);color:#fff;border:0;border-radius:10px;padding:13px 22px;font-weight:800;font-size:14px;cursor:pointer}
+  .addbtn:hover{background:#16232f}
+</style>
+<div class="wrap">
+  <div class="subhead"><a href="/swag"><button class="back">&larr; All swag</button></a></div>
+  <div class="pdp">
+    <div class="pdp-media"><img id="mainImg" src="{{ item.image }}" alt="{{ item.name }}"></div>
+    <div class="pdp-info">
+      <div class="pdp-sub">{{ item.category }} &middot; {{ item.group }}</div>
+      <h1 class="pdp-name">{{ item.name }}</h1>
+      <div class="pdp-price">${{ '%.2f'|format(item.price) }} <span style="color:var(--muted);font-size:13px;font-weight:600">each</span></div>
+      {% if item.desc %}<p class="pdp-desc">{{ item.desc }}</p>{% endif %}
+
+      <div class="pf"><label>Color <span class="cur" id="colorName"></span></label><div class="swrow" id="colorRow"></div></div>
+      <div class="pf" id="sizeField"><label>Size</label><div class="swrow" id="sizeRow"></div></div>
+      <div class="pf"><label>Logo <span class="cur" id="logoName"></span></label><div class="swrow" id="logoRow"></div></div>
+      <div class="pf"><label>Quantity</label>
+        <div class="qtyrow"><input type="number" id="qty" min="1" value="1"><button class="addbtn" id="addBtn">Add to cart</button></div>
+      </div>
+      <div class="fineprint">Preview updates live with your color and logo choice. The item ships branded exactly as shown.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+const IT = {{ item_json|safe }};
+const BRAND = {{ brand_logos|tojson }};
+const st = {color: IT.colors[0], logo: null, size: (IT.sizes[0]||''), qty: 1};
+st.logo = (IT.logo_default && IT.logo_default[st.color]) || (IT.logo_by_color[st.color]||[])[0];
+
+function imgFor(color, logo){
+  const m = (IT.img_variants && IT.img_variants[color]) || {};
+  return m[logo] || m[(IT.logo_default && IT.logo_default[color])] || IT.image;
+}
+function setImg(){ const el=document.getElementById('mainImg'); el.style.opacity=.35; const u=imgFor(st.color,st.logo);
+  const pre=new Image(); pre.onload=()=>{el.src=u; el.style.opacity=1;}; pre.onerror=()=>{el.style.opacity=1;}; pre.src=u; }
+function renderColors(){
+  document.getElementById('colorName').textContent = st.color;
+  document.getElementById('colorRow').innerHTML = IT.colors.map(c=>
+    '<button class="chip'+(c===st.color?' sel':'')+'" title="'+c+'" onclick="pickColor(\''+c.replace(/'/g,"\\'")+'\')">'+
+    '<span class="cc" style="background:'+((IT.color_hex&&IT.color_hex[c])||'#8a9299')+'"></span></button>').join('');
+}
+function renderLogos(){
+  const opts = (IT.logo_by_color && IT.logo_by_color[st.color]) || [];
+  document.getElementById('logoName').textContent = BRAND[st.logo] ? BRAND[st.logo].label : '';
+  const chipBg=(IT.color_hex&&IT.color_hex[st.color])||'#8a9299';
+  document.getElementById('logoRow').innerHTML = opts.map(k=>
+    '<button class="chip'+(k===st.logo?' sel':'')+'" onclick="pickLogo(\''+k+'\')"><span class="lchip">'+
+    '<span class="lg" style="background:'+chipBg+'"><img src="'+(BRAND[k]?BRAND[k].path:'')+'"></span>'+
+    (BRAND[k]?BRAND[k].label:k)+'</span></button>').join('');
+}
+function renderSizes(){
+  const f=document.getElementById('sizeField');
+  if(!IT.sizes || !IT.sizes.length){ f.style.display='none'; return; }
+  f.style.display='block';
+  document.getElementById('sizeRow').innerHTML = IT.sizes.map(s=>
+    '<button class="chip szchip'+(s===st.size?' sel':'')+'" onclick="pickSize(\''+s+'\')">'+s+'</button>').join('');
+}
+function pickColor(c){ st.color=c; const opts=IT.logo_by_color[c]||[]; if(opts.indexOf(st.logo)<0) st.logo=(IT.logo_default[c]||opts[0]); renderColors(); renderLogos(); setImg(); }
+function pickLogo(l){ st.logo=l; renderLogos(); setImg(); }
+function pickSize(s){ st.size=s; renderSizes(); }
+document.getElementById('addBtn').onclick=function(){
+  const q=Math.max(1, parseInt(document.getElementById('qty').value,10)||1);
+  const label = BRAND[st.logo] ? BRAND[st.logo].label : '';
+  cartAdd({type:'swag', id:IT.id, name:IT.name, color:st.color, size:st.size, qty:q, price:IT.price,
+    icon:IT.icon, image:imgFor(st.color,st.logo), logo:st.logo, logoLabel:label, label:IT.name,
+    detail:q+' × '+st.color+(st.size?' · '+st.size:'')+(label?' · '+label:'')+' · $'+IT.price.toFixed(2)+' ea'});
+  toast('Added to cart'); setTimeout(()=>location.href='/cart', 500);
+};
+renderColors(); renderLogos(); renderSizes(); setImg();
+</script>{% endblock %}

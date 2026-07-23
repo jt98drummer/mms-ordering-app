@@ -73,6 +73,8 @@ def area_for(product_id, variant_id, placement):
 def placement_style(placement):
     if "chest_left" in placement:
         return "chest_left"
+    if placement == "default":
+        return "wrap"                       # mugs: full-wrap print area
     if placement.startswith("embroidery"):
         return "center"
     return "front"
@@ -84,11 +86,15 @@ def make_position(aw, ah, style):
         return None
     if style == "chest_left":
         w = int(aw * 0.34); left = int(aw * 0.10); top = int(ah * 0.12)
+    elif style == "wrap":                    # mug wrap: small + shifted onto the visible front
+        w = int(aw * 0.22); left = int(aw * 0.50); top = None
     elif style == "center":
         w = int(aw * 0.60); left = (aw - w) // 2; top = int(ah * 0.34)
     else:  # front / large
         w = int(aw * 0.64); left = (aw - w) // 2; top = int(ah * 0.24)
     h = int(w * 0.42)
+    if top is None:                          # centre vertically (wrap)
+        top = max(0, (ah - h) // 2)
     if top + h > ah:
         top = max(0, ah - h)
     if left + w > aw:
@@ -149,6 +155,31 @@ def generate(product_id, variant_id, placement, image_url, position=None, timeou
             return None, {"stage": "poll", "status": "failed", "data": d2}
         time.sleep(poll)
     return None, {"stage": "poll", "status": "timeout"}
+
+
+def generate_multi(product_id, variant_ids, placement, image_url, position=None, timeout=180, poll=3):
+    """One create-task for MANY variants sharing a logo/placement (batches under
+    the rate limit). Returns ({variant_id: mockup_url}, info)."""
+    _st, data = create_task(product_id, variant_ids, placement, image_url, position)
+    res = (data or {}).get("result") or {}
+    tk = res.get("task_key")
+    if not tk:
+        return {}, {"stage": "create", "status": _st, "data": data}
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        _s, d = get_task(tk)
+        r = (d or {}).get("result") or {}
+        status = r.get("status")
+        if status == "completed":
+            out = {}
+            for m in (r.get("mockups") or []):
+                for vid in (m.get("variant_ids") or []):
+                    out.setdefault(vid, m.get("mockup_url"))
+            return out, {"status": "completed", "n": len(out)}
+        if status == "failed":
+            return {}, {"stage": "poll", "status": "failed", "data": d}
+        time.sleep(poll)
+    return {}, {"stage": "poll", "status": "timeout"}
 
 
 def download(url, dest):

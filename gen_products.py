@@ -18,7 +18,7 @@ Usage:
   python gen_products.py printful    # only the Printful mockups (needs key)
   python gen_products.py catalog     # only (re)write the "image" field into the catalog
 """
-import os, sys, json
+import os, sys, json, re, shutil
 from PIL import Image, ImageDraw, ImageFilter
 
 APP = os.path.dirname(os.path.abspath(__file__))
@@ -29,6 +29,23 @@ CATALOG = os.path.join(APP, "swag_catalog.json")
 # raw.githubusercontent serves pushed repo assets even before Render redeploys.
 MOCKUP_LOGO_BASE = os.environ.get(
     "MOCKUP_LOGO_BASE", "https://raw.githubusercontent.com/jt98drummer/mms-ordering-app/main")
+VARDIR = os.path.join(OUT, "variants"); os.makedirs(VARDIR, exist_ok=True)
+
+
+def slug(s):
+    return re.sub(r"[^a-z0-9]+", "-", (s or "").lower()).strip("-")
+
+
+# Imagery-only Printful sources for the Gelato-fulfilled drinkware/bags, per display
+# colour -> (printful product_id, variant_id). Fulfillment stays Gelato; these just
+# give real, storefront-quality mockups. Mug White = plain white glossy (19); Navy =
+# white mug w/ dark-blue inside+handle (403). Tote Natural = Oyster, Navy = Black (367).
+MOCKUP_SRC = {
+    "sw2": {"White": (19, 1320), "Navy": (403, 17362)},
+    "sw4": {"Natural": (367, 10458), "Navy": (367, 10457)},
+}
+# storefront items that are real + linked (shown); everything else stays unpublished
+PUBLISHED = {"ap1", "ap2", "ap3", "ap8", "ap9", "ap10", "ap11", "sw2", "sw4"}
 
 
 def _load_env(path):
@@ -430,6 +447,68 @@ def build_printful(items, only_ids=None):
     print("printful: %d mockups downloaded" % done)
 
 
+def build_variants(items, only_ids=None):
+    """Pre-render a photoreal mockup for every colour x logo combo of the
+    PUBLISHED items -> assets/products/variants/<id>__<colour>__<logo>.png, plus
+    copy the default combo to the hero <id>.png. Batches one create-task per
+    (product, logo) to stay under the rate limit. Apparel uses its Printful
+    product; the Gelato mug/tote use imagery-only Printful sources (MOCKUP_SRC)."""
+    import time
+    import config, printful, printful_mockups as pm
+    if not config.PRINTFUL_API_KEY:
+        print("variants: PRINTFUL_API_KEY not set (.env) — skipping."); return
+    sid = config.PRINTFUL_STORE_ID or printful.store_id()
+    if sid:
+        config.PRINTFUL_STORE_ID = sid
+    print("variants: store id = %s" % (sid or "(none)"))
+    targets = [it for it in items if it["id"] in PUBLISHED
+               and (only_ids is None or it["id"] in only_ids)]
+    made = 0
+    for it in targets:
+        iid = it["id"]; colors = it.get("colors", [])
+        cv = {}                                   # display colour -> (product_id, variant_id)
+        if it.get("fulfillment") == "printful":
+            pid = it["printful"]["product_id"]; cmap = it["printful"].get("color_map", {})
+            if str(pid) not in printful._variant_cache:
+                _s, vd = pm._req("GET", "/products/%s" % pid)
+                printful._variant_cache[str(pid)] = ((vd or {}).get("result") or {}).get("variants") or []
+            size = None if it.get("category") == "Headwear" else ("L" if it.get("sizes") else "OSFA")
+            for col in colors:
+                cv[col] = (pid, printful.resolve_variant(pid, cmap.get(col, col), size))
+        elif iid in MOCKUP_SRC:
+            cv = dict(MOCKUP_SRC[iid])
+        emb = it.get("decoration") == "embroidery" and it.get("category") not in ("Headwear",)
+        groups = {}                               # (product_id, logo) -> [(colour, variant_id)]
+        for col, (pid, vid) in cv.items():
+            if not vid:
+                print("  %s/%s: no variant — skipped" % (iid, col)); continue
+            for lk in branding.logo_options(col):
+                groups.setdefault((pid, lk), []).append((col, vid))
+        for (pid, lk), colvids in groups.items():
+            placement = pm.choose_placement(pid, prefer_chest=emb)
+            vids = list({v for _, v in colvids})
+            aw, ah = pm.area_for(pid, vids[0], placement)
+            position = pm.make_position(aw, ah, pm.placement_style(placement))
+            logo_url = MOCKUP_LOGO_BASE.rstrip("/") + "/assets/print/" + branding.LOGOS[lk]["file"]
+            print("  %s: product %s logo %s placement %s vids %s ..." % (iid, pid, lk, placement, vids))
+            urlmap, info = pm.generate_multi(pid, vids, placement, logo_url, position=position)
+            if not urlmap:
+                print("    FAILED (%s)" % info); continue
+            for col, vid in colvids:
+                u = urlmap.get(vid)
+                if not u:
+                    print("    %s/%s: no mockup for variant %s" % (iid, col, vid)); continue
+                dest = os.path.join(VARDIR, "%s__%s__%s.png" % (iid, slug(col), lk))
+                pm.download(u, dest); flatten_file(dest); made += 1
+            time.sleep(3)                         # pace create-task calls
+        if colors:                                # hero = default colour x default logo
+            dc = colors[0]; dl = branding.default_logo(dc)
+            src = os.path.join(VARDIR, "%s__%s__%s.png" % (iid, slug(dc), dl))
+            if os.path.exists(src):
+                shutil.copyfile(src, os.path.join(OUT, iid + ".png"))
+    print("variants: generated %d combo images -> %s" % (made, VARDIR))
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     cmd = args[0] if args else "all"
@@ -439,6 +518,8 @@ if __name__ == "__main__":
         build_fallbacks(items, only_missing=(cmd == "all"))
     if cmd in ("all", "printful"):
         build_printful(items, only_ids=ids)
+    if cmd == "variants":
+        build_variants(items, only_ids=ids)
     if cmd == "flatten":
         n = 0
         for it in items:
