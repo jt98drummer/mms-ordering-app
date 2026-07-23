@@ -84,8 +84,8 @@ def make_position(aw, ah, style):
     """A file `position` box; Printful fits the logo into it, preserving aspect."""
     if not (aw and ah):
         return None
-    if style == "chest_left":
-        w = int(aw * 0.34); left = int(aw * 0.10); top = int(ah * 0.12)
+    if style == "chest_left":                # fill + centre the left-chest print zone
+        w = int(aw * 0.72); left = (aw - w) // 2; top = None
     elif style == "wrap":                    # mug wrap: small + shifted onto the visible front
         w = int(aw * 0.22); left = int(aw * 0.50); top = None
     elif style == "center":

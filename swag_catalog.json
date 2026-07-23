@@ -305,7 +305,6 @@
     "icon": "cap",
     "colors": [
       "Black",
-      "Charcoal",
       "Heather Grey"
     ],
     "sizes": [],
@@ -318,7 +317,6 @@
       "placement": "front",
       "color_map": {
         "Black": "Black",
-        "Charcoal": "Charcoal/Black",
         "Heather Grey": "Heather Grey / Black"
       },
       "product_id": 422

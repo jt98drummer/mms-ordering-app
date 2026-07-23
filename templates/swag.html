@@ -39,8 +39,8 @@
 {% block scripts %}
 <style>
   a.card2{text-decoration:none;color:inherit;cursor:pointer}
-  .cdots{display:flex;gap:5px;margin:9px 0 2px;flex-wrap:wrap}
-  .cdots .cdot{width:15px;height:15px;border-radius:50%;border:1px solid rgba(0,0,0,.18);display:inline-block}
+  .swcolors{position:static;display:flex;gap:5px;margin:9px 0 2px;flex-wrap:wrap}
+  .swcolors .swdot{position:static;width:15px;height:15px;border-radius:50%;border:1px solid rgba(0,0,0,.18);display:inline-block}
   .viewbtn{margin-top:auto;color:var(--navy);font-weight:800;font-size:12.5px;padding-top:10px}
   a.card2:hover .viewbtn{color:#c8102e}
 </style>
@@ -52,11 +52,11 @@ function cardHTML(it){
   const thumb = it.image
     ? '<div class="thumb"><img src="'+it.image+'" alt="'+it.name+'" loading="lazy" onerror="imgFallback(this,\''+it.icon+'\')"></div>'
     : '<div class="thumb icon">'+icon(it.icon)+'</div>';
-  const dots=(it.colors||[]).slice(0,6).map(c=>'<span class="cdot" title="'+c+'" style="background:'+((it.color_hex&&it.color_hex[c])||'#8a9299')+'"></span>').join('');
+  const dots=(it.colors||[]).slice(0,6).map(c=>'<span class="swdot" title="'+c+'" style="background:'+((it.color_hex&&it.color_hex[c])||'#8a9299')+'"></span>').join('');
   return '<a class="card2" href="/swag/product/'+it.id+'">'+thumb+
     '<div class="m"><div class="badges"><span class="bdg cat">'+it.category+'</span><span class="bdg type">'+it.group+'</span></div>'+
     '<div class="nm">'+it.name+'</div><div class="price">$'+it.price.toFixed(2)+' each</div>'+
-    '<div class="cdots">'+dots+'</div>'+
+    '<div class="swcolors">'+dots+'</div>'+
     '<div class="viewbtn">View &amp; customize &rarr;</div></div></a>';
 }
 function cats(){ const s=SWAG.filter(i=>G==='all'||i.group===G); return [...new Set(s.map(i=>i.category))]; }
