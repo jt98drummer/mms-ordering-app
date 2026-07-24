@@ -64,6 +64,11 @@ ROLE_CLAIM_MAP = {   # Entra App Role "value" -> our tier
 DEFAULT_ROLE = ROLE_EMPLOYEE
 DEV_ROLE     = _get("DEV_ROLE", ROLE_EMPLOYEE).lower()  # dev-mode default view
 
+# Emails allowed to PREVIEW other roles in production (a private toggle to verify
+# the non-FSE safety net). Only these signed-in users ever see or use it.
+ROLE_PREVIEW_EMAILS = set(e.strip().lower() for e in
+    _get("ROLE_PREVIEW_EMAILS", "jtomlin@mmsinconline.com").split(",") if e.strip())
+
 # --- Safety-net caps (all adjustable via env) ---
 DOC_MAX_QTY              = int(_get("DOC_MAX_QTY", "25"))          # sheets per document
 FSE_MGR_AUTO_APPROVE_USD = float(_get("FSE_MGR_AUTO_APPROVE_USD", "250"))

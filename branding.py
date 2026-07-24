@@ -22,11 +22,13 @@ LOGOS = {
     "icon_red":  {"file": "mms_icon_red.png",  "label": "Red MMS icon (no text)", "threads": ["#C8102E"]},
 }
 
-# logo options offered per garment tone (first = default/recommended)
+# logo options offered per garment tone (first = default/recommended).
+# Every option must CONTRAST the garment: red-script logos vanish on a red
+# garment, so a red tone only offers the all-white mark.
 OPTIONS = {
-    "light": ["red_black", "icon_red"],
-    "dark":  ["white", "red_white", "icon_red"],
-    "red":   ["white", "red_white"],
+    "light": ["red_black", "icon_red"],   # red/black on white/grey/natural
+    "dark":  ["white", "red_white", "icon_red"],  # white or red on navy/black/charcoal
+    "red":   ["white"],                   # only the all-white mark reads on red
 }
 
 # display colour -> hex chip (for the storefront swatch preview)

@@ -39,6 +39,15 @@
 <div class="modebar mode-{{mode}}">ORDER MODE: {{mode|upper}}
   {% if mode=='dry' %}- safe test, no order sent to Gelato{% elif mode=='draft' %}- creates a draft order in Gelato (not charged until confirmed){% else %}- LIVE: orders are charged &amp; printed{% endif %}
 </div>
+{% if user and user.can_preview %}
+<div style="background:#1e2d3b;color:#fff;padding:7px 14px;font-size:12.5px;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;font-family:Raleway,sans-serif">
+  <span style="opacity:.85">&#128065; Role preview <b style="opacity:.6;font-weight:700">(only you see this)</b> &middot; viewing as</span>
+  {% for r,lbl in [('fse','FSE'),('employee','Employee (non-FSE)'),('manager','Manager')] %}
+  <a href="/setrole/{{ r }}?next={{ request.path }}" style="padding:3px 12px;border-radius:20px;text-decoration:none;font-weight:800;{% if user.role==r %}background:#edcd1f;color:#1e2d3b{% else %}background:rgba(255,255,255,.15);color:#fff{% endif %}">{{ lbl }}</a>
+  {% endfor %}
+  {% if user.previewing %}<a href="/setrole/reset?next={{ request.path }}" style="padding:3px 12px;border-radius:20px;text-decoration:none;color:#ffd0d0;border:1px solid rgba(255,255,255,.3)">&#8635; Reset to my role ({{ (user.real_role or user.role)|upper }})</a>{% endif %}
+</div>
+{% endif %}
 
 {% block content %}{% endblock %}
 

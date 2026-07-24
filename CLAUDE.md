@@ -36,6 +36,7 @@ See `.env.example` for the full list. Key ones:
 - **Stripe (personal-card swag checkout — built):** `STRIPE_SECRET_KEY` (setting it turns the real charge ON; unset → personal card stays in demo mode), `STRIPE_WEBHOOK_SECRET` (`whsec_…`, required to trust the webhook), `STRIPE_PUBLISHABLE_KEY` (unused server-side — hosted Checkout). Test vs live is the key prefix (`sk_test_`/`sk_live_`); no separate mode flag. Webhook URL: `<PUBLIC_BASE_URL>/api/stripe/webhook`, event `checkout.session.completed`.
 - **Caps:** `FSE_MGR_AUTO_APPROVE_USD`=250, `EMPLOYEE_MAX_UNITS`=5, `EMPLOYEE_MAX_ORDER_USD`=150, `DOC_MAX_QTY`=25.
 - **`ADMIN_TOKEN`** (default `mms-discover`) gates the `/admin/*` diagnostic endpoints.
+- **`ROLE_PREVIEW_EMAILS`** (default `jtomlin@mmsinconline.com`) — comma-separated allowlist of signed-in users who get a **private role-preview toggle** (FSE / Employee / Manager) in the top bar to verify the non-FSE safety net. Gated on the real email; a session `role_override` drives `auth.current_user()`'s effective role only for these users (no-op for everyone else). Reset via `/setrole/reset`.
 
 ## How ordering + approvals work
 - **Cards / Documents:** checkout on their own page, company card only, receipt auto-emailed to `ACCOUNTING_EMAIL` via Microsoft Graph with orderer/qty/price/purpose/justification.

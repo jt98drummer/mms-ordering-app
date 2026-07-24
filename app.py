@@ -298,8 +298,21 @@ def logout():
 
 @app.route("/setrole/<role>")
 def setrole(role):
-    if not config.AUTH_ENABLED:                       # dev-only role preview
-        session["dev_role"] = role
+    # Role preview: allowed in DEV for anyone, and in PRODUCTION only for an
+    # allowlisted signed-in user (config.ROLE_PREVIEW_EMAILS) so they can verify
+    # the non-FSE safety net. Everyone else is a no-op.
+    role = (role or "").lower()
+    u = auth.current_user()
+    can = (not config.AUTH_ENABLED) or (u and u.get("can_preview"))
+    if can:
+        if role in ("reset", "clear", "off", "me"):
+            session.pop("role_override", None)
+            session.pop("dev_role", None)
+        elif role in (config.ROLE_MANAGER, config.ROLE_FSE, config.ROLE_EMPLOYEE):
+            if config.AUTH_ENABLED:
+                session["role_override"] = role
+            else:
+                session["dev_role"] = role
     return redirect(request.args.get("next") or "/swag")
 
 

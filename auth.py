@@ -39,16 +39,34 @@ def role_from_claims(claims):
     return config.DEFAULT_ROLE
 
 
+_ROLES = (config.ROLE_MANAGER, config.ROLE_FSE, config.ROLE_EMPLOYEE)
+
+
+def _apply_preview(u):
+    """If this signed-in user is allowlisted, let a session role-override drive
+    the effective role (a private toggle to verify the non-FSE safety net).
+    Gated on the REAL email, never on the (overridable) role. Returns a copy."""
+    u = dict(u)
+    u["can_preview"] = (u.get("email", "").strip().lower() in config.ROLE_PREVIEW_EMAILS)
+    ov = (session.get("role_override") or "").lower()
+    if u["can_preview"] and ov in _ROLES:
+        u["real_role"] = u.get("role")
+        u["role"] = ov
+        u["previewing"] = (ov != u["real_role"])
+    return u
+
+
 def current_user():
     u = session.get("user")
     if u:
-        return u
+        return _apply_preview(u)
     if not config.AUTH_ENABLED:                       # DEV fallback
         role = (session.get("dev_role") or config.DEV_ROLE).lower()
-        if role not in (config.ROLE_MANAGER, config.ROLE_FSE, config.ROLE_EMPLOYEE):
+        if role not in _ROLES:
             role = config.DEFAULT_ROLE
         return {"name": "Demo User", "email": config.NOTIFY_EMAIL, "initials": "DU",
-                "role": role, "manager_email": config.NOTIFY_EMAIL, "dev": True}
+                "role": role, "manager_email": config.NOTIFY_EMAIL, "dev": True,
+                "can_preview": True, "real_role": config.DEV_ROLE}
     return None
 
 
