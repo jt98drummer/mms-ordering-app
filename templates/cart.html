@@ -9,7 +9,7 @@
 {% block scripts %}<script>
 const ROLE='{{ user.role }}';
 const PRIV={{ 'true' if user.role in PRIVILEGED else 'false' }};
-const CAPS={units:{{ caps.emp_units }}, usd:{{ caps.emp_usd }}, fseUsd:{{ caps.fse_mgr_usd }}};
+const BUDGET={{ budget|tojson }};
 const STRIPE_ON={{ 'true' if stripe_enabled else 'false' }};
 let pm='company', ack=false;
 
@@ -29,14 +29,18 @@ function draw(){
   document.getElementById('ccount').textContent=c.length?c.length+' item type(s)':'';
   if(!c.length){ a.innerHTML='<div class="empty"><h3 style="color:#1e2d3b;margin:0 0 8px">Your cart is empty</h3><p style="margin:0 0 16px">The cart is just for swag &amp; apparel. Cards and documents check out on their own pages.</p><a class="btn" href="/swag">Back to swag</a></div>'; return; }
   const units=c.reduce((n,i)=>n+(i.qty||1),0), sub=c.reduce((s,i)=>s+(i.price||0)*(i.qty||1),0);
-  const overEmp = (units>CAPS.units||sub>CAPS.usd);
+  const unlimited = !BUDGET || BUDGET.unlimited;
+  const remaining = unlimited ? null : BUDGET.remaining;
+  const overBudget = (!unlimited) && (sub > remaining);
 
-  // payment option labels by role
-  const coDesc = PRIV
-    ? (sub>CAPS.fseUsd ? 'Over $'+CAPS.fseUsd+' - needs one approval, then places automatically' : 'Auto-approved (under $'+CAPS.fseUsd+') - places now, receipt to accounting')
-    : 'Sent to your manager for approval, then places automatically. Receipt to accounting.';
-  const empCapMsg = (!PRIV && overEmp)
-    ? '<div class="capwarn">This order is over the employee company-card limit ('+CAPS.units+' units / $'+CAPS.usd+'). Trim the cart, or switch to your personal card.</div>' : '';
+  // company-card description reflects the budget gate
+  const coDesc = unlimited
+    ? 'Places immediately &mdash; no budget limit. Receipt to accounting.'
+    : (overBudget
+        ? 'Over your remaining budget ($'+remaining.toFixed(2)+') &mdash; goes to your manager for one approval, then places automatically.'
+        : 'Within your budget ($'+remaining.toFixed(2)+' left) &mdash; places now, receipt to accounting.');
+  const empCapMsg = overBudget
+    ? '<div class="capwarn">This order ($'+sub.toFixed(2)+') exceeds your remaining swag budget ($'+remaining.toFixed(2)+'). It will go to your manager for approval &mdash; or use your personal card to skip the wait.</div>' : '';
   const selfDesc = STRIPE_ON
     ? 'Pay now by card on Stripe (secure) - <b>NOT reimbursable</b>, no approval needed'
     : 'Instant - <b>NOT reimbursable</b>, no approval needed';

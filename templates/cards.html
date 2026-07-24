@@ -19,7 +19,11 @@
         <button id="t_north" onclick="setTerr('north')">North &middot; MN/WI/Dakotas</button>
         <button id="t_both" onclick="setTerr('both')">Both &middot; N &amp; S</button></div>
         <div class="fineprint" id="terrNote"></div></div>
-      <div class="field"><label>Quantity</label><select id="c_qty"><option>250</option><option selected>500</option><option>1000</option></select></div>
+      {% if user.role == 'manager' %}{% set card_max = 0 %}{% elif user.role == 'fse' %}{% set card_max = caps.card_fse %}{% else %}{% set card_max = caps.card_emp %}{% endif %}
+      <div class="field"><label>Quantity <span class="fineprint" style="font-weight:600;color:#6b7884">({{ 'no limit for managers' if not card_max else 'max ' ~ card_max ~ ' for your role' }})</span></label>
+        <select id="c_qty">
+        {% for q in [25,50,100,250,500,1000,2500] %}{% if not card_max or q <= card_max %}<option{% if (card_max and q == card_max) or (not card_max and q == 500) %} selected{% endif %}>{{ q }}</option>{% endif %}{% endfor %}
+        </select></div>
 
       <div class="ctxbox">
         <h4>Order context <span class="req">*required</span></h4>

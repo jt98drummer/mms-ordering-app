@@ -5,10 +5,12 @@
   <div class="subhead"><a href="/"><button class="back">&larr; Hub</button></a>
     <h2>Swag &amp; Apparel</h2><span class="sub">MMS-branded gear</span></div>
 
-  {% if user.role in PRIVILEGED %}
-  <div class="rolehint fse"><b>{{ user.role|upper }} store.</b> You're set up for customer visits and trade shows: company-card orders under {{ '$%.0f'|format(caps.fse_mgr_usd) }} place immediately (receipt to accounting). Larger orders need one approval. Personal card is always available - not reimbursable.</div>
+  {% if user.role == 'manager' %}
+  <div class="rolehint fse"><b>MANAGER.</b> No budget or quantity limits &mdash; company-card orders place immediately. You also approve FSE/employee orders that would exceed their budget.</div>
+  {% elif user.role in PRIVILEGED %}
+  <div class="rolehint fse"><b>FSE store.</b> Company-card swag places immediately while you're within your budget (shown above). An order that would push you over goes to your manager for one approval. Personal card is always available &mdash; not reimbursable.</div>
   {% else %}
-  <div class="rolehint"><b>Employee store.</b> Company-card orders route to your manager for approval (capped at {{ caps.emp_units }} units / {{ '$%.0f'|format(caps.emp_usd) }}), then place automatically once approved. Prefer no wait? Use your personal card - not reimbursable, no limit.</div>
+  <div class="rolehint"><b>Employee store.</b> Company-card swag places immediately while you're within your budget (shown above). An order that would push you over goes to your manager for approval. Personal card is always available &mdash; not reimbursable.</div>
   {% endif %}
 
   <!-- shop by category -->

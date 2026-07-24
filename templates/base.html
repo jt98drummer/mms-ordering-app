@@ -48,6 +48,26 @@
   {% if user.previewing %}<a href="/setrole/reset?next={{ request.path }}" style="padding:3px 12px;border-radius:20px;text-decoration:none;color:#ffd0d0;border:1px solid rgba(255,255,255,.3)">&#8635; Reset to my role ({{ (user.real_role or user.role)|upper }})</a>{% endif %}
 </div>
 {% endif %}
+{% if show_cart and budget %}
+<div style="max-width:1080px;margin:14px auto 0;padding:12px 18px;border:1px solid var(--line);border-radius:12px;background:#fff;display:flex;gap:16px;align-items:center;flex-wrap:wrap;font-family:Raleway,sans-serif;box-shadow:var(--shadow-sm)">
+  {% if budget.unlimited %}
+  <div style="font-weight:800;color:#1e2d3b">&#128176; Swag budget</div>
+  <div style="color:#2f7a34;font-weight:700">Manager &middot; no budget limit &mdash; company-card orders place immediately.</div>
+  {% else %}
+  <div style="font-weight:800;color:#1e2d3b;white-space:nowrap">&#128176; Your swag budget</div>
+  <div style="flex:1;min-width:160px">
+    <div style="height:12px;border-radius:8px;background:#eef1f5;overflow:hidden">
+      <div style="height:100%;width:{{ budget.pct }}%;background:{{ '#c8102e' if budget.over else ('#e2a13a' if budget.pct>=80 else '#2f7a34') }}"></div>
+    </div>
+  </div>
+  <div style="white-space:nowrap;font-size:13px">
+    <b style="color:{{ '#c8102e' if budget.over else '#1e2d3b' }};font-size:15px">${{ '%.2f'|format(budget.remaining) }}</b>
+    <span style="color:#6b7884">of ${{ '%.0f'|format(budget.budget) }} left</span>
+    <span style="color:#6b7884">&middot; resets {{ budget.reset_h }}</span>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
 
 {% block content %}{% endblock %}
 

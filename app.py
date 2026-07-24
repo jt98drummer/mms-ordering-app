@@ -11,7 +11,7 @@ Modes (env GELATO_MODE): dry | draft | live
 import os, json, csv, time, datetime, hmac, hashlib, re
 from flask import (Flask, render_template, request, jsonify, send_from_directory,
                    abort, Response, redirect, session)
-import config, gelato, printful, catalog, card_render, auth, graph, stripe_pay, branding
+import config, gelato, printful, catalog, card_render, auth, graph, stripe_pay, branding, budget
 from card_engine import generate_card_pdf
 
 app = Flask(__name__)
@@ -47,17 +47,18 @@ for _s in SWAG:
 
 @app.context_processor
 def inject_globals():
+    u = auth.current_user()
     return {
         "mode": config.GELATO_MODE,
-        "user": auth.current_user(),
+        "user": u,
         "auth_enabled": config.AUTH_ENABLED,
         "stripe_enabled": config.STRIPE_ENABLED,
         "brand_logos": branding.client_logos(),
         "PRIVILEGED": list(config.PRIVILEGED_ROLES),
-        "caps": {"fse_mgr_usd": config.FSE_MGR_AUTO_APPROVE_USD,
-                 "emp_units": config.EMPLOYEE_MAX_UNITS,
-                 "emp_usd": config.EMPLOYEE_MAX_ORDER_USD,
-                 "doc_max": config.DOC_MAX_QTY},
+        "budget": budget.status(u),
+        "caps": {"doc_max": config.DOC_MAX_QTY,
+                 "card_emp": config.CARD_MAX_QTY_EMPLOYEE,
+                 "card_fse": config.CARD_MAX_QTY_FSE},
     }
 
 
@@ -400,6 +401,15 @@ def checkout_cards():
         return jsonify(ok=False, error="Please add at least a shipping address line 1 and city."), 400
     card = body.get("card", {})
     qty = int(card.get("qty", 250))
+    role = u.get("role", config.DEFAULT_ROLE)
+    card_max = (None if role == config.ROLE_MANAGER
+                else config.CARD_MAX_QTY_FSE if role == config.ROLE_FSE
+                else config.CARD_MAX_QTY_EMPLOYEE)
+    if qty < 1:
+        return jsonify(ok=False, error="Quantity must be at least 1."), 400
+    if card_max is not None and qty > card_max:
+        return jsonify(ok=False, error="Your role can order up to %d business cards per order. "
+                       "Please reduce the quantity." % card_max), 400
     oid = _oid("CARD")
     emp = {k: card.get(k, "") for k in ("name", "title", "email", "phone", "role", "territory")}
     pdf_name = oid + ".pdf"
@@ -528,37 +538,41 @@ def checkout_swag():
                        message="Order placed on your personal card. This is NOT reimbursable "
                                "and was not sent to accounting.")
 
-    # ---- company card ----
-    if role == config.ROLE_EMPLOYEE:
-        if units > config.EMPLOYEE_MAX_UNITS or total_val > config.EMPLOYEE_MAX_ORDER_USD:
-            return jsonify(ok=False,
-                           error="Employee company-card orders are capped at %d units and %s. "
-                                 "Reduce the order, or use your personal card."
-                                 % (config.EMPLOYEE_MAX_UNITS, _money(config.EMPLOYEE_MAX_ORDER_USD))), 400
-        need_approval = True
-    else:
-        need_approval = total_val > config.FSE_MGR_AUTO_APPROVE_USD
+    # ---- company card: budget-gated (manager = unlimited) ----
+    # Within the remaining budget places immediately; an order that would push
+    # the user over their 2-month budget goes to the manager for one approval.
+    cap = budget.budget_for(role)                 # None => manager / unlimited
+    remaining = None if cap is None else round(cap - budget.spent(u.get("email", "")), 2)
+    need_approval = (remaining is not None) and (total_val > remaining)
 
     order = _mk_order("Swag & Apparel", oid, u, "company", units, lines, ctx, ship, nm,
                       status=("pending" if need_approval else "placed"), total=_money(total_val))
     order["items"] = items
+    order["_total_usd"] = round(total_val, 2)     # numeric, for budget accrual on approval
 
     if need_approval:
         approver = config.ESCALATION_EMAIL if role == config.ROLE_MANAGER else \
             (u.get("manager_email") or config.NOTIFY_EMAIL)
         order["approver_pending"] = approver
+        order["over_budget"] = True
         _save_pending(order)
         sent, _ = _notify_approver(order, approver)
         _log(order)
         return jsonify(ok=True, order_id=oid, status="pending", approver=approver, notified=sent,
-                       message="Sent to %s for approval. The order places automatically once approved."
-                               % approver)
+                       message="This order is %s and would exceed your remaining swag budget (%s). "
+                               "Sent to %s for approval; it places automatically once approved."
+                               % (_money(total_val), _money(remaining), approver))
+    # within budget -> place now and accrue the spend
+    if cap is not None:
+        budget.add_spend(u.get("email", ""), total_val)
     _fulfill_swag(order)
     _send_receipt(order)
     _log(order)
+    left = "" if cap is None else " You have %s of your %s budget left." % (
+        _money(round(remaining - total_val, 2)), _money(cap))
     return jsonify(ok=True, order_id=oid, status="placed", receipt_to=config.ACCOUNTING_EMAIL,
                    receipt_sent=order.get("receipt_sent"),
-                   message="Approved automatically (under your limit). Receipt sent to accounting.")
+                   message="Placed within your budget. Receipt sent to accounting." + left)
 
 
 # ---------------- approvals (signed links from the approver email) ----------------
@@ -579,6 +593,9 @@ def approve(oid, sig):
         return _approval_page("Already processed", "Order %s is already %s." % (oid, o.get("status")), "#5b6b78")
     o["status"] = "placed"
     o["approver"] = o.get("approver_pending", "approver")
+    # accrue the approved spend against the requester's budget (company-card swag)
+    if o.get("payment") == "company" and o.get("_total_usd"):
+        budget.add_spend(o.get("orderer_email", ""), o.get("_total_usd"))
     _fulfill_swag(o)
     _send_receipt(o)
     _save_pending(o)

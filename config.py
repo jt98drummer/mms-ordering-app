@@ -71,9 +71,17 @@ ROLE_PREVIEW_EMAILS = set(e.strip().lower() for e in
 
 # --- Safety-net caps (all adjustable via env) ---
 DOC_MAX_QTY              = int(_get("DOC_MAX_QTY", "25"))          # sheets per document
-FSE_MGR_AUTO_APPROVE_USD = float(_get("FSE_MGR_AUTO_APPROVE_USD", "250"))
-EMPLOYEE_MAX_UNITS      = int(_get("EMPLOYEE_MAX_UNITS", "5"))
-EMPLOYEE_MAX_ORDER_USD  = float(_get("EMPLOYEE_MAX_ORDER_USD", "150"))
+
+# --- Swag budgets (company card, per 2-month period; see budget.py) ---
+# Spend accrues per user and gates checkout: within budget places immediately,
+# an order that would exceed it routes to the manager for approval. Managers are
+# unlimited. These replace the old per-order unit/$ caps.
+FSE_BUDGET_USD           = float(_get("FSE_BUDGET_USD", "250"))
+EMPLOYEE_BUDGET_USD      = float(_get("EMPLOYEE_BUDGET_USD", "100"))
+
+# --- Business-card quantity limits by role (manager = unlimited) ---
+CARD_MAX_QTY_EMPLOYEE    = int(_get("CARD_MAX_QTY_EMPLOYEE", "100"))
+CARD_MAX_QTY_FSE         = int(_get("CARD_MAX_QTY_FSE", "500"))
 
 # --- Archive / audit mirror ---
 ARCHIVE_EMAIL = _get("ARCHIVE_EMAIL", "")            # optional hidden BCC on every receipt (durable mail archive)
