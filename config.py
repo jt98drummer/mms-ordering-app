@@ -107,5 +107,13 @@ VENDOR_EMAIL = _get("VENDOR_EMAIL", "")
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 FILES_DIR  = os.path.join(BASE_DIR, "files")
 ASSET_DIR  = os.path.join(BASE_DIR, "assets")
-OUTBOX_DIR = os.path.join(BASE_DIR, "files", "outbox")
-PENDING_DIR = os.path.join(BASE_DIR, "files", "pending")
+OUTBOX_DIR = os.path.join(FILES_DIR, "outbox")
+
+# --- Durable data (budgets + pending approvals) ---
+# These must survive redeploys/spin-down for budgets and the approval flow to
+# work over a 2-month period. On Render's free tier the app filesystem is
+# EPHEMERAL, so point DATA_DIR at a mounted persistent disk (e.g. /var/data).
+# Defaults to FILES_DIR so local dev is unchanged.
+DATA_DIR    = _get("DATA_DIR", FILES_DIR)
+PENDING_DIR = os.path.join(DATA_DIR, "pending")
+BUDGET_STORE = _get("BUDGET_STORE", os.path.join(DATA_DIR, "budgets.json"))

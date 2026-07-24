@@ -21,7 +21,7 @@ import config
 _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
-STORE = os.environ.get("BUDGET_STORE", os.path.join(config.FILES_DIR, "budgets.json"))
+STORE = config.BUDGET_STORE   # resolves from DATA_DIR / BUDGET_STORE env (see config.py)
 
 
 def budget_for(role):
