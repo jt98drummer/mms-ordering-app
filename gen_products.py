@@ -484,7 +484,10 @@ def build_variants(items, only_ids=None):
                 print("  %s/%s: no variant — skipped" % (iid, col)); continue
             for lk in branding.logo_options(col):
                 groups.setdefault((pid, lk), []).append((col, vid))
+        only_logo = os.environ.get("MKLOGO")      # optional: regenerate just one logo variant
         for (pid, lk), colvids in groups.items():
+            if only_logo and lk != only_logo:
+                continue
             placement = pm.choose_placement(pid, prefer_chest=emb)
             vids = list({v for _, v in colvids})
             aw, ah = pm.area_for(pid, vids[0], placement)
