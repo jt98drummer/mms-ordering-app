@@ -67,8 +67,11 @@ function draw(){
 }
 function setPm(v){ pm=v; document.getElementById('ackWrap').style.display=(v==='personal')?'block':'none'; psel(); }
 function psel(){ const a=document.getElementById('payCo'),b=document.getElementById('paySelf'); if(a&&b){a.classList.toggle('sel',pm==='company');b.classList.toggle('sel',pm==='personal');} }
-function rm(i){ const c=cartGet(); const sw=swagItems()[i]; const idx=c.indexOf(sw); if(idx>-1)c.splice(idx,1); cartSave(c); draw(); }
-function chg(i,d){ const c=cartGet(); const sw=swagItems()[i]; const idx=c.indexOf(sw); if(idx<0)return;
+// map the i-th swag row to its real index in the full cart (cartGet() re-parses
+// localStorage each call, so we must resolve the index within ONE array)
+function swagIndex(c,i){ const idxs=[]; c.forEach((it,ix)=>{ if(it.type==='swag') idxs.push(ix); }); return idxs[i]; }
+function rm(i){ const c=cartGet(); const idx=swagIndex(c,i); if(idx==null) return; c.splice(idx,1); cartSave(c); draw(); }
+function chg(i,d){ const c=cartGet(); const idx=swagIndex(c,i); if(idx==null) return;
   c[idx].qty=Math.max(1,(c[idx].qty||1)+d); if(c[idx].detail){c[idx].detail=c[idx].detail.replace(/^\d+/,c[idx].qty);} cartSave(c); draw(); }
 function modal(t,b){ document.getElementById('mTitle').textContent=t; document.getElementById('mBody').innerHTML=b; document.getElementById('modalBg').classList.add('show'); }
 async function checkout(){
