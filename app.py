@@ -723,6 +723,40 @@ def admin_printful():
     return jsonify(status=status, what=what, data=data)
 
 
+@app.route("/admin/budget")
+def admin_budget():
+    """Diagnostic: confirm WHERE budgets persist on the live server + that the
+    location is writable (i.e. the persistent disk is mounted). Token-gated.
+    Reports paths/counts only; pass &detail=1 to include per-user spend."""
+    if request.args.get("token") != os.environ.get("ADMIN_TOKEN", "mms-discover"):
+        abort(403)
+    import budget
+    store = budget.STORE
+    d = os.path.dirname(store) or "."
+    writable, probe_error = False, ""
+    try:                                          # prove the live filesystem is writable
+        os.makedirs(d, exist_ok=True)
+        probe = os.path.join(d, ".probe")
+        with open(probe, "w") as f:
+            f.write("ok")
+        os.remove(probe)
+        writable = True
+    except Exception as e:
+        probe_error = str(e)
+    data = budget._load()
+    on_disk = config.DATA_DIR not in (config.FILES_DIR,) and not store.replace("\\", "/").endswith("files/budgets.json")
+    out = {"data_dir": config.DATA_DIR, "budget_store": store,
+           "store_dir_writable": writable, "probe_error": probe_error,
+           "store_file_exists": os.path.exists(store),
+           "looks_persistent": bool(on_disk),
+           "current_period": budget.period_key(), "resets": budget.reset_human(),
+           "users_tracked": len(data),
+           "fse_budget": config.FSE_BUDGET_USD, "employee_budget": config.EMPLOYEE_BUDGET_USD}
+    if request.args.get("detail") == "1":
+        out["spend"] = data                        # per-email → period → $ (sensitive)
+    return jsonify(**out)
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     print("MMS Material Ordering Hub | mode=%s | auth=%s | base=%s"
