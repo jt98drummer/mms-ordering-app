@@ -40,7 +40,8 @@
         "height": 370,
         "top": 415,
         "left": 30
-      }
+      },
+      "thread_option": "thread_colors_chest_left"
     },
     "image": "/asset/products/ap1.png",
     "published": true,
@@ -90,7 +91,8 @@
         "height": 370,
         "top": 415,
         "left": 30
-      }
+      },
+      "thread_option": "thread_colors_chest_left"
     },
     "image": "/asset/products/ap2.png",
     "published": true,
@@ -373,7 +375,8 @@
         "height": 575,
         "top": 12,
         "left": 0
-      }
+      },
+      "thread_option": "thread_colors_front_large"
     },
     "image": "/asset/products/ap10.png",
     "published": true,
@@ -414,7 +417,8 @@
         "height": 488,
         "top": 18,
         "left": 0
-      }
+      },
+      "thread_option": "thread_colors"
     },
     "image": "/asset/products/ap11.png",
     "published": true,

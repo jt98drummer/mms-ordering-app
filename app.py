@@ -239,7 +239,11 @@ def _fulfill_swag(order):
                     f["position"] = pf["print_position"]
                 it_item = {"variant_id": vid, "quantity": int(i.get("qty", 1)), "files": [f]}
                 if SWAG_BY_ID.get(i.get("id"), {}).get("decoration") == "embroidery":
-                    it_item["options"] = [{"id": "thread_colors", "value": branding.threads(logo_key)}]
+                    # The option id is PLACEMENT-specific (thread_colors_chest_left,
+                    # thread_colors_front_large, ...) and the value must come from
+                    # Printful's fixed thread palette — either wrong is a hard 400.
+                    it_item["options"] = [{"id": pf.get("thread_option") or "thread_colors",
+                                           "value": branding.printful_threads(logo_key)}]
                 pf_items.append(it_item)
         if pf_items:
             sh = order.get("_ship", {})

@@ -75,8 +75,16 @@ for iid, item in sorted(CAT.items()):
                   not (branding.tone(color) == "red" and logo != "white"))
             if item.get("decoration") == "embroidery":
                 opts = {o["id"]: o["value"] for o in captured[0].get("options", [])}
-                check(tag + " thread colours match the logo",
-                      opts.get("thread_colors") == branding.threads(logo))
+                want_id = pf.get("thread_option") or "thread_colors"
+                # the option id is placement-specific; a wrong id is a hard 400
+                check(tag + " uses the product's thread option id",
+                      want_id in opts, "%r not in %r" % (want_id, list(opts)))
+                # values must be from Printful's fixed palette (brand red is not)
+                check(tag + " thread colours are orderable + match the logo",
+                      opts.get(want_id) == branding.printful_threads(logo),
+                      "%r != %r" % (opts.get(want_id), branding.printful_threads(logo)))
+                check(tag + " no unorderable thread hex sent",
+                      all(v in branding.PRINTFUL_THREADS for v in (opts.get(want_id) or [])))
 
 print("\n" + ("ALL PRINT-ACCURACY CHECKS PASSED" if not FAILS else "FAILURES: %d" % len(FAILS)))
 sys.exit(1 if FAILS else 0)

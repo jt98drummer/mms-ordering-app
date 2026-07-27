@@ -70,6 +70,29 @@ def area_for(product_id, variant_id, placement):
     return (pfs[0].get("width"), pfs[0].get("height")) if pfs else (None, None)
 
 
+def thread_option_for(product_id, placement):
+    """The embroidery thread option id this product expects FOR THIS PLACEMENT.
+
+    Printful namespaces the option per placement — `thread_colors_chest_left`,
+    `thread_colors_front_large`, or plain `thread_colors`. Sending the wrong id
+    is a hard 400 ("option is missing or incorrect"), so read it from the
+    catalog rather than guessing.
+    """
+    st, data = _req("GET", "/products/%s" % product_id)
+    prod = ((data or {}).get("result") or {}).get("product") or {}
+    ids = [o.get("id") for o in (prod.get("options") or []) if o.get("id")]
+    thread_ids = [i for i in ids if i.startswith("thread_colors") and "_3d" not in i]
+    if not thread_ids:
+        return None
+    suffix = (placement or "").replace("embroidery_", "")
+    want = "thread_colors_" + suffix
+    if want in thread_ids:
+        return want
+    if "thread_colors" in thread_ids:
+        return "thread_colors"
+    return thread_ids[0]
+
+
 def print_spec(product_id, variant_id, prefer_chest=False):
     """THE single source of truth for how the MMS logo is placed on a product.
 

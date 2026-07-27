@@ -79,7 +79,39 @@ def label(key):
 
 
 def threads(key):
+    """Brand-accurate thread colours (used for display / vendor POs)."""
     return LOGOS.get(key, LOGOS["white"])["threads"]
+
+
+# Printful embroidery accepts ONLY this fixed thread palette (same list on every
+# embroidery product — verified via the catalog `options`). Our brand red
+# #C8102E is NOT orderable, so brand colours are snapped to the nearest thread.
+PRINTFUL_THREADS = ["#FFFFFF", "#000000", "#96A1A8", "#A67843", "#FFCC00",
+                    "#E25C27", "#CC3366", "#CC3333", "#660000", "#333366",
+                    "#005397", "#3399FF", "#6B5294", "#01784E", "#7BA35A"]
+
+
+def _rgb(h):
+    h = h.lstrip("#")
+    return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+
+
+def snap_thread(hex_color):
+    """Nearest orderable Printful thread to a brand colour (#C8102E -> #CC3333)."""
+    r, g, b = _rgb(hex_color)
+    return min(PRINTFUL_THREADS,
+               key=lambda t: sum((a - c) ** 2 for a, c in zip(_rgb(t), (r, g, b))))
+
+
+def printful_threads(key):
+    """Thread colours for a Printful ORDER — snapped to their allowed palette,
+    de-duplicated, order preserved. Sending an unlisted hex is a hard 400."""
+    out = []
+    for c in threads(key):
+        s = snap_thread(c)
+        if s not in out:
+            out.append(s)
+    return out
 
 
 def logo_path(key):

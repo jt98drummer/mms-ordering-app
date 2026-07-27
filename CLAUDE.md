@@ -64,7 +64,8 @@ Draft = orders appear in the Printful/Gelato dashboards for review; not produced
 ## Gotchas / lessons
 - **Manual deploy required** (auto-deploy off) — see above.
 - Printful catalog: `GET /products?limit=>100` returns HTTP 400; use a plain `GET /products` (returns all ~511). Variants: `GET /products/{id}`.
-- Embroidery order items need an `options: [{"id":"thread_colors","value":[...hex]}]`; DTG items don't (Printful auto-fills empty).
+- **Embroidery orders: the thread option id is PLACEMENT-SPECIFIC** — `thread_colors_chest_left` (polos), `thread_colors_front_large` (cap), plain `thread_colors` (beanie). Sending the generic id where a namespaced one is required is a hard 400 ("option is missing or incorrect"). Frozen per item as `printful.thread_option` by `gen_products.py printspec` (discovered via `printful_mockups.thread_option_for`).
+- **Printful accepts only a fixed 15-colour thread palette** (`branding.PRINTFUL_THREADS`). MMS brand red #C8102E is NOT orderable — `branding.printful_threads()` snaps it to the nearest allowed thread (#CC3333). Sending an unlisted hex is a hard 400.
 - **`resolve_variant()` must match colours exact-first.** Printful has two-tone colours ("Heather Grey / Black", "Black / Charcoal"). A loose substring match in the WRONG direction (variant colour inside the request) once made the variant "Black" satisfy "Heather Grey / Black" — i.e. ship the wrong-colour cap. Order: exact → alias → request-substring-of-variant only. Validate with the strict check (resolved variant's colour/size must equal what the catalog asked for).
 - Printful vs Gelato use different recipient shapes — see `printful.create_order()` and `gelato.build_order_payload()`.
 - `git` operations failed on the Cowork Windows-mounted folder; clone into a native path to work. (Not an issue in Claude Code on your machine.)

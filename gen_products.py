@@ -541,6 +541,10 @@ def build_printspec(items):
             print("  %s: no spec — skipped" % it["id"]); continue
         pf["print_placement"] = placement
         pf["print_position"] = position
+        if it.get("decoration") == "embroidery":
+            opt = pm.thread_option_for(pid, placement)
+            if opt:
+                pf["thread_option"] = opt          # placement-specific option id
         n += 1
         print("  %s: %s  w=%s h=%s top=%s left=%s (area %sx%s)" % (
             it["id"], placement, position["width"], position["height"],
