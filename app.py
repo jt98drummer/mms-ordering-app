@@ -30,13 +30,13 @@ def _slug(s):
 
 for _s in SWAG:
     _cols = _s.get("colors", [])
-    _s["logo_by_color"] = {c: branding.logo_options(c) for c in _cols}
-    _s["logo_default"] = {c: branding.default_logo(c) for c in _cols}
-    _s["color_hex"] = {c: branding.color_hex(c) for c in _cols}
+    _s["logo_by_color"] = {c: branding.item_logo_options(_s, c) for c in _cols}
+    _s["logo_default"] = {c: branding.item_logo_options(_s, c)[0] for c in _cols}
+    _s["color_hex"] = {c: branding.item_hex(_s, c) for c in _cols}
     _iv = {}
     for _c in _cols:
         _m = {}
-        for _lk in branding.logo_options(_c):
+        for _lk in branding.item_logo_options(_s, _c):
             _fn = "%s__%s__%s.png" % (_s["id"], _slug(_c), _lk)
             if os.path.exists(os.path.join(_VAR_DIR, _fn)):
                 _m[_lk] = "/asset/products/variants/" + _fn
@@ -211,7 +211,7 @@ def _fulfill_swag(order):
     if groups["vendor"] and config.VENDOR_EMAIL:
         rows = "".join("<li>%s (%s%s) &mdash; logo: %s &times;%s</li>" % (
                        i.get("name",""), i.get("color",""), "/"+i["size"] if i.get("size") else "",
-                       branding.label(branding.valid_logo(i.get("color"), i.get("logo"))), i.get("qty",1))
+                       branding.label(branding.item_valid_logo(SWAG_BY_ID.get(i.get("id")), i.get("color"), i.get("logo"))), i.get("qty",1))
                        for i in groups["vendor"])
         html = ("<h3>MMS Swag PO - %s</h3><p>Please fulfill for <b>%s</b> &lt;%s&gt;:</p><ul>%s</ul>"
                 "<p>Ship to: %s<br>Purpose: %s / %s</p>"
@@ -224,7 +224,7 @@ def _fulfill_swag(order):
         for i in groups["printful"]:
             pf = SWAG_BY_ID.get(i.get("id"), {}).get("printful", {})
             pid = pf.get("product_id")
-            logo_key = branding.valid_logo(i.get("color"), i.get("logo"))
+            logo_key = branding.item_valid_logo(SWAG_BY_ID.get(i.get("id")), i.get("color"), i.get("logo"))
             color = (pf.get("color_map") or {}).get(i.get("color"), i.get("color"))
             vid = printful.resolve_variant(pid, color, i.get("size")) if pid else None
             if vid:
@@ -260,7 +260,7 @@ def _fulfill_swag(order):
             uid = (g.get("color_map") or {}).get(i.get("color")) or g.get("product_uid")
             if uid and uid != "TBD":
                 n += 1
-                logo_key = branding.valid_logo(i.get("color"), i.get("logo"))
+                logo_key = branding.item_valid_logo(SWAG_BY_ID.get(i.get("id")), i.get("color"), i.get("logo"))
                 g_items.append({"itemReferenceId": "%s-g%d" % (order["oid"], n), "productUid": uid,
                                 "files": [{"type": "default", "url": branding.logo_url(logo_key)}],
                                 "quantity": int(i.get("qty", 1))})
@@ -513,7 +513,7 @@ def _price_items(raw):
             "name": prod["name"],                       # catalog name
             "price": round(float(prod["price"]), 2),    # catalog price - the only source of truth
             "qty": qty, "color": color, "size": size,
-            "logo": branding.valid_logo(color, i.get("logo")),   # colour-appropriate logo
+            "logo": branding.item_valid_logo(prod, color, i.get("logo")),  # colour-appropriate
             "icon": prod.get("icon"), "image": prod.get("image"),
         })
     if not out:

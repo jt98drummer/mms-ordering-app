@@ -22,14 +22,22 @@ LOGOS = {
     "icon_red":  {"file": "mms_icon_red.png",  "label": "Red MMS icon (no text)", "threads": ["#C8102E"]},
 }
 
-# logo options offered per garment tone (first = default/recommended).
-# Every option must CONTRAST the garment: red-script logos vanish on a red
-# garment, so a red tone only offers the all-white mark.
-OPTIONS = {
-    "light": ["red_black", "icon_red"],   # red/black on white/grey/natural
-    "dark":  ["white", "red_white", "icon_red"],  # white or red on navy/black/charcoal
-    "red":   ["white"],                   # only the all-white mark reads on red
+# The ink colours each logo actually puts on the garment. A logo is only
+# offered when EVERY one of its inks contrasts the garment colour — that's why
+# the all-white mark is hidden on white, and the black wordmark on navy.
+LOGO_INKS = {
+    "red_black": ["#C8102E", "#000000"],
+    "red_white": ["#C8102E", "#FFFFFF"],
+    "white":     ["#FFFFFF"],
+    "icon_red":  ["#C8102E"],
 }
+# Minimum contrast ratio between an ink and the garment. Lower than the WCAG
+# 3:1 text rule on purpose: these are large, bold embroidered/printed marks on
+# fabric, not small screen text. 2.0 keeps red-on-navy (2.43) — which reads
+# well in the real mockups — while dropping white-on-heather-grey (1.84).
+MIN_CONTRAST = 2.0
+# Tie-break order when several logos contrast equally well.
+_PREFERENCE = ["white", "red_black", "red_white", "icon_red"]
 
 # display colour -> hex chip (for the storefront swatch preview)
 COLOR_HEX = {
@@ -61,17 +69,67 @@ def tone(color):
     return "dark"                            # navy/black/charcoal/forest/loden/orange...
 
 
-def logo_options(color):
-    return OPTIONS[tone(color)]
+def _srgb_lum(hex_color):
+    """WCAG relative luminance of a hex colour."""
+    h = hex_color.lstrip("#")
+    out = []
+    for i in (0, 2, 4):
+        c = int(h[i:i + 2], 16) / 255.0
+        out.append(c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4)
+    r, g, b = out
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
 
 
-def default_logo(color):
-    return logo_options(color)[0]
+def contrast_ratio(a, b):
+    la, lb = _srgb_lum(a), _srgb_lum(b)
+    hi, lo = max(la, lb), min(la, lb)
+    return (hi + 0.05) / (lo + 0.05)
 
 
-def valid_logo(color, key):
-    """The shopper's pick if it's allowed for this colour, else the default."""
-    return key if key in logo_options(color) else default_logo(color)
+def logo_contrast(color, key, hexcode=None):
+    """Weakest contrast between this logo's inks and the garment colour."""
+    bg = hexcode or color_hex(color)
+    return min(contrast_ratio(bg, ink) for ink in LOGO_INKS[key])
+
+
+def logo_options(color, hexcode=None):
+    """Every logo that genuinely contrasts this garment, strongest first.
+
+    ALWAYS pass the product's real colour hex when you have it: the same
+    display name is a different physical colour per product ("Grey" is
+    #5c5e5d on the UA polo but #cececc on the Bella tee), so deciding from
+    the display name alone would offer a white logo on a near-white garment.
+    """
+    scored = [(logo_contrast(color, k, hexcode), -_PREFERENCE.index(k), k) for k in LOGOS]
+    ok = [t for t in scored if t[0] >= MIN_CONTRAST]
+    if not ok:                                  # never leave an item unbrandable
+        ok = [max(scored)]
+    return [k for _c, _p, k in sorted(ok, reverse=True)]
+
+
+def default_logo(color, hexcode=None):
+    return logo_options(color, hexcode)[0]
+
+
+def valid_logo(color, key, hexcode=None):
+    """The shopper's pick if it's allowed for this colour, else the default.
+    Pass the product's real hex so this agrees with what the storefront showed."""
+    opts = logo_options(color, hexcode)
+    return key if key in opts else opts[0]
+
+
+def item_hex(item, color):
+    """Real garment hex for a catalog item + display colour (falls back to the
+    generic display-name map for non-Printful items)."""
+    return ((item or {}).get("color_hex") or {}).get(color) or color_hex(color)
+
+
+def item_logo_options(item, color):
+    return logo_options(color, item_hex(item, color))
+
+
+def item_valid_logo(item, color, key):
+    return valid_logo(color, key, item_hex(item, color))
 
 
 def label(key):

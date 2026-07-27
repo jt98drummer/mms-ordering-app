@@ -49,7 +49,7 @@ for iid, item in sorted(CAT.items()):
         continue
     pf = item["printful"]
     for color in item["colors"]:
-        for logo in branding.logo_options(color):
+        for logo in branding.item_logo_options(item, color):
             captured.clear()
             size = item["sizes"][len(item["sizes"]) // 2] if item.get("sizes") else ""
             app._fulfill_swag({
@@ -72,7 +72,8 @@ for iid, item in sorted(CAT.items()):
             check(tag + " logo file is the chosen variant",
                   f.get("url", "").endswith(branding.LOGOS[logo]["file"]))
             check(tag + " logo contrasts the garment",
-                  not (branding.tone(color) == "red" and logo != "white"))
+                  branding.logo_contrast(color, logo, branding.item_hex(item, color))
+                  >= branding.MIN_CONTRAST)
             if item.get("decoration") == "embroidery":
                 opts = {o["id"]: o["value"] for o in captured[0].get("options", [])}
                 want_id = pf.get("thread_option") or "thread_colors"

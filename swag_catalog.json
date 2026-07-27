@@ -45,7 +45,13 @@
     },
     "image": "/asset/products/ap1.png",
     "published": true,
-    "desc": "Moisture-wicking Under Armour Tech performance polo \u2014 a sharp, breathable layer for customer visits and trade shows. MMS embroidered on the left chest."
+    "desc": "Moisture-wicking Under Armour Tech performance polo \u2014 a sharp, breathable layer for customer visits and trade shows. MMS embroidered on the left chest.",
+    "color_hex": {
+      "Navy": "#222745",
+      "Black": "#1a1a1a",
+      "Grey": "#5c5e5d",
+      "White": "#ffffff"
+    }
   },
   {
     "id": "ap2",
@@ -96,7 +102,14 @@
     },
     "image": "/asset/products/ap2.png",
     "published": true,
-    "desc": "Classic Port Authority cotton-blend polo with a soft hand and clean drape. MMS embroidered on the left chest."
+    "desc": "Classic Port Authority cotton-blend polo with a soft hand and clean drape. MMS embroidered on the left chest.",
+    "color_hex": {
+      "Navy": "#223653",
+      "Black": "#0e0c0c",
+      "Grey": "#47525c",
+      "White": "#ffffff",
+      "Red": "#af0029"
+    }
   },
   {
     "id": "ap3",
@@ -146,7 +159,14 @@
     },
     "image": "/asset/products/ap3.png",
     "published": true,
-    "desc": "Bella+Canvas 3001 unisex tee \u2014 soft ringspun cotton built for everyday comfort. MMS printed on the front."
+    "desc": "Bella+Canvas 3001 unisex tee \u2014 soft ringspun cotton built for everyday comfort. MMS printed on the front.",
+    "color_hex": {
+      "Navy": "#212642",
+      "Black": "#0c0c0c",
+      "Grey": "#cececc",
+      "White": "#ffffff",
+      "Red": "#d0071e"
+    }
   },
   {
     "id": "ap4",
@@ -294,7 +314,13 @@
     },
     "image": "/asset/products/ap8.png",
     "published": true,
-    "desc": "Heavy-blend fleece pullover hoodie with a roomy front pouch pocket and drawstring hood. MMS printed on the front."
+    "desc": "Heavy-blend fleece pullover hoodie with a roomy front pouch pocket and drawstring hood. MMS printed on the front.",
+    "color_hex": {
+      "Navy": "#131928",
+      "Black": "#0b0b0b",
+      "Grey": "#9b969c",
+      "Red": "#da0a1a"
+    }
   },
   {
     "id": "ap9",
@@ -342,7 +368,13 @@
     },
     "image": "/asset/products/ap9.png",
     "published": true,
-    "desc": "Classic heavy-blend crewneck sweatshirt \u2014 warm, durable and no-fuss. MMS printed on the front."
+    "desc": "Classic heavy-blend crewneck sweatshirt \u2014 warm, durable and no-fuss. MMS printed on the front.",
+    "color_hex": {
+      "Navy": "#050c1d",
+      "Black": "#0b0b0b",
+      "Grey": "#ccccce",
+      "Red": "#da0a1a"
+    }
   },
   {
     "id": "ap10",
@@ -380,7 +412,11 @@
     },
     "image": "/asset/products/ap10.png",
     "published": true,
-    "desc": "Richardson 112 trucker cap \u2014 structured front panel, breathable mesh back, adjustable snapback. MMS embroidered on the front. One size fits most."
+    "desc": "Richardson 112 trucker cap \u2014 structured front panel, breathable mesh back, adjustable snapback. MMS embroidered on the front. One size fits most.",
+    "color_hex": {
+      "Black": "#000000",
+      "Heather Grey": "#afafb3"
+    }
   },
   {
     "id": "ap11",
@@ -422,7 +458,13 @@
     },
     "image": "/asset/products/ap11.png",
     "published": true,
-    "desc": "Cuffed knit beanie in a warm ribbed knit for cold job sites. MMS embroidered on the cuff. One size fits most."
+    "desc": "Cuffed knit beanie in a warm ribbed knit for cold job sites. MMS embroidered on the cuff. One size fits most.",
+    "color_hex": {
+      "Navy": "#000219",
+      "Black": "#020201",
+      "Heather Charcoal": "#212125",
+      "Heather Grey": "#dfdfd9"
+    }
   },
   {
     "id": "sw1",

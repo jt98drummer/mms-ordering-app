@@ -429,7 +429,7 @@ def build_printful(items, only_ids=None):
         # SAME spec the real order uses (printful_mockups.print_spec) so the
         # storefront image and the printed garment can never disagree.
         placement, position = pm.print_spec(pid, vid, prefer_chest=prefer_chest)
-        logo_key = branding.default_logo(color)
+        logo_key = branding.item_logo_options(it, color)[0]
         logo_url = MOCKUP_LOGO_BASE.rstrip("/") + "/assets/print/" + branding.LOGOS[logo_key]["file"]
         print("  %s: product %s variant %s color %s placement %s ..." %
               (it["id"], pid, vid, color, placement))
@@ -482,7 +482,7 @@ def build_variants(items, only_ids=None):
         for col, (pid, vid) in cv.items():
             if not vid:
                 print("  %s/%s: no variant — skipped" % (iid, col)); continue
-            for lk in branding.logo_options(col):
+            for lk in branding.item_logo_options(it, col):
                 groups.setdefault((pid, lk), []).append((col, vid))
         only_logo = os.environ.get("MKLOGO")      # optional: regenerate just one logo variant
         for (pid, lk), colvids in groups.items():
@@ -504,7 +504,7 @@ def build_variants(items, only_ids=None):
                 pm.download(u, dest); flatten_file(dest); made += 1
             time.sleep(3)                         # pace create-task calls
         if colors:                                # hero = default colour x default logo
-            dc = colors[0]; dl = branding.default_logo(dc)
+            dc = colors[0]; dl = branding.item_logo_options(it, dc)[0]
             src = os.path.join(VARDIR, "%s__%s__%s.png" % (iid, slug(dc), dl))
             if os.path.exists(src):
                 shutil.copyfile(src, os.path.join(OUT, iid + ".png"))
@@ -545,6 +545,20 @@ def build_printspec(items):
             opt = pm.thread_option_for(pid, placement)
             if opt:
                 pf["thread_option"] = opt          # placement-specific option id
+        # Freeze the REAL garment hex per display colour. The same name is a
+        # different physical colour per product ("Grey" = #5c5e5d on the UA
+        # polo, #cececc on the Bella tee), and the logo-contrast rules depend
+        # on the actual colour, not the label.
+        vs = printful._variant_cache.get(str(pid)) or []
+        hexes = {}
+        for disp in it.get("colors", []):
+            real = (pf.get("color_map") or {}).get(disp, disp)
+            v = next((x for x in vs
+                      if (x.get("color") or "").strip().lower() == real.strip().lower()), None)
+            if v and v.get("color_code"):
+                hexes[disp] = v["color_code"]
+        if hexes:
+            it["color_hex"] = hexes
         n += 1
         print("  %s: %s  w=%s h=%s top=%s left=%s (area %sx%s)" % (
             it["id"], placement, position["width"], position["height"],
