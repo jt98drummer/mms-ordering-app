@@ -15,7 +15,7 @@ Storage: a JSON file keyed by email -> period -> dollars spent.
   The rest of the app only touches spent()/add_spend()/status(), so the backing
   store can change without touching callers.
 """
-import os, json, datetime
+import os, json, time, datetime
 import config
 
 _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -66,11 +66,85 @@ def _load():
 
 
 def _save(d):
-    os.makedirs(os.path.dirname(STORE), exist_ok=True)
+    os.makedirs(os.path.dirname(STORE) or ".", exist_ok=True)
     tmp = STORE + ".tmp"
     with open(tmp, "w") as f:
         json.dump(d, f, indent=2)
-    os.replace(tmp, STORE)
+        f.flush()
+        os.fsync(f.fileno())          # money data: force to disk before swapping
+    os.replace(tmp, STORE)            # atomic replace - never a torn file
+
+
+# --- cross-process mutual exclusion -------------------------------------------------
+# Budget reads and writes must be atomic as a PAIR ("is there room?" then "take it"),
+# otherwise two concurrent orders can both pass the check and overspend. gunicorn runs
+# multiple workers, so an in-process lock isn't enough: take an OS-level lock on a file
+# next to the store. Render mounts one disk on one instance, so this is sufficient.
+_LOCK_PATH = STORE + ".lock"
+
+try:                                   # POSIX (Render/Linux)
+    import fcntl
+
+    class _FileLock(object):
+        def __enter__(self):
+            os.makedirs(os.path.dirname(_LOCK_PATH) or ".", exist_ok=True)
+            self.f = open(_LOCK_PATH, "a+")
+            fcntl.flock(self.f.fileno(), fcntl.LOCK_EX)
+            return self
+        def __exit__(self, *exc):
+            try:
+                fcntl.flock(self.f.fileno(), fcntl.LOCK_UN)
+            finally:
+                self.f.close()
+except ImportError:                    # Windows (local dev)
+    import msvcrt
+
+    class _FileLock(object):
+        def __enter__(self):
+            os.makedirs(os.path.dirname(_LOCK_PATH) or ".", exist_ok=True)
+            self.f = open(_LOCK_PATH, "a+")
+            while True:
+                try:
+                    msvcrt.locking(self.f.fileno(), msvcrt.LK_LOCK, 1)
+                    break
+                except OSError:
+                    time.sleep(0.05)
+            return self
+        def __exit__(self, *exc):
+            try:
+                self.f.seek(0)
+                msvcrt.locking(self.f.fileno(), msvcrt.LK_UNLCK, 1)
+            except OSError:
+                pass
+            finally:
+                self.f.close()
+
+
+def try_reserve(email, amount, cap, dt=None):
+    """Atomically check the budget and accrue in ONE locked step.
+
+    Returns (ok, remaining_before, remaining_after). ok is False (and nothing is
+    written) when the amount would exceed the remaining budget. cap=None means
+    unlimited (manager): nothing is ever recorded.
+
+    This is the ONLY safe way to spend budget - doing spent() then add_spend()
+    separately lets two concurrent orders both pass the check.
+    """
+    if cap is None:                                  # manager: no budget, no accrual
+        return True, None, None
+    e = (email or "").strip().lower()
+    amt = round(float(amount or 0), 2)
+    pk = period_key(dt)
+    with _FileLock():
+        d = _load()
+        cur = float(d.get(e, {}).get(pk, 0.0))
+        before = round(cap - cur, 2)
+        if amt > before + 1e-9:                      # tolerate float dust
+            return False, before, before
+        d.setdefault(e, {})
+        d[e][pk] = round(cur + amt, 2)
+        _save(d)
+        return True, before, round(cap - d[e][pk], 2)
 
 
 def spent(email, dt=None):
@@ -81,16 +155,35 @@ def spent(email, dt=None):
 
 
 def add_spend(email, amount, dt=None):
-    """Accrue spend for this user in the current period. Returns new total."""
+    """Unconditionally accrue spend (used when a manager APPROVES an over-budget
+    order — the approval is the authorisation, so it may exceed the cap).
+    Locked so it can't race another order's reserve. Returns the new total."""
     if not email or not amount:
         return spent(email, dt)
     e = email.strip().lower()
     pk = period_key(dt)
-    d = _load()
-    d.setdefault(e, {})
-    d[e][pk] = round(float(d[e].get(pk, 0.0)) + float(amount), 2)
-    _save(d)
-    return d[e][pk]
+    with _FileLock():
+        d = _load()
+        d.setdefault(e, {})
+        d[e][pk] = round(float(d[e].get(pk, 0.0)) + float(amount), 2)
+        _save(d)
+        return d[e][pk]
+
+
+def release(email, amount, cap=None, dt=None):
+    """Give back a reservation when an order fails after budget was taken.
+    Never drops below zero. No-op for managers (cap None => nothing reserved)."""
+    if cap is None or not email or not amount:
+        return
+    e = email.strip().lower()
+    pk = period_key(dt)
+    with _FileLock():
+        d = _load()
+        cur = float(d.get(e, {}).get(pk, 0.0))
+        d.setdefault(e, {})
+        d[e][pk] = round(max(0.0, cur - float(amount)), 2)
+        _save(d)
+        return d[e][pk]
 
 
 def status(user):

@@ -466,6 +466,49 @@ def checkout_documents():
                    gelato=None if ok else result)
 
 
+MAX_LINE_QTY = int(os.environ.get("SWAG_MAX_LINE_QTY", "500"))
+
+
+def _price_items(raw):
+    """Rebuild cart lines from the CATALOG (authoritative), ignoring any
+    client-supplied price/name. Returns (items, error). Every line must name a
+    real, published product with a valid colour/size and a sane quantity, so a
+    tampered or stale cart can never mis-charge a budget."""
+    out = []
+    for i in raw:
+        pid = (i.get("id") or "").strip()
+        prod = SWAG_BY_ID.get(pid)
+        if not prod or not prod.get("published"):
+            return None, "That item is no longer available. Please refresh the store and rebuild your cart."
+        try:
+            qty = int(i.get("qty", 1))
+        except (TypeError, ValueError):
+            return None, "Invalid quantity."
+        if qty < 1 or qty > MAX_LINE_QTY:
+            return None, "Quantity for %s must be between 1 and %d." % (prod["name"], MAX_LINE_QTY)
+        colors = prod.get("colors") or []
+        color = i.get("color")
+        if colors and color not in colors:
+            return None, "%s doesn't come in %s. Please pick an available colour." % (prod["name"], color)
+        sizes = prod.get("sizes") or []
+        size = i.get("size") or ""
+        if sizes and size not in sizes:
+            return None, "%s doesn't come in size %s." % (prod["name"], size or "(none)")
+        if not sizes:
+            size = ""
+        out.append({
+            "type": "swag", "id": pid,
+            "name": prod["name"],                       # catalog name
+            "price": round(float(prod["price"]), 2),    # catalog price - the only source of truth
+            "qty": qty, "color": color, "size": size,
+            "logo": branding.valid_logo(color, i.get("logo")),   # colour-appropriate logo
+            "icon": prod.get("icon"), "image": prod.get("image"),
+        })
+    if not out:
+        return None, "Your cart is empty."
+    return out, None
+
+
 # ---------------- checkout: SWAG/APPAREL (role-based, approval net) ----------------
 @app.route("/api/checkout/swag", methods=["POST"])
 @auth.login_required
@@ -484,17 +527,20 @@ def checkout_swag():
     if not ship["addressLine1"] or not ship["city"]:
         return jsonify(ok=False, error="Please add at least a shipping address line 1 and city."), 400
 
-    # normalise the chosen logo to one valid for the garment colour (so the
-    # receipt, approval and fulfillment all agree with what the shopper saw)
-    for i in items:
-        i["logo"] = branding.valid_logo(i.get("color"), i.get("logo"))
-    units = sum(int(i.get("qty", 1)) for i in items)
-    total_val = sum(float(i.get("price", 0)) * int(i.get("qty", 1)) for i in items)
-    lines = [{"desc": "%s (%s%s · %s)" % (i.get("name", ""), i.get("color", ""),
+    # ---- authoritative server-side pricing ----
+    # NEVER trust the client's price/name: money decisions (budget gating and
+    # accrual) must come from the catalog. Rebuild every line from
+    # swag_catalog.json by id, validating colour/size/qty; reject anything that
+    # doesn't match a real, published product.
+    items, err = _price_items(items)
+    if err:
+        return jsonify(ok=False, error=err), 400
+    units = sum(i["qty"] for i in items)
+    total_val = round(sum(i["price"] * i["qty"] for i in items), 2)
+    lines = [{"desc": "%s (%s%s · %s)" % (i["name"], i["color"],
                                           "/" + i["size"] if i.get("size") else "",
                                           branding.label(i.get("logo"))),
-              "qty": int(i.get("qty", 1)),
-              "line": _money(float(i.get("price", 0)) * int(i.get("qty", 1)))} for i in items]
+              "qty": i["qty"], "line": _money(i["price"] * i["qty"])} for i in items]
     oid = _oid("SWAG")
 
     # ---- personal card: no approval, no accounting receipt, must acknowledge ----
@@ -542,8 +588,10 @@ def checkout_swag():
     # Within the remaining budget places immediately; an order that would push
     # the user over their 2-month budget goes to the manager for one approval.
     cap = budget.budget_for(role)                 # None => manager / unlimited
-    remaining = None if cap is None else round(cap - budget.spent(u.get("email", "")), 2)
-    need_approval = (remaining is not None) and (total_val > remaining)
+    # Atomically check-and-reserve: if there's room the spend is recorded in the
+    # SAME locked step, so two concurrent orders can never both slip through.
+    reserved, remaining, left_after = budget.try_reserve(u.get("email", ""), total_val, cap)
+    need_approval = not reserved
 
     order = _mk_order("Swag & Apparel", oid, u, "company", units, lines, ctx, ship, nm,
                       status=("pending" if need_approval else "placed"), total=_money(total_val))
@@ -562,14 +610,20 @@ def checkout_swag():
                        message="This order is %s and would exceed your remaining swag budget (%s). "
                                "Sent to %s for approval; it places automatically once approved."
                                % (_money(total_val), _money(remaining), approver))
-    # within budget -> place now and accrue the spend
-    if cap is not None:
-        budget.add_spend(u.get("email", ""), total_val)
-    _fulfill_swag(order)
+    # within budget -> the spend was already reserved atomically above.
+    # If fulfillment blows up, release the reservation so the user isn't charged
+    # budget for an order that never happened.
+    try:
+        _fulfill_swag(order)
+    except Exception as e:
+        budget.release(u.get("email", ""), total_val, cap)
+        app.logger.exception("swag fulfillment failed for %s", oid)
+        return jsonify(ok=False, error="We couldn't submit your order to the printer. "
+                                       "Nothing was charged against your budget - please try again."), 502
     _send_receipt(order)
     _log(order)
     left = "" if cap is None else " You have %s of your %s budget left." % (
-        _money(round(remaining - total_val, 2)), _money(cap))
+        _money(left_after), _money(cap))
     return jsonify(ok=True, order_id=oid, status="placed", receipt_to=config.ACCOUNTING_EMAIL,
                    receipt_sent=order.get("receipt_sent"),
                    message="Placed within your budget. Receipt sent to accounting." + left)
