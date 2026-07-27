@@ -70,6 +70,21 @@ def area_for(product_id, variant_id, placement):
     return (pfs[0].get("width"), pfs[0].get("height")) if pfs else (None, None)
 
 
+def print_spec(product_id, variant_id, prefer_chest=False):
+    """THE single source of truth for how the MMS logo is placed on a product.
+
+    Returns (placement, position) — used both to render the storefront mockup
+    and to submit the real Printful order, so the preview and the printed
+    garment can never disagree. Frozen into swag_catalog.json by
+    `gen_products.py printspec` so ordering needs no API call.
+    """
+    placement = choose_placement(product_id, prefer_chest=prefer_chest)
+    if not placement:
+        return None, None
+    aw, ah = area_for(product_id, variant_id, placement)
+    return placement, make_position(aw, ah, placement_style(placement))
+
+
 def placement_style(placement):
     if "chest_left" in placement:
         return "chest_left"

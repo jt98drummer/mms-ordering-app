@@ -31,7 +31,16 @@
         "Grey": "Grey",
         "White": "White"
       },
-      "product_id": 766
+      "product_id": 766,
+      "print_placement": "embroidery_chest_left",
+      "print_position": {
+        "area_width": 1200,
+        "area_height": 1200,
+        "width": 1140,
+        "height": 478,
+        "top": 361,
+        "left": 30
+      }
     },
     "image": "/asset/products/ap1.png",
     "published": true,
@@ -72,7 +81,16 @@
         "White": "White",
         "Red": "Red"
       },
-      "product_id": 340
+      "product_id": 340,
+      "print_placement": "embroidery_chest_left",
+      "print_position": {
+        "area_width": 1200,
+        "area_height": 1200,
+        "width": 1140,
+        "height": 478,
+        "top": 361,
+        "left": 30
+      }
     },
     "image": "/asset/products/ap2.png",
     "published": true,
@@ -113,7 +131,16 @@
         "White": "White",
         "Red": "Red"
       },
-      "product_id": 71
+      "product_id": 71,
+      "print_placement": "front",
+      "print_position": {
+        "area_width": 1800,
+        "area_height": 2400,
+        "width": 1152,
+        "height": 483,
+        "top": 576,
+        "left": 324
+      }
     },
     "image": "/asset/products/ap3.png",
     "published": true,
@@ -252,7 +279,16 @@
         "Grey": "Sport Grey",
         "Red": "Red"
       },
-      "product_id": 146
+      "product_id": 146,
+      "print_placement": "front",
+      "print_position": {
+        "area_width": 2100,
+        "area_height": 2100,
+        "width": 1344,
+        "height": 564,
+        "top": 504,
+        "left": 378
+      }
     },
     "image": "/asset/products/ap8.png",
     "published": true,
@@ -291,7 +327,16 @@
         "Grey": "Sport Grey",
         "Red": "Red"
       },
-      "product_id": 145
+      "product_id": 145,
+      "print_placement": "front",
+      "print_position": {
+        "area_width": 1800,
+        "area_height": 2400,
+        "width": 1152,
+        "height": 483,
+        "top": 576,
+        "left": 324
+      }
     },
     "image": "/asset/products/ap9.png",
     "published": true,
@@ -319,7 +364,16 @@
         "Black": "Black",
         "Heather Grey": "Heather Grey / Black"
       },
-      "product_id": 422
+      "product_id": 422,
+      "print_placement": "embroidery_front_large",
+      "print_position": {
+        "area_width": 1770,
+        "area_height": 600,
+        "width": 1062,
+        "height": 446,
+        "top": 154,
+        "left": 354
+      }
     },
     "image": "/asset/products/ap10.png",
     "published": true,
@@ -351,7 +405,16 @@
         "Heather Charcoal": "Heather Charcoal",
         "Heather Grey": "Heather Grey"
       },
-      "product_id": 637
+      "product_id": 637,
+      "print_placement": "embroidery_front",
+      "print_position": {
+        "area_width": 1500,
+        "area_height": 525,
+        "width": 900,
+        "height": 378,
+        "top": 147,
+        "left": 300
+      }
     },
     "image": "/asset/products/ap11.png",
     "published": true,

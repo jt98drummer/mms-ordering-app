@@ -512,6 +512,43 @@ def build_variants(items, only_ids=None):
     print("variants: generated %d combo images -> %s" % (made, VARDIR))
 
 
+def build_printspec(items):
+    """Freeze each Printful item's print placement + position into the catalog so
+    the REAL ORDER prints exactly what the storefront mockup showed."""
+    import config, printful, printful_mockups as pm
+    if not config.PRINTFUL_API_KEY:
+        print("printspec: PRINTFUL_API_KEY not set — skipped."); return
+    config.PRINTFUL_STORE_ID = config.PRINTFUL_STORE_ID or printful.store_id()
+    n = 0
+    for it in items:
+        if it.get("fulfillment") != "printful":
+            continue
+        pf = it.get("printful") or {}
+        pid = pf.get("product_id")
+        if not pid:
+            continue
+        col = (it.get("colors") or ["Navy"])[0]
+        real = (pf.get("color_map") or {}).get(col, col)
+        size = None if not it.get("sizes") else it["sizes"][len(it["sizes"]) // 2]
+        if str(pid) not in printful._variant_cache:
+            _s, vd = pm._req("GET", "/products/%s" % pid)
+            printful._variant_cache[str(pid)] = ((vd or {}).get("result") or {}).get("variants") or []
+        vid = printful.resolve_variant(pid, real, size)
+        if not vid:
+            print("  %s: no variant — skipped" % it["id"]); continue
+        prefer = it.get("decoration") == "embroidery" and it.get("category") != "Headwear"
+        placement, position = pm.print_spec(pid, vid, prefer_chest=prefer)
+        if not placement or not position:
+            print("  %s: no spec — skipped" % it["id"]); continue
+        pf["print_placement"] = placement
+        pf["print_position"] = position
+        n += 1
+        print("  %s: %s  w=%s h=%s top=%s left=%s (area %sx%s)" % (
+            it["id"], placement, position["width"], position["height"],
+            position["top"], position["left"], position["area_width"], position["area_height"]))
+    print("printspec: wrote placement+position for %d items" % n)
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     cmd = args[0] if args else "all"
@@ -530,6 +567,8 @@ if __name__ == "__main__":
             if os.path.exists(p) and flatten_file(p):
                 n += 1
         print("flatten: normalized %d mockups" % n)
-    if cmd in ("all", "fallback", "catalog"):
+    if cmd in ("all", "printspec", "variants"):
+        build_printspec(items)
+    if cmd in ("all", "fallback", "catalog", "printspec", "variants"):
         update_catalog(items)
     print("done:", cmd)

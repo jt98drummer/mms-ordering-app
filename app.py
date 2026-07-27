@@ -228,8 +228,16 @@ def _fulfill_swag(order):
             color = (pf.get("color_map") or {}).get(i.get("color"), i.get("color"))
             vid = printful.resolve_variant(pid, color, i.get("size")) if pid else None
             if vid:
-                it_item = {"variant_id": vid, "quantity": int(i.get("qty", 1)),
-                           "files": [{"type": "default", "url": branding.logo_url(logo_key)}]}
+                # Use the SAME placement + position the storefront mockup was
+                # rendered with (frozen into the catalog by
+                # `gen_products.py printspec`), so the printed garment matches
+                # the preview. Without these Printful auto-fits the artwork to
+                # the whole print area — e.g. a 12" tee print vs the 7.7" shown.
+                f = {"type": pf.get("print_placement") or "default",
+                     "url": branding.logo_url(logo_key)}
+                if pf.get("print_position"):
+                    f["position"] = pf["print_position"]
+                it_item = {"variant_id": vid, "quantity": int(i.get("qty", 1)), "files": [f]}
                 if SWAG_BY_ID.get(i.get("id"), {}).get("decoration") == "embroidery":
                     it_item["options"] = [{"id": "thread_colors", "value": branding.threads(logo_key)}]
                 pf_items.append(it_item)
