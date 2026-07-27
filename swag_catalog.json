@@ -37,8 +37,8 @@
         "area_width": 1200,
         "area_height": 1200,
         "width": 1140,
-        "height": 478,
-        "top": 361,
+        "height": 370,
+        "top": 415,
         "left": 30
       }
     },
@@ -87,8 +87,8 @@
         "area_width": 1200,
         "area_height": 1200,
         "width": 1140,
-        "height": 478,
-        "top": 361,
+        "height": 370,
+        "top": 415,
         "left": 30
       }
     },
@@ -137,7 +137,7 @@
         "area_width": 1800,
         "area_height": 2400,
         "width": 1152,
-        "height": 483,
+        "height": 374,
         "top": 576,
         "left": 324
       }
@@ -285,7 +285,7 @@
         "area_width": 2100,
         "area_height": 2100,
         "width": 1344,
-        "height": 564,
+        "height": 437,
         "top": 504,
         "left": 378
       }
@@ -333,7 +333,7 @@
         "area_width": 1800,
         "area_height": 2400,
         "width": 1152,
-        "height": 483,
+        "height": 374,
         "top": 576,
         "left": 324
       }
@@ -361,7 +361,7 @@
       "file": "mms_logo.png",
       "placement": "front",
       "color_map": {
-        "Black": "Black",
+        "Black": "Black / Charcoal",
         "Heather Grey": "Heather Grey / Black"
       },
       "product_id": 422,
@@ -369,10 +369,10 @@
       "print_position": {
         "area_width": 1770,
         "area_height": 600,
-        "width": 1062,
-        "height": 446,
-        "top": 154,
-        "left": 354
+        "width": 1770,
+        "height": 575,
+        "top": 12,
+        "left": 0
       }
     },
     "image": "/asset/products/ap10.png",
@@ -410,10 +410,10 @@
       "print_position": {
         "area_width": 1500,
         "area_height": 525,
-        "width": 900,
-        "height": 378,
-        "top": 147,
-        "left": 300
+        "width": 1500,
+        "height": 488,
+        "top": 18,
+        "left": 0
       }
     },
     "image": "/asset/products/ap11.png",

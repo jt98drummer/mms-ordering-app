@@ -114,22 +114,40 @@ def _variants(product_id):
     return vs
 
 def resolve_variant(product_id, color, size):
-    """Return the Printful variant id for a product + color + size, or None."""
+    """Return the Printful variant id for a product + color + size, or None.
+
+    Matching is deliberately strict-first: EXACT colour, then a known alias,
+    then (last resort) a candidate that is a substring OF the variant colour.
+
+    ⚠️ Never match in the reverse direction (variant colour inside the
+    candidate). That once let the variant "Black" satisfy a request for
+    "Heather Grey / Black" — i.e. ship the wrong colour cap. Two-tone Printful
+    colours ("Heather Grey / Black", "Black / Charcoal") make that a real risk.
+    """
     if not product_id:
         return None
     vs = _variants(product_id)
+    if not vs:
+        return None
     c = (color or "").strip().lower()
     s = (size or "").strip().upper()
-    cands = [c] + COLOR_ALIASES.get(c, [])
-    for v in vs:
-        if (v.get("color") or "").strip().lower() in cands and (v.get("size") or "").strip().upper() == s:
+    # products whose variants all share one size (caps/beanies) ignore size
+    one_size = len({(v.get("size") or "").strip().upper() for v in vs}) <= 1
+
+    def size_ok(v):
+        if not s or one_size:
+            return True
+        return (v.get("size") or "").strip().upper() == s
+
+    cands = [x for x in ([c] + COLOR_ALIASES.get(c, [])) if x]
+    for v in vs:                                   # 1. exact colour
+        if (v.get("color") or "").strip().lower() == c and size_ok(v):
             return v.get("id")
-    for v in vs:  # looser contains match
-        vc = (v.get("color") or "").strip().lower()
-        if any(x and (x in vc or vc in x) for x in cands) and (v.get("size") or "").strip().upper() == s:
+    for v in vs:                                   # 2. known alias, exact
+        if (v.get("color") or "").strip().lower() in cands and size_ok(v):
             return v.get("id")
-    for v in vs:  # one-size items (caps/beanies): match color, ignore size
-        vc = (v.get("color") or "").strip().lower()
-        if any(x and (x in vc or vc in x) for x in cands):
-            return v.get("id")
+    for x in sorted(cands, key=len, reverse=True):  # 3. candidate inside variant colour
+        for v in vs:
+            if x in (v.get("color") or "").strip().lower() and size_ok(v):
+                return v.get("id")
     return None

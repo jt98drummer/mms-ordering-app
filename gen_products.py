@@ -426,13 +426,13 @@ def build_printful(items, only_ids=None):
             print("  %s: no variant at all — skipped" % it["id"])
             continue
         prefer_chest = it.get("decoration") == "embroidery" and it.get("category") not in ("Headwear",)
-        placement = pm.choose_placement(pid, prefer_chest=prefer_chest)
-        aw, ah = pm.area_for(pid, vid, placement)
-        position = pm.make_position(aw, ah, pm.placement_style(placement))
+        # SAME spec the real order uses (printful_mockups.print_spec) so the
+        # storefront image and the printed garment can never disagree.
+        placement, position = pm.print_spec(pid, vid, prefer_chest=prefer_chest)
         logo_key = branding.default_logo(color)
         logo_url = MOCKUP_LOGO_BASE.rstrip("/") + "/assets/print/" + branding.LOGOS[logo_key]["file"]
-        print("  %s: product %s variant %s color %s placement %s area %sx%s ..." %
-              (it["id"], pid, vid, color, placement, aw, ah))
+        print("  %s: product %s variant %s color %s placement %s ..." %
+              (it["id"], pid, vid, color, placement))
         url, info = pm.generate(pid, vid, placement, logo_url, position=position)
         if not url:
             print("  %s: mockup failed (%s)" % (it["id"], info))
@@ -488,10 +488,9 @@ def build_variants(items, only_ids=None):
         for (pid, lk), colvids in groups.items():
             if only_logo and lk != only_logo:
                 continue
-            placement = pm.choose_placement(pid, prefer_chest=emb)
             vids = list({v for _, v in colvids})
-            aw, ah = pm.area_for(pid, vids[0], placement)
-            position = pm.make_position(aw, ah, pm.placement_style(placement))
+            # SAME spec the real order uses — see printful_mockups.print_spec.
+            placement, position = pm.print_spec(pid, vids[0], prefer_chest=emb)
             logo_url = MOCKUP_LOGO_BASE.rstrip("/") + "/assets/print/" + branding.LOGOS[lk]["file"]
             print("  %s: product %s logo %s placement %s vids %s ..." % (iid, pid, lk, placement, vids))
             urlmap, info = pm.generate_multi(pid, vids, placement, logo_url, position=position)

@@ -95,25 +95,44 @@ def placement_style(placement):
     return "front"
 
 
+# True aspect ratio (w/h) of the MMS brand logo files in assets/print/.
+# The position box is sized from THIS so the box matches the artwork; Printful
+# fits the image inside the box, so a mismatched box would silently shrink it.
+LOGO_ASPECT = 4555.0 / 1482.0
+
+# How much of the print area's width the logo should occupy, per placement style.
+# 1.0 = fill the placement edge-to-edge (what Printful does by default).
+FILL = {
+    "chest_left": 0.95,   # left-chest embroidery: ~3.8" on a 4" area
+    "center":     1.00,   # cap / beanie front embroidery: fill the panel
+    "front":      0.64,   # DTG chest print: ~7.7" on a 12" area (not full-front)
+    "wrap":       0.22,   # mug wrap
+}
+# Vertical placement inside the area (fraction from top); None = centre.
+VPOS = {"chest_left": None, "center": None, "front": 0.24, "wrap": None}
+
+
 def make_position(aw, ah, style):
-    """A file `position` box; Printful fits the logo into it, preserving aspect."""
+    """Build a file `position` box sized to the logo's real aspect ratio.
+
+    Printful fits the artwork inside this box preserving aspect, so the box is
+    computed to match the logo exactly and is always clamped inside the print
+    area. Used for BOTH the storefront mockup and the real order (print_spec).
+    """
     if not (aw and ah):
         return None
-    if style == "chest_left":                # fill Printful's real left-chest print area
-        w = int(aw * 0.95); left = (aw - w) // 2; top = None
-    elif style == "wrap":                    # mug wrap: small + shifted onto the visible front
-        w = int(aw * 0.22); left = int(aw * 0.50); top = None
-    elif style == "center":
-        w = int(aw * 0.60); left = (aw - w) // 2; top = int(ah * 0.34)
-    else:  # front / large
-        w = int(aw * 0.64); left = (aw - w) // 2; top = int(ah * 0.24)
-    h = int(w * 0.42)
-    if top is None:                          # centre vertically (wrap)
-        top = max(0, (ah - h) // 2)
-    if top + h > ah:
-        top = max(0, ah - h)
-    if left + w > aw:
-        left = max(0, aw - w)
+    f = FILL.get(style, 0.64)
+    w = aw * f
+    h = w / LOGO_ASPECT
+    if h > ah:                                # too tall for the area -> fit by height
+        h = float(ah)
+        w = h * LOGO_ASPECT
+    w, h = int(w), int(h)
+    left = (aw - w) // 2
+    v = VPOS.get(style)
+    top = int(ah * v) if v is not None else (ah - h) // 2
+    top = max(0, min(top, ah - h))            # clamp inside the area
+    left = max(0, min(left, aw - w))
     return {"area_width": aw, "area_height": ah, "width": w, "height": h, "top": top, "left": left}
 
 
