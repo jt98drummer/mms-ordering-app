@@ -25,7 +25,31 @@ def vgrad(size, top, bot):
     return g.resize((w, h))
 
 
-def cutout(path, light=222, small=340):
+def script_logo():
+    """The official MMS script WITHOUT the tagline, in white (for the navy tile).
+
+    Crops assets/print/mms_white.png above the blank band that separates the
+    script from the 'MILLER MECHANICAL SPECIALTIES' wordmark, so we use the real
+    brand asset rather than typing 'MMS' in a font."""
+    im = Image.open(os.path.join(APP, "assets", "print", "mms_white.png")).convert("RGBA")
+    a = im.split()[3]; w, h = im.size; px = a.load()
+    rows = []
+    for y in range(h):
+        rows.append(any(px[x, y] > 40 for x in range(0, w, 4)))
+    gap_start, best, cur = None, None, None      # widest blank band in the lower half
+    for y in range(h):
+        if not rows[y]:
+            cur = y if cur is None else cur
+        elif cur is not None:
+            if cur > h * 0.4 and (best is None or (y - cur) > best[1] - best[0]):
+                best = (cur, y)
+            cur = None
+    cut = best[0] if best else h
+    out = im.crop((0, 0, w, cut))
+    return out.crop(out.split()[3].getbbox())
+
+
+def cutout(path, light=222, small=512):
     """Lift the product off its studio backdrop -> RGBA, tight-cropped.
 
     Flood-fills the LIGHT region inward from the borders, so the backdrop (which
@@ -75,7 +99,12 @@ def cutout(path, light=222, small=340):
         for x in range(small):
             if row[x]:
                 mp[x, y] = 0
-    m = m.resize(im.size, Image.LANCZOS).filter(ImageFilter.GaussianBlur(1.2))
+    m = m.resize(im.size, Image.LANCZOS)
+    # Pull the matte IN a couple of pixels then feather it. Without this the
+    # upscaled mask keeps a light rim of studio backdrop, which reads as a
+    # jagged white outline once the product sits on the dark tile.
+    m = m.filter(ImageFilter.MinFilter(5)).filter(ImageFilter.GaussianBlur(1.6))
+    m = m.point(lambda p: 0 if p < 90 else min(255, int((p - 90) * 255 / 130)))
     out = im.convert("RGBA"); out.putalpha(m)
     bbox = m.point(lambda p: 255 if p > 40 else 0).getbbox()
     return out.crop(bbox) if bbox else out
@@ -100,15 +129,29 @@ def build():
     ImageDraw.Draw(glow).ellipse([W - 470, -150, W + 150, 320], fill=(200, 16, 46, 70))
     base.alpha_composite(glow.filter(ImageFilter.GaussianBlur(75)))
 
+    # Real MMS script logo (no tagline), not typed text
+    lg = script_logo()
+    lw = 300
+    lg = lg.resize((lw, max(1, int(lg.height * lw / lg.width))), Image.LANCZOS)
+    base.alpha_composite(lg, (66, 150))
+
     d = ImageDraw.Draw(base)
-    d.text((66, 168), "MMS", font=ImageFont.truetype(FB, 84), fill=(255, 255, 255))
-    d.text((70, 278), "BRANDED APPAREL & SWAG", font=ImageFont.truetype(FB, 23), fill=GOLD)
+    # Auto-fit the strapline to the left column so it can never run under the
+    # product cluster (the products start around x=430).
+    label, maxw = "BRANDED APPAREL & SWAG", 408
+    size = 34
+    while size > 16:
+        fnt = ImageFont.truetype(FB, size)
+        if d.textlength(label, font=fnt) <= maxw:
+            break
+        size -= 1
+    d.text((70, 150 + lg.height + 22), label, font=fnt, fill=GOLD)
 
     # (file, centre x, centre y, height, rotation) - real store mockups
-    layout = [("ap3.png", 560, 258, 340, -3),    # tee
-              ("ap10.png", 762, 168, 150, 4),    # cap
-              ("ev4.png", 800, 330, 250, 0),     # tumbler
-              ("sw4.png", 918, 210, 190, 3)]     # tote
+    layout = [("ap3.png", 566, 258, 340, -3),    # tee
+              ("ap10.png", 768, 162, 152, 4),    # cap
+              ("ev4.png", 800, 336, 252, 0),     # insulated tumbler
+              ("ev7.png", 912, 232, 208, 4)]     # hardcover journal
     for fn, cx, cy, th, ang in layout:
         p = os.path.join(PROD, fn)
         if os.path.exists(p):

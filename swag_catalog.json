@@ -1059,7 +1059,7 @@
     "decoration": "print",
     "fulfillment": "printful",
     "image": "/asset/products/sw4.png",
-    "published": true,
+    "published": false,
     "desc": "Sturdy natural canvas tote with long handles for easy carrying. MMS printed on the front \u2014 a popular trade-show giveaway.",
     "printful": {
       "decoration": "print",
