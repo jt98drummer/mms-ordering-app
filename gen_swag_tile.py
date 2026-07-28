@@ -25,28 +25,16 @@ def vgrad(size, top, bot):
     return g.resize((w, h))
 
 
-def script_logo():
-    """The official MMS script WITHOUT the tagline, in white (for the navy tile).
+def brand_logo():
+    """The COMPLETE official MMS logo (script + 'MILLER MECHANICAL SPECIALTIES'),
+    all-white variant, for the navy tile.
 
-    Crops assets/print/mms_white.png above the blank band that separates the
-    script from the 'MILLER MECHANICAL SPECIALTIES' wordmark, so we use the real
-    brand asset rather than typing 'MMS' in a font."""
+    Used whole — only transparent margins are trimmed, never the artwork. The
+    script on its own is a very wide 4.66:1 lockup that reads as stretched at
+    tile scale; the full mark is 3.42:1 and balanced.
+    """
     im = Image.open(os.path.join(APP, "assets", "print", "mms_white.png")).convert("RGBA")
-    a = im.split()[3]; w, h = im.size; px = a.load()
-    rows = []
-    for y in range(h):
-        rows.append(any(px[x, y] > 40 for x in range(0, w, 4)))
-    gap_start, best, cur = None, None, None      # widest blank band in the lower half
-    for y in range(h):
-        if not rows[y]:
-            cur = y if cur is None else cur
-        elif cur is not None:
-            if cur > h * 0.4 and (best is None or (y - cur) > best[1] - best[0]):
-                best = (cur, y)
-            cur = None
-    cut = best[0] if best else h
-    out = im.crop((0, 0, w, cut))
-    return out.crop(out.split()[3].getbbox())
+    return im.crop(im.split()[3].getbbox())
 
 
 def cutout(path, light=222, small=512):
@@ -129,11 +117,12 @@ def build():
     ImageDraw.Draw(glow).ellipse([W - 470, -150, W + 150, 320], fill=(200, 16, 46, 70))
     base.alpha_composite(glow.filter(ImageFilter.GaussianBlur(75)))
 
-    # Real MMS script logo (no tagline), not typed text
-    lg = script_logo()
-    lw = 300
+    # The real, complete MMS logo (never typed text, never cropped)
+    lg = brand_logo()
+    lw = 330
     lg = lg.resize((lw, max(1, int(lg.height * lw / lg.width))), Image.LANCZOS)
-    base.alpha_composite(lg, (66, 150))
+    ly = 152
+    base.alpha_composite(lg, (66, ly))
 
     d = ImageDraw.Draw(base)
     # Auto-fit the strapline to the left column so it can never run under the
@@ -145,7 +134,7 @@ def build():
         if d.textlength(label, font=fnt) <= maxw:
             break
         size -= 1
-    d.text((70, 150 + lg.height + 22), label, font=fnt, fill=GOLD)
+    d.text((70, ly + lg.height + 20), label, font=fnt, fill=GOLD)
 
     # (file, centre x, centre y, height, rotation) - real store mockups
     layout = [("ap3.png", 566, 258, 340, -3),    # tee
