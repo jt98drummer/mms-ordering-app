@@ -3,7 +3,14 @@
 {% block content %}
 <div class="wrap">
   <div class="subhead"><a href="/"><button class="back">&larr; Hub</button></a>
-    <h2>Print Materials &amp; Documents</h2><span class="sub">approved MMS &amp; Signal collateral &middot; company card only &middot; max {{ doc_max }} sheets each</span></div>
+    <h2>Print Materials &amp; Documents</h2><span class="sub">approved MMS &amp; Signal collateral &middot; company card only &middot; max {{ doc_max }} sheets each</span>
+    <a href="/documents/cart" style="margin-left:auto"><button class="cartbtn">Document cart <span class="badge" data-doc-count style="display:none">0</span></button></a></div>
+
+  <div class="placenow" style="background:#eef4fa;border-color:#9fc0dd;border-left-color:#2f6f9f;color:#1e3d57">
+    <b>Documents have their own cart.</b> Add as many documents as you need here, then review cost,
+    shipping and delivery in the <a href="/documents/cart" style="color:#1e3d57;font-weight:800">document cart</a>
+    and place one order. This is separate from the swag cart.
+  </div>
 
   <div class="section" id="allitems"><div class="eyebrow2">Full library</div><h2 class="h" id="docCount"></h2>
     <div class="filterbar">
@@ -21,29 +28,16 @@
   </div>
 </div>
 
-<!-- checkout drawer -->
+<!-- add-to-cart drawer -->
 <div class="drawer-bg" id="dbg"><div class="drawer">
-  <div class="dhead"><h3 id="dTitle">Order document</h3><button class="dx" onclick="closeD()">&times;</button></div>
+  <div class="dhead"><h3 id="dTitle">Add document</h3><button class="dx" onclick="closeD()">&times;</button></div>
   <div class="dbody">
     <div class="drow"><img id="dThumb" src=""><div><div class="dnm" id="dName"></div><div class="dsub" id="dSub"></div></div></div>
-    <div class="field"><label>Quantity (max {{ doc_max }} sheets)</label>
+    <div class="field"><label>How many sheets? (max {{ doc_max }})</label>
       <input id="d_qty" type="number" min="1" max="{{ doc_max }}" value="25" oninput="capQty()"></div>
-    <div class="ctxbox">
-      <h4>Order context <span class="req">*required</span></h4>
-      <div class="field"><label>Purpose</label>
-        <select id="d_purpose"><option value="">Select a purpose...</option>
-          <option>Customer visit / leave-behind</option><option>Trade show / event</option>
-          <option>Sales follow-up</option><option>Internal use</option><option>Restock</option><option>Other</option></select></div>
-      <div class="field"><label>For whom / event</label><input id="d_recipient" placeholder="e.g. Process Expo booth"></div>
-      <div class="field"><label>Justification</label><textarea id="d_just" rows="2" placeholder="Why these are needed"></textarea></div>
-    </div>
-    <h3 style="margin:4px 0 10px">Ship to</h3>
-    <div class="row2"><div class="field"><label>First name</label><input id="s_fn" value="Jayce"></div><div class="field"><label>Last name</label><input id="s_ln" value="Tomlin"></div></div>
-    <div class="field"><label>Address line 1</label><input id="s_a1" placeholder="123 Main St"></div>
-    <div class="row2"><div class="field"><label>City</label><input id="s_ct"></div><div class="field"><label>State</label><input id="s_st" placeholder="IA"></div></div>
-    <div class="row2"><div class="field"><label>ZIP</label><input id="s_zp"></div><div class="field"><label>Phone</label><input id="s_ph" value="555-123-4567"></div></div>
-    <div class="paynote">Company card (MMS) &middot; auto-charged. Receipt emailed to accounting automatically.</div>
-    <button class="btn gold full" style="margin-top:12px" id="dPlace" onclick="placeDoc()">Place document order</button>
+    <div class="fineprint">Cost, shipping and delivery are shown in the document cart once you've added everything you need.</div>
+    <button class="btn gold full" style="margin-top:12px" id="dPlace" onclick="addDoc()">Add to document cart</button>
+    <a class="btn full" style="margin-top:8px;background:#eef1f5;color:#1e2d3b" href="/documents/cart">Go to document cart &rarr;</a>
   </div>
 </div></div>
 {% endblock %}
@@ -56,7 +50,7 @@ function docCard(d){
   return '<div class="card2"><div class="thumb"><img src="/static/thumbs/'+d.thumb+'" alt=""></div>'+
     '<div class="m"><div class="badges">'+divb+'<span class="bdg type">'+d.doc_type+'</span></div>'+
     '<div class="nm">'+d.title+'</div>'+
-    '<div class="ctl"><button class="add" onclick="openD(\''+d.id+'\')">Order &rarr;</button></div></div></div>';
+    '<div class="ctl"><button class="add" onclick="openD(\''+d.id+'\')">Add &rarr;</button></div></div></div>';
 }
 function setF(k,v,el){ F[k]=v; el.parentNode.querySelectorAll('[data-f="'+k+'"]').forEach(b=>b.classList.remove('on')); el.classList.add('on'); render(); }
 function render(){
@@ -67,32 +61,24 @@ function render(){
 }
 function capQty(){ const el=document.getElementById('d_qty'); let v=parseInt(el.value||'1',10); if(v>DOC_MAX)el.value=DOC_MAX; if(v<1)el.value=1; }
 function openD(id){ cur=DOCS.find(x=>x.id===id);
-  document.getElementById('dTitle').textContent='Order: '+cur.title;
+  const existing=docGet().find(i=>i.id===id);
+  document.getElementById('dTitle').textContent=(existing?'Update: ':'Add: ')+cur.title;
   document.getElementById('dThumb').src='/static/thumbs/'+cur.thumb;
   document.getElementById('dName').textContent=cur.title;
   document.getElementById('dSub').textContent=cur.division+' · '+cur.doc_type;
-  document.getElementById('d_qty').value=Math.min(25,DOC_MAX);
+  document.getElementById('d_qty').value=existing?existing.qty:Math.min(25,DOC_MAX);
+  document.getElementById('dPlace').textContent=existing?'Update quantity':'Add to document cart';
   document.getElementById('dbg').classList.add('show');
 }
 function closeD(){ document.getElementById('dbg').classList.remove('show'); }
 function modal(t,b){ document.getElementById('mTitle').textContent=t; document.getElementById('mBody').innerHTML=b; document.getElementById('modalBg').classList.add('show'); }
-async function placeDoc(){
+function addDoc(){
   if(!cur) return;
-  const g=id=>document.getElementById(id).value;
-  const qty=parseInt(g('d_qty'),10);
+  const qty=parseInt(document.getElementById('d_qty').value,10);
   if(!qty||qty<1||qty>DOC_MAX){ modal('Check quantity','Enter between 1 and '+DOC_MAX+' sheets.'); return; }
-  const ctx={purpose:g('d_purpose'),recipient:g('d_recipient'),justification:g('d_just')};
-  if(!ctx.purpose||!ctx.justification.trim()){ modal('Context required','Please choose a purpose and add a short justification.'); return; }
-  const ship={firstName:g('s_fn'),lastName:g('s_ln'),addressLine1:g('s_a1'),city:g('s_ct'),state:g('s_st'),postCode:g('s_zp'),country:'US',email:'{{ user.email }}',phone:g('s_ph')};
-  if(!ship.addressLine1||!ship.city){ modal('Add a shipping address','Please fill in at least address line 1 and city.'); return; }
-  document.getElementById('dPlace').textContent='Placing order...';
-  try{
-    const r=await fetch('/api/checkout/documents',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:cur.id,qty,context:ctx,ship})});
-    const j=await r.json();
-    if(j.ok){ closeD(); modal('Order placed!','Document order <b>'+j.order_id+'</b> ('+'{{mode|upper}}'+').<br><br>A receipt was routed to <b>accounting</b> with your name, quantity, pricing, and reason.<br><br><i>(Demo - nothing was really produced or charged.)</i>'); }
-    else { modal('Could not place order', j.error||('Gelato status '+j.gelato_status)); }
-  }catch(e){ modal('Error', String(e)); }
-  document.getElementById('dPlace').textContent='Place document order';
+  docAdd(cur.id, cur.title, qty, cur.thumb, cur.division+' · '+cur.doc_type);
+  closeD(); render();
+  toast('Added to document cart');
 }
-render();
+render(); renderDocBadge();
 </script>{% endblock %}

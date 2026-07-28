@@ -315,3 +315,20 @@ input:focus,select:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 
 .drow img{width:54px;height:70px;object-fit:cover;border:1px solid var(--line);border-radius:6px}
 .dnm{font-weight:800;color:var(--navy);font-size:14px}
 .dsub{font-size:12px;color:var(--muted)}
+
+/* ---- "places immediately" banner + live cost quote (cards & documents) ---- */
+.placenow{background:#fff8e1;border:1px solid #edcd1f;border-left:5px solid #edcd1f;border-radius:10px;
+  padding:12px 16px;margin:0 0 16px;font-size:13.5px;color:#5a4a00;line-height:1.55}
+.placenow b{color:#3f3400}
+.quotebox{background:#f7f9fb;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:2px 0 10px}
+.quotebox .qmuted{color:var(--muted);font-size:12.5px;line-height:1.5}
+.quotebox .qrow{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:3px 0;color:#22303c}
+.quotebox .qrow.qtot{border-top:1px solid var(--line);margin-top:5px;padding-top:7px;font-weight:800;color:var(--navy)}
+.quotebox .qdel{margin-top:8px;font-size:12.5px;color:#2f7a34;background:#eef7ef;border-radius:7px;padding:6px 9px}
+/* documents cart */
+.doccart{position:sticky;top:12px}
+.docrow{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.docrow:last-child{border-bottom:0}
+.docrow .dt{flex:1;font-size:13px;font-weight:700;color:var(--navy);line-height:1.35}
+.docrow .dq{width:70px;padding:7px;border:1px solid var(--line);border-radius:7px;font-size:12.5px;font-family:inherit}
+.docrow .dx{background:none;border:0;color:var(--red);font-weight:800;cursor:pointer;font-size:12px}

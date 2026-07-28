@@ -426,9 +426,12 @@ def build_printful(items, only_ids=None):
         # SAME spec the real order uses (printful_mockups.print_spec) so the
         # storefront image and the printed garment can never disagree.
         placement, position = pm.print_spec(pid, vid, prefer_chest=prefer_chest,
-                                            style=(it.get('printful') or {}).get('print_style'))
+                                            style=(it.get('printful') or {}).get('print_style'),
+                                            fill=(it.get('printful') or {}).get('print_fill'))
         logo_key = branding.item_logo_options(it, color)[0]
-        logo_url = MOCKUP_LOGO_BASE.rstrip("/") + "/assets/print/" + branding.LOGOS[logo_key]["file"]
+        rot = (it.get("printful") or {}).get("logo_rotate")
+        logo_url = (MOCKUP_LOGO_BASE.rstrip("/") + "/assets/print/" +
+                    ("rot/" if rot else "") + branding.LOGOS[logo_key]["file"])
         print("  %s: product %s variant %s color %s placement %s ..." %
               (it["id"], pid, vid, color, placement))
         url, info = pm.generate(pid, vid, placement, logo_url, position=position)
@@ -493,8 +496,11 @@ def build_variants(items, only_ids=None):
             vids = list({v for _, v in colvids})
             # SAME spec the real order uses — see printful_mockups.print_spec.
             placement, position = pm.print_spec(pid, vids[0], prefer_chest=emb,
-                                                style=(it.get('printful') or {}).get('print_style'))
-            logo_url = MOCKUP_LOGO_BASE.rstrip("/") + "/assets/print/" + branding.LOGOS[lk]["file"]
+                                                style=(it.get('printful') or {}).get('print_style'),
+                                            fill=(it.get('printful') or {}).get('print_fill'))
+            rot = (it.get("printful") or {}).get("logo_rotate")
+            logo_url = (MOCKUP_LOGO_BASE.rstrip("/") + "/assets/print/" +
+                        ("rot/" if rot else "") + branding.LOGOS[lk]["file"])
             print("  %s: product %s logo %s placement %s vids %s ..." % (iid, pid, lk, placement, vids))
             urlmap, info = pm.generate_multi(pid, vids, placement, logo_url, position=position)
             if not urlmap:
@@ -606,7 +612,8 @@ def build_printspec(items):
             print("  %s: no variant — skipped" % it["id"]); continue
         prefer = it.get("decoration") == "embroidery" and it.get("category") != "Headwear"
         placement, position = pm.print_spec(pid, vid, prefer_chest=prefer,
-                                            style=pf.get("print_style"))
+                                            style=pf.get("print_style"),
+                                            fill=pf.get("print_fill"))
         if not placement or not position:
             print("  %s: no spec — skipped" % it["id"]); continue
         pf["print_placement"] = placement

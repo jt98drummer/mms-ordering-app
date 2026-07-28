@@ -93,7 +93,7 @@ def thread_option_for(product_id, placement):
     return thread_ids[0]
 
 
-def print_spec(product_id, variant_id, prefer_chest=False, style=None):
+def print_spec(product_id, variant_id, prefer_chest=False, style=None, fill=None):
     """THE single source of truth for how the MMS logo is placed on a product.
 
     Returns (placement, position) — used both to render the storefront mockup
@@ -107,7 +107,7 @@ def print_spec(product_id, variant_id, prefer_chest=False, style=None):
     aw, ah = area_for(product_id, variant_id, placement)
     # `style` lets the catalog override how the logo sits on non-garment goods
     # ("default" alone can't tell a mug wrap from a flat mouse pad).
-    return placement, make_position(aw, ah, style or placement_style(placement))
+    return placement, make_position(aw, ah, style or placement_style(placement), fill=fill)
 
 
 def placement_style(placement):
@@ -140,7 +140,7 @@ VPOS = {"chest_left": None, "center": None, "front": 0.24, "wrap": None,
         "flat": None, "cover": None}
 
 
-def make_position(aw, ah, style):
+def make_position(aw, ah, style, fill=None):
     """Build a file `position` box sized to the logo's real aspect ratio.
 
     Printful fits the artwork inside this box preserving aspect, so the box is
@@ -149,7 +149,22 @@ def make_position(aw, ah, style):
     """
     if not (aw and ah):
         return None
-    f = FILL.get(style, 0.64)
+    # per-item override wins (catalog `printful.print_fill`) — print areas vary
+    # enormously between products, so one fraction per style isn't enough.
+    f = fill if fill else FILL.get(style, 0.64)
+    if style == "vertical":
+        # Rotated logo running UP a cylinder: size by the print area's HEIGHT so
+        # it never wraps off the visible face (a horizontal logo on a tumbler
+        # clips as it curves away). Aspect is inverted for the rotated artwork.
+        h = ah * f
+        w = h / LOGO_ASPECT
+        if w > aw:
+            w = float(aw); h = w * LOGO_ASPECT
+        w, h = int(w), int(h)
+        left = (aw - w) // 2
+        top = max(0, min((ah - h) // 2, ah - h))
+        return {"area_width": aw, "area_height": ah, "width": w, "height": h,
+                "top": top, "left": max(0, min(left, aw - w))}
     w = aw * f
     h = w / LOGO_ASPECT
     if h > ah:                                # too tall for the area -> fit by height

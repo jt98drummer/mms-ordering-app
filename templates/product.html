@@ -97,10 +97,9 @@ function renderCost(){
   document.getElementById('priceLine').innerHTML =
     '$'+unit.toFixed(2)+' <span style="color:var(--muted);font-size:13px;font-weight:600">each</span>';
   document.getElementById('costNote').innerHTML =
-    'Item cost $'+goods.toFixed(2)+' &nbsp;+&nbsp; shipping (est.) $'+ship.toFixed(2)+
-    ' &nbsp;=&nbsp; <b style="color:var(--navy)">$'+(goods+ship).toFixed(2)+' total</b>'+
-    '<br><span style="font-size:11.5px">What MMS pays. Shipping is estimated per Printful\'s rates '+
-    '(first item $'+sf.toFixed(2)+', +$'+sa.toFixed(2)+' each after). Counts against your swag budget.</span>';
+    'Item cost for '+q+': <b style="color:var(--navy)">$'+goods.toFixed(2)+'</b>'+
+    '<br><span style="font-size:11.5px">This is what MMS pays for the item. '+
+    'Shipping is calculated in the cart at checkout, where you\'ll see the full total.</span>';
 }
 function pickSize(s){ st.size=s; renderSizes(); renderCost(); }
 document.getElementById('addBtn').onclick=function(){

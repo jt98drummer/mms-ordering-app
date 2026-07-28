@@ -172,6 +172,26 @@ def printful_threads(key):
     return out
 
 
+def logo_path_rot(key):
+    """Vertical (90°-rotated) print file — for cylinders like bottles/tumblers,
+    where a horizontal logo wraps off the visible face. Generated into
+    assets/print/rot/ by gen_products.py rotate."""
+    return "/asset/print/rot/" + LOGOS.get(key, LOGOS["white"])["file"]
+
+
+def item_logo_path(item, key):
+    """Print-file path for THIS item — rotated when the product asks for a
+    vertical logo (catalog `printful.logo_rotate`)."""
+    if (item or {}).get("printful", {}).get("logo_rotate"):
+        return logo_path_rot(key)
+    return logo_path(key)
+
+
+def item_logo_url(item, key):
+    """Absolute URL of the print file for this item (Printful/Gelato fetch it)."""
+    return config.PUBLIC_BASE_URL + item_logo_path(item, key)
+
+
 def logo_path(key):
     """Site-relative path (works on any host) — use in templates."""
     return "/asset/print/" + LOGOS.get(key, LOGOS["white"])["file"]

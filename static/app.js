@@ -9,6 +9,24 @@ function renderCartBadge(){
     const n=cartCount(); el.textContent=n; el.style.display=n?'inline-flex':'none';
   });
 }
+/* ---- DOCUMENT cart: deliberately a SEPARATE store from the swag cart so
+   documents and swag can never end up in the same checkout ---- */
+const DOC_KEY = "mms_doccart_v1";
+function docGet(){ try{return JSON.parse(localStorage.getItem(DOC_KEY))||[];}catch(e){return [];} }
+function docSave(c){ localStorage.setItem(DOC_KEY, JSON.stringify(c)); renderDocBadge(); }
+function docAdd(id, title, qty, thumb, meta){
+  const c=docGet(); const ex=c.find(i=>i.id===id);
+  if(ex){ ex.qty=qty; } else { c.push({id, title, qty, thumb, meta}); }
+  docSave(c);
+}
+function docCount(){ return docGet().length; }
+function renderDocBadge(){
+  document.querySelectorAll('[data-doc-count]').forEach(el=>{
+    const n=docCount(); el.textContent=n; el.style.display=n?'inline-flex':'none';
+  });
+}
+document.addEventListener('DOMContentLoaded', renderDocBadge);
+
 function toast(msg){
   let t=document.getElementById('mms-toast');
   if(!t){t=document.createElement('div');t.id='mms-toast';

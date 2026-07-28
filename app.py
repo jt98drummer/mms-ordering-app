@@ -234,7 +234,7 @@ def _fulfill_swag(order):
                 # the preview. Without these Printful auto-fits the artwork to
                 # the whole print area — e.g. a 12" tee print vs the 7.7" shown.
                 f = {"type": pf.get("print_placement") or "default",
-                     "url": branding.logo_url(logo_key)}
+                     "url": branding.item_logo_url(SWAG_BY_ID.get(i.get("id")), logo_key)}
                 if pf.get("print_position"):
                     f["position"] = pf["print_position"]
                 it_item = {"variant_id": vid, "quantity": int(i.get("qty", 1)), "files": [f]}
@@ -262,7 +262,8 @@ def _fulfill_swag(order):
                 n += 1
                 logo_key = branding.item_valid_logo(SWAG_BY_ID.get(i.get("id")), i.get("color"), i.get("logo"))
                 g_items.append({"itemReferenceId": "%s-g%d" % (order["oid"], n), "productUid": uid,
-                                "files": [{"type": "default", "url": branding.logo_url(logo_key)}],
+                                "files": [{"type": "default",
+                                           "url": branding.item_logo_url(SWAG_BY_ID.get(i.get("id")), logo_key)}],
                                 "quantity": int(i.get("qty", 1))})
         if g_items:
             sh = order.get("_ship", {})
@@ -346,6 +347,13 @@ def documents():
     return render_template("documents.html", docs_json=json.dumps(catalog.load()),
                            doc_max=config.DOC_MAX_QTY)
 
+@app.route("/documents/cart")
+@auth.login_required
+def documents_cart():
+    """Document-only cart + checkout (kept separate from the swag cart)."""
+    return render_template("documents_cart.html", doc_max=config.DOC_MAX_QTY)
+
+
 @app.route("/flyers")
 @auth.login_required
 def flyers_redirect():
@@ -413,13 +421,10 @@ def checkout_cards():
         return jsonify(ok=False, error="Please add at least a shipping address line 1 and city."), 400
     card = body.get("card", {})
     qty = int(card.get("qty", 250))
-    role = u.get("role", config.DEFAULT_ROLE)
-    card_max = (None if role == config.ROLE_MANAGER
-                else config.CARD_MAX_QTY_FSE if role == config.ROLE_FSE
-                else config.CARD_MAX_QTY_EMPLOYEE)
+    card_max = _card_max_qty(u.get("role", config.DEFAULT_ROLE))
     if qty < 1:
         return jsonify(ok=False, error="Quantity must be at least 1."), 400
-    if card_max is not None and qty > card_max:
+    if card_max and qty > card_max:
         return jsonify(ok=False, error="Your role can order up to %d business cards per order. "
                        "Please reduce the quantity." % card_max), 400
     oid = _oid("CARD")
@@ -429,16 +434,25 @@ def checkout_cards():
     print_items = [{"itemReferenceId": oid + "-1", "productUid": config.CARD_PRODUCT_UID,
                     "files": [{"type": "default", "url": config.PUBLIC_BASE_URL + "/files/" + pdf_name}],
                     "quantity": qty}]
+    # quote first so the receipt carries the real cost, not "priced by printer"
+    q = gelato.quote_summary(oid + "-q", [dict(print_items[0], itemReferenceId="q1")], ship)
     status, result, gid = _place_print(oid, ship, print_items)
-    order = _mk_order("Business Cards", oid, u, "company", qty,
-                      [{"desc": "Business cards - " + emp.get("name", ""), "qty": qty,
-                        "line": "priced by printer"}], ctx, ship, nm,
-                      status="placed", total="priced by printer")
+    lines = [{"desc": "Business cards - " + emp.get("name", ""), "qty": qty,
+              "line": _money(q["items"]) if q.get("ok") else "priced by printer"}]
+    if q.get("ok"):
+        lines.append({"desc": "Shipping (%s)" % (q.get("method") or "standard"),
+                      "qty": "", "line": _money(q["shipping"])})
+    order = _mk_order("Business Cards", oid, u, "company", qty, lines, ctx, ship, nm,
+                      status="placed",
+                      total=_money(q["total"]) if q.get("ok") else "priced by printer")
+    if q.get("ok"):
+        order["quote"] = q
     _send_receipt(order)
     _log(order, status, gid)
     ok = status in (0, 200, 201)
     return jsonify(ok=ok, order_id=oid, status="placed", receipt_to=config.ACCOUNTING_EMAIL,
                    receipt_sent=order.get("receipt_sent"), gelato_status=status,
+                   quote=q if q.get("ok") else None,
                    gelato=None if ok else result)
 
 
@@ -451,31 +465,121 @@ def checkout_documents():
     ctx = body.get("context", {})
     if not _ctx_ok(ctx):
         return jsonify(ok=False, error="Please fill in the purpose and the justification."), 400
-    d = catalog.by_id(body.get("id"))
-    if not d:
-        return jsonify(ok=False, error="Unknown document."), 400
-    qty = int(body.get("qty", config.DOC_MAX_QTY))
-    if qty < 1 or qty > config.DOC_MAX_QTY:
-        return jsonify(ok=False, error="Quantity must be between 1 and %d sheets." % config.DOC_MAX_QTY), 400
+    # Accepts a document CART: items=[{id, qty}, ...]. A single {id, qty} body
+    # still works so older clients don't break.
+    raw = body.get("items")
+    if not raw:
+        raw = [{"id": body.get("id"), "qty": body.get("qty", config.DOC_MAX_QTY)}]
+    lines_in, err = _doc_items(raw)
+    if err:
+        return jsonify(ok=False, error=err), 400
     ship, nm = _recipient(body.get("ship", {}))
     if not ship["addressLine1"] or not ship["city"]:
         return jsonify(ok=False, error="Please add at least a shipping address line 1 and city."), 400
     oid = _oid("DOC")
-    print_items = [{"itemReferenceId": oid + "-1",
+    print_items = [{"itemReferenceId": "%s-%d" % (oid, n),
                     "productUid": d.get("gelato_product", config.FLYER_PRODUCT_UID),
                     "files": [{"type": "default", "url": config.PUBLIC_BASE_URL + "/flyerpdf/" + d["id"]}],
-                    "quantity": qty}]
+                    "quantity": qty}
+                   for n, (d, qty) in enumerate(lines_in, 1)]
+    # quote first so the receipt shows real cost + shipping
+    q = gelato.quote_summary(oid + "-q",
+                             [dict(p, itemReferenceId="q%d" % n) for n, p in enumerate(print_items, 1)],
+                             ship)
     status, result, gid = _place_print(oid, ship, print_items)
-    order = _mk_order("Documents", oid, u, "company", qty,
-                      [{"desc": "%s (%s)" % (d["title"], d.get("division", "")), "qty": qty,
-                        "line": "priced by printer"}], ctx, ship, nm,
-                      status="placed", total="priced by printer")
+    qty_total = sum(qty for _d, qty in lines_in)
+    lines = [{"desc": "%s (%s)" % (d["title"], d.get("division", "")), "qty": qty,
+              "line": "-"} for d, qty in lines_in]
+    if q.get("ok"):
+        lines.append({"desc": "Printing (%d sheet%s)" % (qty_total, "" if qty_total == 1 else "s"),
+                      "qty": "", "line": _money(q["items"])})
+        lines.append({"desc": "Shipping (%s)" % (q.get("method") or "standard"),
+                      "qty": "", "line": _money(q["shipping"])})
+    order = _mk_order("Documents", oid, u, "company", qty_total, lines, ctx, ship, nm,
+                      status="placed",
+                      total=_money(q["total"]) if q.get("ok") else "priced by printer")
+    if q.get("ok"):
+        order["quote"] = q
     _send_receipt(order)
     _log(order, status, gid)
     ok = status in (0, 200, 201)
     return jsonify(ok=ok, order_id=oid, status="placed", receipt_to=config.ACCOUNTING_EMAIL,
                    receipt_sent=order.get("receipt_sent"), gelato_status=status,
+                   docs=len(lines_in), quote=q if q.get("ok") else None,
                    gelato=None if ok else result)
+
+
+# ---------------- live cost quotes (cards + documents, printed by Gelato) ----------------
+@app.route("/api/quote/cards", methods=["POST"])
+@auth.login_required
+def quote_cards():
+    """Real item cost + shipping + estimated delivery for a business-card order,
+    so the price is visible BEFORE the order is placed."""
+    body = request.get_json(force=True)
+    u = auth.current_user()
+    qty = max(1, int(body.get("qty") or 250))
+    cap = _card_max_qty(u.get("role"))
+    if cap and qty > cap:
+        return jsonify(ok=False, error="Your role is limited to %d cards per order." % cap), 400
+    ship, _nm = _recipient(body.get("ship", {}))
+    if not ship["addressLine1"] or not ship["city"]:
+        return jsonify(ok=False, error="Enter a shipping address to see the price."), 400
+    products = [{"itemReferenceId": "q1", "productUid": config.CARD_PRODUCT_UID,
+                 "quantity": qty,
+                 "files": [{"type": "default",
+                            "url": config.PUBLIC_BASE_URL + "/asset/print/mms_white.png"}]}]
+    q = gelato.quote_summary(_oid("QCARD"), products, ship)
+    return jsonify(dict(q, qty=qty))
+
+
+@app.route("/api/quote/documents", methods=["POST"])
+@auth.login_required
+def quote_documents():
+    """Real item cost + shipping + estimated delivery for a document cart."""
+    body = request.get_json(force=True)
+    ship, _nm = _recipient(body.get("ship", {}))
+    if not ship["addressLine1"] or not ship["city"]:
+        return jsonify(ok=False, error="Enter a shipping address to see the price."), 400
+    lines, err = _doc_items(body.get("items") or [])
+    if err:
+        return jsonify(ok=False, error=err), 400
+    products = []
+    for n, (d, qty) in enumerate(lines, 1):
+        products.append({"itemReferenceId": "q%d" % n,
+                         "productUid": d.get("gelato_product", config.FLYER_PRODUCT_UID),
+                         "quantity": qty,
+                         "files": [{"type": "default",
+                                    "url": config.PUBLIC_BASE_URL + "/flyerpdf/" + d["id"]}]})
+    q = gelato.quote_summary(_oid("QDOC"), products, ship)
+    return jsonify(dict(q, sheets=sum(qty for _d, qty in lines)))
+
+
+def _card_max_qty(role):
+    """Business-card quantity cap for a role; 0/None = unlimited (manager)."""
+    if role == config.ROLE_MANAGER:
+        return 0
+    if role == config.ROLE_FSE:
+        return config.CARD_MAX_QTY_FSE
+    return config.CARD_MAX_QTY_EMPLOYEE
+
+
+def _doc_items(raw):
+    """Validate a document cart against the catalog. Returns ([(doc, qty)], error)."""
+    out = []
+    for i in raw:
+        d = catalog.by_id((i.get("id") or "").strip())
+        if not d:
+            return None, "One of those documents is no longer available. Please refresh."
+        try:
+            qty = int(i.get("qty") or 0)
+        except (TypeError, ValueError):
+            return None, "Invalid quantity."
+        if qty < 1 or qty > config.DOC_MAX_QTY:
+            return None, "%s: quantity must be between 1 and %d sheets." % (d["title"], config.DOC_MAX_QTY)
+        out.append((d, qty))
+    if not out:
+        return None, "No documents selected."
+    return out, None
 
 
 MAX_LINE_QTY = int(os.environ.get("SWAG_MAX_LINE_QTY", "500"))

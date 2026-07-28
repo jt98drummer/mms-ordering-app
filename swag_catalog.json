@@ -548,11 +548,12 @@
       "print_position": {
         "area_width": 900,
         "area_height": 900,
-        "width": 774,
-        "height": 251,
-        "top": 324,
-        "left": 63
-      }
+        "width": 855,
+        "height": 278,
+        "top": 311,
+        "left": 22
+      },
+      "print_fill": 0.95
     },
     "price_by_size": {},
     "ship_first": 4.99,
@@ -587,11 +588,12 @@
       "print_position": {
         "area_width": 1076,
         "area_height": 2085,
-        "width": 925,
-        "height": 301,
-        "top": 892,
-        "left": 75
-      }
+        "width": 1022,
+        "height": 332,
+        "top": 876,
+        "left": 27
+      },
+      "print_fill": 0.95
     },
     "price_by_size": {},
     "ship_first": 4.5,
@@ -628,11 +630,12 @@
       "print_position": {
         "area_width": 1200,
         "area_height": 1200,
-        "width": 1032,
-        "height": 335,
-        "top": 432,
-        "left": 84
-      }
+        "width": 1140,
+        "height": 370,
+        "top": 415,
+        "left": 30
+      },
+      "print_fill": 0.95
     },
     "price_by_size": {},
     "ship_first": 4.5,
@@ -668,16 +671,18 @@
         "Black": "Black",
         "White": "White"
       },
-      "print_style": "wrap",
+      "print_style": "vertical",
       "print_placement": "default",
       "print_position": {
         "area_width": 3017,
         "area_height": 1200,
-        "width": 663,
-        "height": 215,
-        "top": 492,
-        "left": 1177
-      }
+        "width": 351,
+        "height": 1080,
+        "top": 60,
+        "left": 1333
+      },
+      "print_fill": 0.9,
+      "logo_rotate": true
     },
     "price_by_size": {},
     "ship_first": 6.49,
@@ -713,16 +718,18 @@
         "Black": "Black",
         "White": "White"
       },
-      "print_style": "wrap",
+      "print_style": "vertical",
       "print_placement": "default",
       "print_position": {
         "area_width": 2776,
         "area_height": 2374,
-        "width": 610,
-        "height": 198,
-        "top": 1088,
-        "left": 1083
-      }
+        "width": 695,
+        "height": 2136,
+        "top": 119,
+        "left": 1040
+      },
+      "print_fill": 0.9,
+      "logo_rotate": true
     },
     "price_by_size": {},
     "ship_first": 10.49,
@@ -757,16 +764,18 @@
         "Black": "Black",
         "White": "White"
       },
-      "print_style": "wrap",
+      "print_style": "vertical",
       "print_placement": "default",
       "print_position": {
         "area_width": 2557,
         "area_height": 1582,
-        "width": 562,
-        "height": 183,
-        "top": 699,
-        "left": 997
-      }
+        "width": 463,
+        "height": 1423,
+        "top": 79,
+        "left": 1047
+      },
+      "print_fill": 0.9,
+      "logo_rotate": true
     },
     "price_by_size": {},
     "ship_first": 10.49,
@@ -808,11 +817,12 @@
       "print_position": {
         "area_width": 900,
         "area_height": 1500,
-        "width": 558,
-        "height": 181,
-        "top": 659,
-        "left": 171
-      }
+        "width": 720,
+        "height": 234,
+        "top": 633,
+        "left": 90
+      },
+      "print_fill": 0.8
     },
     "price_by_size": {},
     "ship_first": 5.5,
@@ -851,11 +861,12 @@
       "print_position": {
         "area_width": 2700,
         "area_height": 2250,
-        "width": 2322,
-        "height": 755,
-        "top": 747,
-        "left": 189
-      }
+        "width": 2565,
+        "height": 834,
+        "top": 708,
+        "left": 67
+      },
+      "print_fill": 0.95
     },
     "price_by_size": {},
     "ship_first": 4.49,
@@ -892,11 +903,12 @@
       "print_position": {
         "area_width": 5043,
         "area_height": 7350,
-        "width": 3126,
-        "height": 1017,
-        "top": 3166,
-        "left": 958
-      }
+        "width": 3782,
+        "height": 1230,
+        "top": 3060,
+        "left": 630
+      },
+      "print_fill": 0.75
     },
     "price_by_size": {},
     "ship_first": 5.49,
@@ -1061,11 +1073,12 @@
       "print_position": {
         "area_width": 1500,
         "area_height": 1500,
-        "width": 960,
-        "height": 312,
+        "width": 1200,
+        "height": 390,
         "top": 360,
-        "left": 270
-      }
+        "left": 150
+      },
+      "print_fill": 0.8
     },
     "price_by_size": {},
     "ship_first": 4.49,

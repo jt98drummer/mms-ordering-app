@@ -56,6 +56,38 @@ def quote(order_ref, customer_ref, products, recipient):
     }
     return _post(config.QUOTE_API, payload)
 
+def quote_summary(order_ref, products, recipient):
+    """Real cost breakdown for a Gelato order, for showing BEFORE checkout.
+
+    Returns a dict: {ok, items, shipping, total, method, delivery_min,
+    delivery_max, days_min, days_max} — or {ok: False, error} when unavailable
+    (dry mode, no key, network). Picks the cheapest shipment method of the same
+    type we actually order with (config.SHIPMENT_METHOD), so the quoted shipping
+    matches what will be charged.
+    """
+    st, res = quote(order_ref, "mms-quote", products, recipient)
+    if st not in (200, 201) or not isinstance(res, dict):
+        return {"ok": False, "error": (res or {}).get("error") or "quote unavailable",
+                "status": st}
+    qs = res.get("quotes") or []
+    if not qs:
+        return {"ok": False, "error": "no quote returned"}
+    q = qs[0]
+    items_total = round(sum(float(p.get("price") or 0) for p in (q.get("products") or [])), 2)
+    methods = q.get("shipmentMethods") or []
+    if not methods:
+        return {"ok": False, "error": "no shipping options"}
+    want = (config.SHIPMENT_METHOD or "normal").lower()
+    same = [m for m in methods if (m.get("type") or "").lower() == want] or methods
+    m = min(same, key=lambda x: float(x.get("price") or 9999))
+    shipping = round(float(m.get("price") or 0), 2)
+    return {"ok": True, "items": items_total, "shipping": shipping,
+            "total": round(items_total + shipping, 2),
+            "method": m.get("name"), "currency": q.get("currency") or config.CURRENCY,
+            "delivery_min": m.get("minDeliveryDate"), "delivery_max": m.get("maxDeliveryDate"),
+            "days_min": m.get("minDeliveryDays"), "days_max": m.get("maxDeliveryDays")}
+
+
 def search_products(catalog, attribute_filters=None, limit=50):
     """List product UIDs in a catalog (e.g. 'cards', 'flyers'). Needs an API key."""
     url = config.PRODUCT_SEARCH.format(catalog=catalog)
