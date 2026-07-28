@@ -150,4 +150,11 @@ def resolve_variant(product_id, color, size):
         for v in vs:
             if x in (v.get("color") or "").strip().lower() and size_ok(v):
                 return v.get("id")
+    # 4. products with NO colour axis at all (e.g. golf towel, drawstring bag):
+    #    every variant is colourless, so match on size only. Safe because there
+    #    is no colour to get wrong.
+    if all(not (v.get("color") or "").strip() for v in vs):
+        for v in vs:
+            if size_ok(v):
+                return v.get("id")
     return None

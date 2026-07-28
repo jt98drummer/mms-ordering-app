@@ -511,14 +511,41 @@ def _price_items(raw):
         out.append({
             "type": "swag", "id": pid,
             "name": prod["name"],                       # catalog name
-            "price": round(float(prod["price"]), 2),    # catalog price - the only source of truth
+            "price": item_unit_cost(prod, size),        # catalog cost for THIS size
             "qty": qty, "color": color, "size": size,
             "logo": branding.item_valid_logo(prod, color, i.get("logo")),  # colour-appropriate
             "icon": prod.get("icon"), "image": prod.get("image"),
+            "ship_first": round(float(prod.get("ship_first") or 0), 2),
+            "ship_addl": round(float(prod.get("ship_addl") or 0), 2),
         })
     if not out:
         return None, "Your cart is empty."
     return out, None
+
+
+def item_unit_cost(prod, size):
+    """Unit cost for a specific size. Extended sizes (2XL+) cost more, so the
+    per-size table wins when present; otherwise the base price."""
+    by = prod.get("price_by_size") or {}
+    if size and size in by:
+        return round(float(by[size]), 2)
+    return round(float(prod.get("price") or 0), 2)
+
+
+def estimate_shipping(items):
+    """Estimated shipping for a cart, mirroring Printful's model: the highest
+    first-item rate in the cart, plus the additional-unit rate for every other
+    unit. Shown separately from item cost so the true spend is visible."""
+    if not items:
+        return 0.0
+    first = max((float(i.get("ship_first") or 0) for i in items), default=0.0)
+    # the unit that claimed the first-item rate doesn't also pay an additional rate
+    lead = max(items, key=lambda i: float(i.get("ship_first") or 0))
+    total = first
+    for i in items:
+        n = int(i.get("qty", 1)) - (1 if i is lead else 0)
+        total += max(0, n) * float(i.get("ship_addl") or 0)
+    return round(total, 2)
 
 
 # ---------------- checkout: SWAG/APPAREL (role-based, approval net) ----------------
@@ -548,11 +575,15 @@ def checkout_swag():
     if err:
         return jsonify(ok=False, error=err), 400
     units = sum(i["qty"] for i in items)
-    total_val = round(sum(i["price"] * i["qty"] for i in items), 2)
+    goods_val = round(sum(i["price"] * i["qty"] for i in items), 2)
+    ship_val = estimate_shipping(items)
+    # Budget is charged the TRUE spend: goods + shipping (both are company money).
+    total_val = round(goods_val + ship_val, 2)
     lines = [{"desc": "%s (%s%s · %s)" % (i["name"], i["color"],
                                           "/" + i["size"] if i.get("size") else "",
                                           branding.label(i.get("logo"))),
               "qty": i["qty"], "line": _money(i["price"] * i["qty"])} for i in items]
+    lines.append({"desc": "Shipping (estimated)", "qty": "", "line": _money(ship_val)})
     oid = _oid("SWAG")
 
     # ---- personal card: no approval, no accounting receipt, must acknowledge ----

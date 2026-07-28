@@ -18,7 +18,7 @@
       "XL",
       "2XL"
     ],
-    "price": 28.0,
+    "price": 50.95,
     "decoration": "embroidery",
     "fulfillment": "printful",
     "printful": {
@@ -51,7 +51,112 @@
       "Black": "#1a1a1a",
       "Grey": "#5c5e5d",
       "White": "#ffffff"
-    }
+    },
+    "price_by_size": {
+      "S": 50.95,
+      "M": 50.95,
+      "L": 50.95,
+      "XL": 50.95,
+      "2XL": 52.95
+    },
+    "ship_first": 4.75,
+    "ship_addl": 2.2
+  },
+  {
+    "id": "ap10",
+    "name": "MMS Structured Cap",
+    "group": "Apparel",
+    "category": "Headwear",
+    "icon": "cap",
+    "colors": [
+      "Black",
+      "Heather Grey"
+    ],
+    "sizes": [],
+    "price": 17.89,
+    "decoration": "embroidery",
+    "fulfillment": "printful",
+    "printful": {
+      "decoration": "embroidery",
+      "file": "mms_logo.png",
+      "placement": "front",
+      "color_map": {
+        "Black": "Black / Charcoal",
+        "Heather Grey": "Heather Grey / Black"
+      },
+      "product_id": 422,
+      "print_placement": "embroidery_front_large",
+      "print_position": {
+        "area_width": 1770,
+        "area_height": 600,
+        "width": 1770,
+        "height": 575,
+        "top": 12,
+        "left": 0
+      },
+      "thread_option": "thread_colors_front_large"
+    },
+    "image": "/asset/products/ap10.png",
+    "published": true,
+    "desc": "Richardson 112 trucker cap \u2014 structured front panel, breathable mesh back, adjustable snapback. MMS embroidered on the front. One size fits most.",
+    "color_hex": {
+      "Black": "#000000",
+      "Heather Grey": "#afafb3"
+    },
+    "price_by_size": {},
+    "ship_first": 4.49,
+    "ship_addl": 2.0
+  },
+  {
+    "id": "ap11",
+    "name": "MMS Knit Beanie",
+    "group": "Apparel",
+    "category": "Headwear",
+    "icon": "cap",
+    "colors": [
+      "Navy",
+      "Black",
+      "Heather Charcoal",
+      "Heather Grey"
+    ],
+    "sizes": [],
+    "price": 16.5,
+    "decoration": "embroidery",
+    "fulfillment": "printful",
+    "printful": {
+      "decoration": "embroidery",
+      "file": "mms_logo.png",
+      "placement": "front",
+      "color_map": {
+        "Navy": "Navy",
+        "Black": "Black",
+        "Heather Charcoal": "Heather Charcoal",
+        "Heather Grey": "Heather Grey"
+      },
+      "product_id": 637,
+      "print_placement": "embroidery_front",
+      "print_position": {
+        "area_width": 1500,
+        "area_height": 525,
+        "width": 1500,
+        "height": 488,
+        "top": 18,
+        "left": 0
+      },
+      "thread_option": "thread_colors"
+    },
+    "image": "/asset/products/ap11.png",
+    "published": true,
+    "desc": "Cuffed knit beanie in a warm ribbed knit for cold job sites. MMS embroidered on the cuff. One size fits most.",
+    "color_hex": {
+      "Navy": "#000219",
+      "Black": "#020201",
+      "Heather Charcoal": "#212125",
+      "Heather Grey": "#dfdfd9"
+    },
+    "price_by_size": {},
+    "ship_first": 4.49,
+    "ship_addl": 2.0
   },
   {
     "id": "ap2",
@@ -74,7 +179,7 @@
       "2XL",
       "3XL"
     ],
-    "price": 24.0,
+    "price": 20.35,
     "decoration": "embroidery",
     "fulfillment": "printful",
     "printful": {
@@ -109,7 +214,17 @@
       "Grey": "#47525c",
       "White": "#ffffff",
       "Red": "#af0029"
-    }
+    },
+    "price_by_size": {
+      "S": 20.35,
+      "M": 20.35,
+      "L": 20.35,
+      "XL": 20.35,
+      "2XL": 22.35,
+      "3XL": 24.35
+    },
+    "ship_first": 4.75,
+    "ship_addl": 2.2
   },
   {
     "id": "ap3",
@@ -132,7 +247,7 @@
       "2XL",
       "3XL"
     ],
-    "price": 16.0,
+    "price": 11.69,
     "decoration": "print",
     "fulfillment": "printful",
     "printful": {
@@ -166,7 +281,17 @@
       "Grey": "#cececc",
       "White": "#ffffff",
       "Red": "#d0071e"
-    }
+    },
+    "price_by_size": {
+      "S": 11.69,
+      "M": 11.69,
+      "L": 11.69,
+      "XL": 11.69,
+      "2XL": 13.69,
+      "3XL": 15.69
+    },
+    "ship_first": 4.75,
+    "ship_addl": 2.2
   },
   {
     "id": "ap4",
@@ -288,7 +413,7 @@
       "2XL",
       "3XL"
     ],
-    "price": 42.0,
+    "price": 22.19,
     "decoration": "print",
     "fulfillment": "printful",
     "printful": {
@@ -320,7 +445,17 @@
       "Black": "#0b0b0b",
       "Grey": "#9b969c",
       "Red": "#da0a1a"
-    }
+    },
+    "price_by_size": {
+      "S": 22.19,
+      "M": 22.19,
+      "L": 22.19,
+      "XL": 22.19,
+      "2XL": 24.19,
+      "3XL": 26.19
+    },
+    "ship_first": 8.49,
+    "ship_addl": 2.5
   },
   {
     "id": "ap9",
@@ -342,7 +477,7 @@
       "2XL",
       "3XL"
     ],
-    "price": 38.0,
+    "price": 18.79,
     "decoration": "print",
     "fulfillment": "printful",
     "printful": {
@@ -374,97 +509,399 @@
       "Black": "#0b0b0b",
       "Grey": "#ccccce",
       "Red": "#da0a1a"
-    }
-  },
-  {
-    "id": "ap10",
-    "name": "MMS Structured Cap",
-    "group": "Apparel",
-    "category": "Headwear",
-    "icon": "cap",
-    "colors": [
-      "Black",
-      "Heather Grey"
-    ],
-    "sizes": [],
-    "price": 18.0,
-    "decoration": "embroidery",
-    "fulfillment": "printful",
-    "printful": {
-      "decoration": "embroidery",
-      "file": "mms_logo.png",
-      "placement": "front",
-      "color_map": {
-        "Black": "Black / Charcoal",
-        "Heather Grey": "Heather Grey / Black"
-      },
-      "product_id": 422,
-      "print_placement": "embroidery_front_large",
-      "print_position": {
-        "area_width": 1770,
-        "area_height": 600,
-        "width": 1770,
-        "height": 575,
-        "top": 12,
-        "left": 0
-      },
-      "thread_option": "thread_colors_front_large"
     },
-    "image": "/asset/products/ap10.png",
+    "price_by_size": {
+      "S": 18.79,
+      "M": 18.79,
+      "L": 18.79,
+      "XL": 18.79,
+      "2XL": 20.79,
+      "3XL": 22.79
+    },
+    "ship_first": 8.49,
+    "ship_addl": 2.5
+  },
+  {
+    "id": "ev1",
+    "name": "MMS Logo Stickers (3\")",
+    "group": "Swag",
+    "category": "Giveaways",
+    "icon": "tag",
+    "colors": [
+      "White"
+    ],
+    "sizes": [
+      "3\u2033\u00d73\u2033"
+    ],
+    "price": 4.27,
+    "decoration": "print",
+    "fulfillment": "printful",
     "published": true,
-    "desc": "Richardson 112 trucker cap \u2014 structured front panel, breathable mesh back, adjustable snapback. MMS embroidered on the front. One size fits most.",
+    "printful": {
+      "decoration": "print",
+      "product_id": 957,
+      "color_map": {
+        "White": "Satin"
+      },
+      "print_style": "flat",
+      "print_placement": "front",
+      "print_position": {
+        "area_width": 900,
+        "area_height": 900,
+        "width": 774,
+        "height": 251,
+        "top": 324,
+        "left": 63
+      }
+    },
+    "price_by_size": {},
+    "ship_first": 4.99,
+    "ship_addl": 0.07,
+    "image": "/asset/products/ev1.png"
+  },
+  {
+    "id": "ev2",
+    "name": "MMS Can Koozie",
+    "group": "Swag",
+    "category": "Giveaways",
+    "icon": "cup",
+    "colors": [
+      "White"
+    ],
+    "sizes": [
+      "Regular 12 oz",
+      "Slim 12 oz"
+    ],
+    "price": 3.42,
+    "decoration": "print",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "print",
+      "product_id": 764,
+      "color_map": {
+        "White": "White"
+      },
+      "print_style": "flat",
+      "print_placement": "front",
+      "print_position": {
+        "area_width": 1076,
+        "area_height": 2085,
+        "width": 925,
+        "height": 301,
+        "top": 892,
+        "left": 75
+      }
+    },
+    "price_by_size": {},
+    "ship_first": 4.5,
+    "ship_addl": 0.99,
+    "image": "/asset/products/ev2.png",
     "color_hex": {
-      "Black": "#000000",
-      "Heather Grey": "#afafb3"
+      "White": "#ffffff"
     }
   },
   {
-    "id": "ap11",
-    "name": "MMS Knit Beanie",
-    "group": "Apparel",
-    "category": "Headwear",
-    "icon": "cap",
+    "id": "ev3",
+    "name": "MMS Die-Cut Magnet (4\")",
+    "group": "Swag",
+    "category": "Giveaways",
+    "icon": "tag",
+    "colors": [
+      "White"
+    ],
+    "sizes": [
+      "4\u2033\u00d74\u2033"
+    ],
+    "price": 3.83,
+    "decoration": "print",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "print",
+      "product_id": 656,
+      "color_map": {
+        "White": "White"
+      },
+      "print_style": "flat",
+      "print_placement": "default",
+      "print_position": {
+        "area_width": 1200,
+        "area_height": 1200,
+        "width": 1032,
+        "height": 335,
+        "top": 432,
+        "left": 84
+      }
+    },
+    "price_by_size": {},
+    "ship_first": 4.5,
+    "ship_addl": 0.99,
+    "image": "/asset/products/ev3.png",
+    "color_hex": {
+      "White": "#ffffff"
+    }
+  },
+  {
+    "id": "ev4",
+    "name": "MMS Insulated Tumbler 20oz",
+    "group": "Swag",
+    "category": "Drinkware",
+    "icon": "cup",
     "colors": [
       "Navy",
       "Black",
-      "Heather Charcoal",
-      "Heather Grey"
+      "White"
     ],
-    "sizes": [],
-    "price": 16.0,
-    "decoration": "embroidery",
+    "sizes": [
+      "20 oz"
+    ],
+    "price": 20.35,
+    "decoration": "print",
     "fulfillment": "printful",
+    "published": true,
     "printful": {
-      "decoration": "embroidery",
-      "file": "mms_logo.png",
-      "placement": "front",
+      "decoration": "print",
+      "product_id": 742,
       "color_map": {
         "Navy": "Navy",
         "Black": "Black",
-        "Heather Charcoal": "Heather Charcoal",
-        "Heather Grey": "Heather Grey"
+        "White": "White"
       },
-      "product_id": 637,
-      "print_placement": "embroidery_front",
+      "print_style": "wrap",
+      "print_placement": "default",
       "print_position": {
-        "area_width": 1500,
-        "area_height": 525,
-        "width": 1500,
-        "height": 488,
-        "top": 18,
-        "left": 0
-      },
-      "thread_option": "thread_colors"
+        "area_width": 3017,
+        "area_height": 1200,
+        "width": 663,
+        "height": 215,
+        "top": 492,
+        "left": 1177
+      }
     },
-    "image": "/asset/products/ap11.png",
-    "published": true,
-    "desc": "Cuffed knit beanie in a warm ribbed knit for cold job sites. MMS embroidered on the cuff. One size fits most.",
+    "price_by_size": {},
+    "ship_first": 6.49,
+    "ship_addl": 2.0,
+    "image": "/asset/products/ev4.png",
     "color_hex": {
-      "Navy": "#000219",
-      "Black": "#020201",
-      "Heather Charcoal": "#212125",
-      "Heather Grey": "#dfdfd9"
+      "Navy": "#213c51",
+      "Black": "#000000",
+      "White": "#ffffff"
     }
+  },
+  {
+    "id": "ev5",
+    "name": "MMS Stainless Tumbler 20oz",
+    "group": "Swag",
+    "category": "Drinkware",
+    "icon": "cup",
+    "colors": [
+      "Black",
+      "White"
+    ],
+    "sizes": [
+      "20 oz"
+    ],
+    "price": 21.37,
+    "decoration": "print",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "print",
+      "product_id": 585,
+      "color_map": {
+        "Black": "Black",
+        "White": "White"
+      },
+      "print_style": "wrap",
+      "print_placement": "default",
+      "print_position": {
+        "area_width": 2776,
+        "area_height": 2374,
+        "width": 610,
+        "height": 198,
+        "top": 1088,
+        "left": 1083
+      }
+    },
+    "price_by_size": {},
+    "ship_first": 10.49,
+    "ship_addl": 4.5,
+    "image": "/asset/products/ev5.png",
+    "color_hex": {
+      "Black": "#121214",
+      "White": "#ffffff"
+    }
+  },
+  {
+    "id": "ev6",
+    "name": "MMS Water Bottle 17oz",
+    "group": "Swag",
+    "category": "Drinkware",
+    "icon": "cup",
+    "colors": [
+      "Black",
+      "White"
+    ],
+    "sizes": [
+      "17 oz"
+    ],
+    "price": 23.91,
+    "decoration": "print",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "print",
+      "product_id": 382,
+      "color_map": {
+        "Black": "Black",
+        "White": "White"
+      },
+      "print_style": "wrap",
+      "print_placement": "default",
+      "print_position": {
+        "area_width": 2557,
+        "area_height": 1582,
+        "width": 562,
+        "height": 183,
+        "top": 699,
+        "left": 997
+      }
+    },
+    "price_by_size": {},
+    "ship_first": 10.49,
+    "ship_addl": 4.5,
+    "image": "/asset/products/ev6.png",
+    "color_hex": {
+      "Black": "#020202",
+      "White": "#ffffff"
+    }
+  },
+  {
+    "id": "ev7",
+    "name": "MMS Hardcover Journal",
+    "group": "Swag",
+    "category": "Office",
+    "icon": "notebook",
+    "colors": [
+      "Navy",
+      "Black",
+      "Red"
+    ],
+    "sizes": [
+      "5.5\u2033\u00d78.5\u2033"
+    ],
+    "price": 13.21,
+    "decoration": "print",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "print",
+      "product_id": 682,
+      "color_map": {
+        "Navy": "Navy",
+        "Black": "Black",
+        "Red": "Red"
+      },
+      "print_style": "cover",
+      "print_placement": "front",
+      "print_position": {
+        "area_width": 900,
+        "area_height": 1500,
+        "width": 558,
+        "height": 181,
+        "top": 659,
+        "left": 171
+      }
+    },
+    "price_by_size": {},
+    "ship_first": 5.5,
+    "ship_addl": 3.25,
+    "image": "/asset/products/ev7.png",
+    "color_hex": {
+      "Navy": "#1e2c4a",
+      "Black": "#161616",
+      "Red": "#f40023"
+    }
+  },
+  {
+    "id": "ev8",
+    "name": "MMS Mouse Pad",
+    "group": "Swag",
+    "category": "Office",
+    "icon": "notebook",
+    "colors": [
+      "White"
+    ],
+    "sizes": [
+      "8.7\"x7.1\""
+    ],
+    "price": 9.13,
+    "decoration": "print",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "print",
+      "product_id": 518,
+      "color_map": {
+        "White": "White"
+      },
+      "print_style": "flat",
+      "print_placement": "default",
+      "print_position": {
+        "area_width": 2700,
+        "area_height": 2250,
+        "width": 2322,
+        "height": 755,
+        "top": 747,
+        "left": 189
+      }
+    },
+    "price_by_size": {},
+    "ship_first": 4.49,
+    "ship_addl": 2.0,
+    "image": "/asset/products/ev8.png",
+    "color_hex": {
+      "White": "#ffffff"
+    }
+  },
+  {
+    "id": "ev9",
+    "name": "MMS Golf Towel",
+    "group": "Swag",
+    "category": "Events",
+    "icon": "tag",
+    "colors": [
+      "White"
+    ],
+    "sizes": [
+      "16\u2033\u00d724\u2033"
+    ],
+    "price": 10.61,
+    "decoration": "print",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "print",
+      "product_id": 1423,
+      "color_map": {
+        "White": "White"
+      },
+      "print_style": "cover",
+      "print_placement": "front",
+      "print_position": {
+        "area_width": 5043,
+        "area_height": 7350,
+        "width": 3126,
+        "height": 1017,
+        "top": 3166,
+        "left": 958
+      }
+    },
+    "price_by_size": {},
+    "ship_first": 5.49,
+    "ship_addl": 2.5,
+    "image": "/asset/products/ev9.png"
   },
   {
     "id": "sw1",
@@ -481,6 +918,72 @@
     "decoration": "promo",
     "fulfillment": "vendor",
     "image": "/asset/products/sw1.png",
+    "published": false
+  },
+  {
+    "id": "sw10",
+    "name": "MMS Hardcover Notebook",
+    "group": "Swag",
+    "category": "Office",
+    "icon": "notebook",
+    "colors": [
+      "Navy",
+      "Black"
+    ],
+    "sizes": [],
+    "price": 13.0,
+    "decoration": "promo",
+    "fulfillment": "vendor",
+    "image": "/asset/products/sw10.png",
+    "published": false
+  },
+  {
+    "id": "sw11",
+    "name": "MMS Pen Set",
+    "group": "Swag",
+    "category": "Office",
+    "icon": "notebook",
+    "colors": [
+      "Navy/Silver"
+    ],
+    "sizes": [],
+    "price": 8.0,
+    "decoration": "promo",
+    "fulfillment": "vendor",
+    "image": "/asset/products/sw11.png",
+    "published": false
+  },
+  {
+    "id": "sw12",
+    "name": "MMS Can Koozie",
+    "group": "Swag",
+    "category": "Misc",
+    "icon": "tag",
+    "colors": [
+      "Navy",
+      "Red"
+    ],
+    "sizes": [],
+    "price": 3.5,
+    "decoration": "promo",
+    "fulfillment": "vendor",
+    "image": "/asset/products/sw12.png",
+    "published": false
+  },
+  {
+    "id": "sw13",
+    "name": "MMS Metal Keychain",
+    "group": "Swag",
+    "category": "Misc",
+    "icon": "tag",
+    "colors": [
+      "Silver"
+    ],
+    "sizes": [],
+    "price": 5.0,
+    "decoration": "promo",
+    "fulfillment": "vendor",
+    "image": "/asset/products/sw13.png",
     "published": false
   },
   {
@@ -535,24 +1038,42 @@
     "icon": "bag",
     "colors": [
       "Natural",
-      "Navy"
+      "Black"
     ],
-    "sizes": [],
-    "price": 9.0,
+    "sizes": [
+      "One size"
+    ],
+    "price": 15.56,
     "decoration": "print",
-    "fulfillment": "gelato",
-    "gelato": {
-      "catalog": "tote-bags",
-      "placement": "default",
-      "print_file": "mms_white.png",
-      "color_map": {
-        "Natural": "bag_product_bsc_tote-bag_bqa_clc_bsi_std-t_bco_natural_bpr_4-0",
-        "Navy": "bag_product_bsc_tote-bag_bqa_clc_bsi_std-t_bco_black_bpr_4-0"
-      }
-    },
+    "fulfillment": "printful",
     "image": "/asset/products/sw4.png",
     "published": true,
-    "desc": "Sturdy natural canvas tote with long handles for easy carrying. MMS printed on the front \u2014 a popular trade-show giveaway."
+    "desc": "Sturdy natural canvas tote with long handles for easy carrying. MMS printed on the front \u2014 a popular trade-show giveaway.",
+    "printful": {
+      "decoration": "print",
+      "product_id": 367,
+      "color_map": {
+        "Natural": "Oyster",
+        "Black": "Black"
+      },
+      "print_style": "front",
+      "print_placement": "front",
+      "print_position": {
+        "area_width": 1500,
+        "area_height": 1500,
+        "width": 960,
+        "height": 312,
+        "top": 360,
+        "left": 270
+      }
+    },
+    "price_by_size": {},
+    "ship_first": 4.49,
+    "ship_addl": 2.0,
+    "color_hex": {
+      "Natural": "#edcea5",
+      "Black": "#101010"
+    }
   },
   {
     "id": "sw5",
@@ -635,72 +1156,6 @@
     "decoration": "promo",
     "fulfillment": "vendor",
     "image": "/asset/products/sw9.png",
-    "published": false
-  },
-  {
-    "id": "sw10",
-    "name": "MMS Hardcover Notebook",
-    "group": "Swag",
-    "category": "Office",
-    "icon": "notebook",
-    "colors": [
-      "Navy",
-      "Black"
-    ],
-    "sizes": [],
-    "price": 13.0,
-    "decoration": "promo",
-    "fulfillment": "vendor",
-    "image": "/asset/products/sw10.png",
-    "published": false
-  },
-  {
-    "id": "sw11",
-    "name": "MMS Pen Set",
-    "group": "Swag",
-    "category": "Office",
-    "icon": "notebook",
-    "colors": [
-      "Navy/Silver"
-    ],
-    "sizes": [],
-    "price": 8.0,
-    "decoration": "promo",
-    "fulfillment": "vendor",
-    "image": "/asset/products/sw11.png",
-    "published": false
-  },
-  {
-    "id": "sw12",
-    "name": "MMS Can Koozie",
-    "group": "Swag",
-    "category": "Misc",
-    "icon": "tag",
-    "colors": [
-      "Navy",
-      "Red"
-    ],
-    "sizes": [],
-    "price": 3.5,
-    "decoration": "promo",
-    "fulfillment": "vendor",
-    "image": "/asset/products/sw12.png",
-    "published": false
-  },
-  {
-    "id": "sw13",
-    "name": "MMS Metal Keychain",
-    "group": "Swag",
-    "category": "Misc",
-    "icon": "tag",
-    "colors": [
-      "Silver"
-    ],
-    "sizes": [],
-    "price": 5.0,
-    "decoration": "promo",
-    "fulfillment": "vendor",
-    "image": "/asset/products/sw13.png",
     "published": false
   }
 ]

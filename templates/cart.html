@@ -28,7 +28,16 @@ function draw(){
   const c=swagItems(); const a=document.getElementById('cartArea');
   document.getElementById('ccount').textContent=c.length?c.length+' item type(s)':'';
   if(!c.length){ a.innerHTML='<div class="empty"><h3 style="color:#1e2d3b;margin:0 0 8px">Your cart is empty</h3><p style="margin:0 0 16px">The cart is just for swag &amp; apparel. Cards and documents check out on their own pages.</p><a class="btn" href="/swag">Back to swag</a></div>'; return; }
-  const units=c.reduce((n,i)=>n+(i.qty||1),0), sub=c.reduce((s,i)=>s+(i.price||0)*(i.qty||1),0);
+  const units=c.reduce((n,i)=>n+(i.qty||1),0);
+  const goods=c.reduce((s,i)=>s+(i.price||0)*(i.qty||1),0);
+  // shipping mirrors the server: highest first-item rate + additional per extra unit
+  let shipEst=0;
+  if(c.length){
+    const lead=c.reduce((a,b)=>((b.ship_first||0)>(a.ship_first||0)?b:a), c[0]);
+    shipEst=(lead.ship_first||0);
+    c.forEach(i=>{ const n=(i.qty||1)-(i===lead?1:0); shipEst+=Math.max(0,n)*(i.ship_addl||0); });
+  }
+  const sub=Math.round((goods+shipEst)*100)/100;   // true spend = goods + shipping
   const unlimited = !BUDGET || BUDGET.unlimited;
   const remaining = unlimited ? null : BUDGET.remaining;
   const overBudget = (!unlimited) && (sub > remaining);
@@ -47,7 +56,10 @@ function draw(){
 
   a.innerHTML='<div class="cartwrap"><div class="panel">'+c.map(line).join('')+'</div>'+
    '<div class="summary"><h3>Checkout</h3>'+
-     '<div class="sumrow"><span>Swag subtotal (est.)</span><span>$'+sub.toFixed(2)+'</span></div>'+
+     '<div class="sumrow"><span>Items ('+units+')</span><span>$'+goods.toFixed(2)+'</span></div>'+
+     '<div class="sumrow"><span>Shipping (estimated)</span><span>$'+shipEst.toFixed(2)+'</span></div>'+
+     '<div class="sumrow" style="border-top:1px solid var(--line);margin-top:4px;padding-top:8px;font-weight:800;color:#1e2d3b"><span>Total MMS pays</span><span>$'+sub.toFixed(2)+'</span></div>'+
+     '<div class="fineprint" style="margin:2px 0 10px">Item costs are the real Printful price for the size chosen; shipping is estimated from Printful\'s rates. The total is what counts against your budget.</div>'+
      '<div class="ctxbox"><h4>Order context <span class="req">*required</span></h4>'+
        '<div class="field"><label>Purpose</label><select id="x_purpose"><option value="">Select a purpose...</option>'+
          '<option>Customer visit</option><option>Trade show / event</option><option>Customer gift</option><option>New hire kit</option><option>Internal / team</option><option>Other</option></select></div>'+

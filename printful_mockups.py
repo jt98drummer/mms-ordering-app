@@ -93,7 +93,7 @@ def thread_option_for(product_id, placement):
     return thread_ids[0]
 
 
-def print_spec(product_id, variant_id, prefer_chest=False):
+def print_spec(product_id, variant_id, prefer_chest=False, style=None):
     """THE single source of truth for how the MMS logo is placed on a product.
 
     Returns (placement, position) — used both to render the storefront mockup
@@ -105,7 +105,9 @@ def print_spec(product_id, variant_id, prefer_chest=False):
     if not placement:
         return None, None
     aw, ah = area_for(product_id, variant_id, placement)
-    return placement, make_position(aw, ah, placement_style(placement))
+    # `style` lets the catalog override how the logo sits on non-garment goods
+    # ("default" alone can't tell a mug wrap from a flat mouse pad).
+    return placement, make_position(aw, ah, style or placement_style(placement))
 
 
 def placement_style(placement):
@@ -129,10 +131,13 @@ FILL = {
     "chest_left": 0.95,   # left-chest embroidery: ~3.8" on a 4" area
     "center":     1.00,   # cap / beanie front embroidery: fill the panel
     "front":      0.64,   # DTG chest print: ~7.7" on a 12" area (not full-front)
-    "wrap":       0.22,   # mug wrap
+    "wrap":       0.22,   # mug / tumbler / bottle: small, on the visible face
+    "flat":       0.86,   # flat goods printed edge-to-edge: sticker, magnet, mouse pad
+    "cover":      0.62,   # journal / notebook cover, golf towel: centred, some margin
 }
 # Vertical placement inside the area (fraction from top); None = centre.
-VPOS = {"chest_left": None, "center": None, "front": 0.24, "wrap": None}
+VPOS = {"chest_left": None, "center": None, "front": 0.24, "wrap": None,
+        "flat": None, "cover": None}
 
 
 def make_position(aw, ah, style):

@@ -34,7 +34,8 @@
     <div class="pdp-info">
       <div class="pdp-sub">{{ item.category }} &middot; {{ item.group }}</div>
       <h1 class="pdp-name">{{ item.name }}</h1>
-      <div class="pdp-price">${{ '%.2f'|format(item.price) }} <span style="color:var(--muted);font-size:13px;font-weight:600">each</span></div>
+      <div class="pdp-price" id="priceLine">${{ '%.2f'|format(item.price) }} <span style="color:var(--muted);font-size:13px;font-weight:600">each</span></div>
+      <div id="costNote" style="color:var(--muted);font-size:12.5px;margin:-2px 0 8px;line-height:1.5"></div>
       {% if item.desc %}<p class="pdp-desc">{{ item.desc }}</p>{% endif %}
 
       <div class="pf"><label>Color <span class="cur" id="colorName"></span></label><div class="swrow" id="colorRow"></div></div>
@@ -84,14 +85,34 @@ function renderSizes(){
 }
 function pickColor(c){ st.color=c; const opts=IT.logo_by_color[c]||[]; if(opts.indexOf(st.logo)<0) st.logo=(IT.logo_default[c]||opts[0]); renderColors(); renderLogos(); setImg(); }
 function pickLogo(l){ st.logo=l; renderLogos(); setImg(); }
-function pickSize(s){ st.size=s; renderSizes(); }
+function unitCost(){   // extended sizes (2XL+) cost more
+  const by=IT.price_by_size||{};
+  return (st.size && by[st.size]!=null) ? by[st.size] : IT.price;
+}
+function renderCost(){
+  const q=Math.max(1, parseInt((document.getElementById('qty')||{}).value,10)||1);
+  const unit=unitCost(), goods=unit*q;
+  const sf=IT.ship_first||0, sa=IT.ship_addl||0;
+  const ship=q>0 ? sf+Math.max(0,q-1)*sa : 0;
+  document.getElementById('priceLine').innerHTML =
+    '$'+unit.toFixed(2)+' <span style="color:var(--muted);font-size:13px;font-weight:600">each</span>';
+  document.getElementById('costNote').innerHTML =
+    'Item cost $'+goods.toFixed(2)+' &nbsp;+&nbsp; shipping (est.) $'+ship.toFixed(2)+
+    ' &nbsp;=&nbsp; <b style="color:var(--navy)">$'+(goods+ship).toFixed(2)+' total</b>'+
+    '<br><span style="font-size:11.5px">What MMS pays. Shipping is estimated per Printful\'s rates '+
+    '(first item $'+sf.toFixed(2)+', +$'+sa.toFixed(2)+' each after). Counts against your swag budget.</span>';
+}
+function pickSize(s){ st.size=s; renderSizes(); renderCost(); }
 document.getElementById('addBtn').onclick=function(){
   const q=Math.max(1, parseInt(document.getElementById('qty').value,10)||1);
   const label = BRAND[st.logo] ? BRAND[st.logo].label : '';
-  cartAdd({type:'swag', id:IT.id, name:IT.name, color:st.color, size:st.size, qty:q, price:IT.price,
+  const unit = unitCost();
+  cartAdd({type:'swag', id:IT.id, name:IT.name, color:st.color, size:st.size, qty:q, price:unit,
     icon:IT.icon, image:imgFor(st.color,st.logo), logo:st.logo, logoLabel:label, label:IT.name,
-    detail:q+' × '+st.color+(st.size?' · '+st.size:'')+(label?' · '+label:'')+' · $'+IT.price.toFixed(2)+' ea'});
+    ship_first:IT.ship_first||0, ship_addl:IT.ship_addl||0,
+    detail:q+' × '+st.color+(st.size?' · '+st.size:'')+(label?' · '+label:'')+' · $'+unit.toFixed(2)+' ea'});
   toast('Added to cart'); setTimeout(()=>location.href='/cart', 500);
 };
-renderColors(); renderLogos(); renderSizes(); setImg();
+var qi=document.getElementById('qty'); if(qi) qi.addEventListener('input', renderCost);
+renderColors(); renderLogos(); renderSizes(); setImg(); renderCost();
 </script>{% endblock %}

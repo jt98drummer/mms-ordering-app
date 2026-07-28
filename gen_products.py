@@ -41,11 +41,8 @@ def slug(s):
 # give real, storefront-quality mockups. Mug White = plain white glossy (19); Navy =
 # white mug w/ dark-blue inside+handle (403). Tote Natural = Oyster, Navy = Black (367).
 MOCKUP_SRC = {
-    "sw2": {"White": (19, 1320), "Navy": (403, 17362)},
-    "sw4": {"Natural": (367, 10458), "Navy": (367, 10457)},
+    "sw2": {"White": (19, 1320), "Navy": (403, 17362)},   # mug: still Gelato-fulfilled
 }
-# storefront items that are real + linked (shown); everything else stays unpublished
-PUBLISHED = {"ap1", "ap2", "ap3", "ap8", "ap9", "ap10", "ap11", "sw2", "sw4"}
 
 
 def _load_env(path):
@@ -428,7 +425,8 @@ def build_printful(items, only_ids=None):
         prefer_chest = it.get("decoration") == "embroidery" and it.get("category") not in ("Headwear",)
         # SAME spec the real order uses (printful_mockups.print_spec) so the
         # storefront image and the printed garment can never disagree.
-        placement, position = pm.print_spec(pid, vid, prefer_chest=prefer_chest)
+        placement, position = pm.print_spec(pid, vid, prefer_chest=prefer_chest,
+                                            style=(it.get('printful') or {}).get('print_style'))
         logo_key = branding.item_logo_options(it, color)[0]
         logo_url = MOCKUP_LOGO_BASE.rstrip("/") + "/assets/print/" + branding.LOGOS[logo_key]["file"]
         print("  %s: product %s variant %s color %s placement %s ..." %
@@ -461,7 +459,8 @@ def build_variants(items, only_ids=None):
     if sid:
         config.PRINTFUL_STORE_ID = sid
     print("variants: store id = %s" % (sid or "(none)"))
-    targets = [it for it in items if it["id"] in PUBLISHED
+    # drive off the catalog's published flag (single source of truth)
+    targets = [it for it in items if it.get("published")
                and (only_ids is None or it["id"] in only_ids)]
     made = 0
     for it in targets:
@@ -472,7 +471,10 @@ def build_variants(items, only_ids=None):
             if str(pid) not in printful._variant_cache:
                 _s, vd = pm._req("GET", "/products/%s" % pid)
                 printful._variant_cache[str(pid)] = ((vd or {}).get("result") or {}).get("variants") or []
-            size = None if it.get("category") == "Headwear" else ("L" if it.get("sizes") else "OSFA")
+            # pick a real size from THIS item (never a hardcoded "L" — the new
+            # event goods use sizes like "20 oz" / "3″×3″")
+            szs = it.get("sizes") or []
+            size = None if (it.get("category") == "Headwear" or not szs) else szs[len(szs) // 2]
             for col in colors:
                 cv[col] = (pid, printful.resolve_variant(pid, cmap.get(col, col), size))
         elif iid in MOCKUP_SRC:
@@ -490,7 +492,8 @@ def build_variants(items, only_ids=None):
                 continue
             vids = list({v for _, v in colvids})
             # SAME spec the real order uses — see printful_mockups.print_spec.
-            placement, position = pm.print_spec(pid, vids[0], prefer_chest=emb)
+            placement, position = pm.print_spec(pid, vids[0], prefer_chest=emb,
+                                                style=(it.get('printful') or {}).get('print_style'))
             logo_url = MOCKUP_LOGO_BASE.rstrip("/") + "/assets/print/" + branding.LOGOS[lk]["file"]
             print("  %s: product %s logo %s placement %s vids %s ..." % (iid, pid, lk, placement, vids))
             urlmap, info = pm.generate_multi(pid, vids, placement, logo_url, position=position)
@@ -509,6 +512,72 @@ def build_variants(items, only_ids=None):
             if os.path.exists(src):
                 shutil.copyfile(src, os.path.join(OUT, iid + ".png"))
     print("variants: generated %d combo images -> %s" % (made, VARDIR))
+
+
+SHIP_RCPT = {"address1": "1501 42nd St", "city": "West Des Moines",
+             "country_code": "US", "state_code": "IA", "zip": "50266"}
+
+
+def build_costs(items):
+    """Freeze REAL costs into the catalog so the store shows what MMS actually pays:
+      price          - unit cost of the base size (what most people order)
+      price_by_size  - per-size cost (extended sizes cost more; budget uses this)
+      ship_first     - shipping for the first unit of this item
+      ship_addl      - shipping for each additional unit
+    Costs come from the Printful catalog; shipping from a live rate quote."""
+    import config, printful, printful_mockups as pm
+    if not config.PRINTFUL_API_KEY:
+        print("costs: PRINTFUL_API_KEY not set — skipped."); return
+    config.PRINTFUL_STORE_ID = config.PRINTFUL_STORE_ID or printful.store_id()
+    for it in items:
+        if it.get("fulfillment") != "printful":
+            continue
+        pf = it.get("printful") or {}
+        pid = pf.get("product_id")
+        if not pid:
+            continue
+        _s, d = pm._req("GET", "/products/%s" % pid)
+        vs = ((d or {}).get("result") or {}).get("variants") or []
+        cm = pf.get("color_map") or {}
+        want = {str(cm.get(c, c)).strip().lower() for c in (it.get("colors") or [])}
+        # price per size across the colours we sell (colours don't change price)
+        by_size = {}
+        for v in vs:
+            vc = (v.get("color") or "").strip().lower()
+            if want and vc and vc not in want:
+                continue
+            sz = (v.get("size") or "").strip()
+            p = float(v.get("price") or 0)
+            if p and (sz not in by_size or p < by_size[sz]):
+                by_size[sz] = round(p, 2)
+        sold = [s for s in (it.get("sizes") or []) if s in by_size] or list(by_size)
+        if not sold:
+            print("  %s: no priced variants — skipped" % it["id"]); continue
+        prices = {s: by_size[s] for s in sold}
+        base = min(prices.values())
+        it["price"] = base
+        it["price_by_size"] = prices if len(set(prices.values())) > 1 else {}
+        # live shipping quote (first unit vs two units -> incremental)
+        vid = None
+        for v in vs:
+            vc = (v.get("color") or "").strip().lower()
+            if (not want or not vc or vc in want) and (v.get("size") or "").strip() in sold:
+                vid = v.get("id"); break
+        if vid:
+            def q(n):
+                _st, rd = pm._req("POST", "/shipping/rates",
+                                  {"recipient": SHIP_RCPT, "items": [{"variant_id": vid, "quantity": n}]})
+                rs = (rd or {}).get("result") or []
+                return min((float(r.get("rate") or 99) for r in rs), default=None)
+            r1, r2 = q(1), q(2)
+            if r1 is not None:
+                it["ship_first"] = round(r1, 2)
+                it["ship_addl"] = round((r2 - r1), 2) if r2 is not None else round(r1, 2)
+        print("  %-5s base $%-7s sizes=%s ship $%s/+$%s" % (
+            it["id"], base, prices if it["price_by_size"] else "flat",
+            it.get("ship_first"), it.get("ship_addl")))
+    print("costs: refreshed for %d Printful items" % sum(
+        1 for i in items if i.get("fulfillment") == "printful"))
 
 
 def build_printspec(items):
@@ -536,7 +605,8 @@ def build_printspec(items):
         if not vid:
             print("  %s: no variant — skipped" % it["id"]); continue
         prefer = it.get("decoration") == "embroidery" and it.get("category") != "Headwear"
-        placement, position = pm.print_spec(pid, vid, prefer_chest=prefer)
+        placement, position = pm.print_spec(pid, vid, prefer_chest=prefer,
+                                            style=pf.get("print_style"))
         if not placement or not position:
             print("  %s: no spec — skipped" % it["id"]); continue
         pf["print_placement"] = placement
@@ -584,8 +654,10 @@ if __name__ == "__main__":
             if os.path.exists(p) and flatten_file(p):
                 n += 1
         print("flatten: normalized %d mockups" % n)
+    if cmd in ("all", "costs"):
+        build_costs(items)
     if cmd in ("all", "printspec", "variants"):
         build_printspec(items)
-    if cmd in ("all", "fallback", "catalog", "printspec", "variants"):
+    if cmd in ("all", "fallback", "catalog", "printspec", "variants", "costs"):
         update_catalog(items)
     print("done:", cmd)
