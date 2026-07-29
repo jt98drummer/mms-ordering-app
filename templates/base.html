@@ -13,7 +13,6 @@
     <a href="/cards">Business Cards</a>
     <a href="/documents">Documents</a>
     <a href="/swag">Swag &amp; Apparel</a>
-    {% if show_cart %}<a href="/cart"><button class="cartbtn">Cart <span class="badge" data-cart-count style="display:none">0</span></button></a>{% endif %}
     {% if user %}
     <div class="profile" tabindex="0">
       <div class="avatar" title="{{user.name}}">{{ user.initials }}</div>
