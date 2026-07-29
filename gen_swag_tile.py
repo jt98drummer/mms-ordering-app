@@ -26,14 +26,12 @@ def vgrad(size, top, bot):
 
 
 def brand_logo():
-    """The COMPLETE official MMS logo (script + 'MILLER MECHANICAL SPECIALTIES'),
-    all-white variant, for the navy tile.
+    """The official RED MMS icon — script only, no tagline underneath.
 
-    Used whole — only transparent margins are trimmed, never the artwork. The
-    script on its own is a very wide 4.66:1 lockup that reads as stretched at
-    tile scale; the full mark is 3.42:1 and balanced.
+    This is brand-guide file 4 ("MMS Icon Only, red, no text") used whole; only
+    transparent margins are trimmed, never the artwork.
     """
-    im = Image.open(os.path.join(APP, "assets", "print", "mms_white.png")).convert("RGBA")
+    im = Image.open(os.path.join(APP, "assets", "print", "mms_icon_red.png")).convert("RGBA")
     return im.crop(im.split()[3].getbbox())
 
 
