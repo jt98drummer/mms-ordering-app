@@ -8,7 +8,8 @@
     "pdf": "doc1.pdf",
     "thumb": "doc1.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-4_ver",
-    "doc_type": "Flyers"
+    "doc_type": "Flyers",
+    "trending": true
   },
   {
     "id": "doc2",
@@ -19,7 +20,8 @@
     "pdf": "doc2.pdf",
     "thumb": "doc2.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-4_ver",
-    "doc_type": "Line Cards"
+    "doc_type": "Line Cards",
+    "trending": false
   },
   {
     "id": "doc3",
@@ -30,7 +32,8 @@
     "pdf": "doc3.pdf",
     "thumb": "doc3.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-4_ver",
-    "doc_type": "Line Cards"
+    "doc_type": "Line Cards",
+    "trending": false
   },
   {
     "id": "doc4",
@@ -41,7 +44,8 @@
     "pdf": "doc4.pdf",
     "thumb": "doc4.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-0_ver",
-    "doc_type": "Flyers"
+    "doc_type": "Flyers",
+    "trending": false
   },
   {
     "id": "doc5",
@@ -52,7 +56,8 @@
     "pdf": "doc5.pdf",
     "thumb": "doc5.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-0_ver",
-    "doc_type": "Flyers"
+    "doc_type": "Flyers",
+    "trending": true
   },
   {
     "id": "doc6",
@@ -63,7 +68,8 @@
     "pdf": "doc6.pdf",
     "thumb": "doc6.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-0_ver",
-    "doc_type": "Flyers"
+    "doc_type": "Flyers",
+    "trending": false
   },
   {
     "id": "doc7",
@@ -74,7 +80,8 @@
     "pdf": "doc7.pdf",
     "thumb": "doc7.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-0_ver",
-    "doc_type": "Flyers"
+    "doc_type": "Flyers",
+    "trending": false
   },
   {
     "id": "doc8",
@@ -85,7 +92,8 @@
     "pdf": "doc8.pdf",
     "thumb": "doc8.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-0_ver",
-    "doc_type": "Flyers"
+    "doc_type": "Flyers",
+    "trending": false
   },
   {
     "id": "doc9",
@@ -96,7 +104,8 @@
     "pdf": "doc9.pdf",
     "thumb": "doc9.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-0_ver",
-    "doc_type": "Flyers"
+    "doc_type": "Flyers",
+    "trending": false
   },
   {
     "id": "doc10",
@@ -107,7 +116,8 @@
     "pdf": "doc10.pdf",
     "thumb": "doc10.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-0_ver",
-    "doc_type": "Flyers"
+    "doc_type": "Flyers",
+    "trending": true
   },
   {
     "id": "doc11",
@@ -118,7 +128,8 @@
     "pdf": "doc11.pdf",
     "thumb": "doc11.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-0_ver",
-    "doc_type": "Flyers"
+    "doc_type": "Flyers",
+    "trending": false
   },
   {
     "id": "doc12",
@@ -129,7 +140,8 @@
     "pdf": "doc12.pdf",
     "thumb": "doc12.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-0_ver",
-    "doc_type": "Flyers"
+    "doc_type": "Flyers",
+    "trending": false
   },
   {
     "id": "doc13",
@@ -140,7 +152,8 @@
     "pdf": "doc13.pdf",
     "thumb": "doc13.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-0_ver",
-    "doc_type": "Flyers"
+    "doc_type": "Flyers",
+    "trending": false
   },
   {
     "id": "doc14",
@@ -151,7 +164,8 @@
     "pdf": "doc14.pdf",
     "thumb": "doc14.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-4_ver",
-    "doc_type": "Flyers"
+    "doc_type": "Flyers",
+    "trending": true
   },
   {
     "id": "doc15",
@@ -162,7 +176,8 @@
     "pdf": "doc15.pdf",
     "thumb": "doc15.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-4_ver",
-    "doc_type": "Internal Sales Guides"
+    "doc_type": "Internal Sales Guides",
+    "trending": false
   },
   {
     "id": "doc16",
@@ -173,7 +188,8 @@
     "pdf": "doc16.pdf",
     "thumb": "doc16.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-0_ver",
-    "doc_type": "Flyers"
+    "doc_type": "Flyers",
+    "trending": true
   },
   {
     "id": "doc17",
@@ -184,7 +200,8 @@
     "pdf": "doc17.pdf",
     "thumb": "doc17.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-0_ver",
-    "doc_type": "Flyers"
+    "doc_type": "Flyers",
+    "trending": false
   },
   {
     "id": "doc18",
@@ -195,7 +212,8 @@
     "pdf": "doc18.pdf",
     "thumb": "doc18.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-4_ver",
-    "doc_type": "Flyers"
+    "doc_type": "Flyers",
+    "trending": false
   },
   {
     "id": "doc19",
@@ -206,6 +224,7 @@
     "pdf": "doc19.pdf",
     "thumb": "doc19.jpg",
     "gelato_product": "cards_pf_lt_pt_250-gsm-coated-silk_cl_4-0_ver",
-    "doc_type": "Internal Sales Guides"
+    "doc_type": "Internal Sales Guides",
+    "trending": false
   }
 ]

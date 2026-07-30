@@ -8,6 +8,23 @@
 
   {% include "_rules_callout.html" %}
 
+  {% if trending_json and trending_json != '[]' %}
+  <!-- Curated campaign push: flip "trending" on a document in data_catalog.json -->
+  <div class="spot" id="trendSpot">
+    <div class="spot-head">
+      <span class="spot-eyebrow">&#128200; Trending now</span>
+      <h3 class="spot-title">Marketing wants these in front of customers</h3>
+      <div class="spot-sub">Tied to campaigns running right now &mdash; grab these for your next visit or show.</div>
+    </div>
+    <div class="spot-view">
+      <button class="spot-nav spot-prev" aria-label="Previous">&#8249;</button>
+      <div class="spot-track"></div>
+      <button class="spot-nav spot-next" aria-label="Next">&#8250;</button>
+    </div>
+    <div class="spot-dots"></div>
+  </div>
+  {% endif %}
+
   <div class="section" id="allitems"><div class="eyebrow2">Full library</div><h2 class="h" id="docCount"></h2>
     <div class="filterbar">
       <div class="filterrow"><span class="lab">Type</span>
@@ -39,6 +56,7 @@
 {% endblock %}
 {% block scripts %}<script>
 const DOCS = {{ docs_json|safe }};
+const TRENDING = {{ trending_json|safe if trending_json else '[]' }};
 const DOC_MAX = {{ doc_max }};
 let F={type:'all',div:'all'}, cur=null;
 function docCard(d){
@@ -76,5 +94,19 @@ function addDoc(){
   closeD(); render();
   toast('Added to cart');
 }
+function trendSlide(d){
+  const divb = d.division==='Signal' ? 'Signal' : 'MMS';
+  return '<div class="spot-slide">'+
+    '<div class="spot-shot"><img src="/static/thumbs/'+d.thumb+'" alt=""></div>'+
+    '<div class="spot-body">'+
+      '<div class="spot-meta">'+divb+' &middot; '+d.doc_type+(d.audience?' &middot; '+d.audience:'')+'</div>'+
+      '<h4>'+d.title+'</h4>'+
+      '<p>Part of a campaign we’re pushing right now. Add it to your cart and hand it out at your next '+
+        'customer visit or trade show — up to '+DOC_MAX+' sheets per order.</p>'+
+      '<a class="spot-cta" href="#" onclick="openD(\''+d.id+'\');return false;">Add to cart</a>'+
+      '<a class="spot-cta ghost" href="/flyerpdf/'+d.id+'" target="_blank" rel="noopener">Preview PDF</a>'+
+    '</div></div>';
+}
 render(); renderCartBadge();
+mountSpotlight('trendSpot', TRENDING.map(trendSlide), {interval:5000});
 </script>{% endblock %}

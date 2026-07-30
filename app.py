@@ -11,7 +11,7 @@ Modes (env GELATO_MODE): dry | draft | live
 import os, json, csv, time, datetime, hmac, hashlib, re
 from flask import (Flask, render_template, request, jsonify, send_from_directory,
                    abort, Response, redirect, session)
-import config, gelato, printful, catalog, card_render, auth, graph, stripe_pay, branding, budget
+import config, gelato, printful, catalog, card_render, auth, graph, stripe_pay, branding, budget, popularity
 from card_engine import generate_card_pdf
 
 app = Flask(__name__)
@@ -201,6 +201,8 @@ def _load_pending(oid):
 
 
 def _fulfill_swag(order):
+    for _i in (order.get("items") or []):        # popularity: real orders rank highest
+        popularity.ordered(_i.get("id"), _i.get("qty", 1))
     """Route each swag line to its maker: Gelato (print), Printful (apparel), emailed PO (promo)."""
     items = order.get("items", [])
     groups = {"gelato": [], "printful": [], "vendor": []}
@@ -344,7 +346,10 @@ def cards():
 @app.route("/documents")
 @auth.login_required
 def documents():
-    return render_template("documents.html", docs_json=json.dumps(catalog.load()),
+    docs = catalog.load()
+    trending = [d for d in docs if d.get("trending")]
+    return render_template("documents.html", docs_json=json.dumps(docs),
+                           trending_json=json.dumps(trending),
                            doc_max=config.DOC_MAX_QTY)
 
 @app.route("/documents/cart")
@@ -362,7 +367,12 @@ def flyers_redirect():
 @auth.login_required
 def swag():
     published = [s for s in SWAG if s.get("published")]
-    return render_template("swag.html", swag_json=json.dumps(published), show_cart=True)
+    # Crew Favorites: most-ordered first, falling back to most-viewed while
+    # order volume is low (popularity.rank), topped up with these defaults.
+    favs = popularity.rank(published, limit=5,
+                           fallback_ids=("ap3", "ap1", "ap10", "ev4", "ap8"))
+    return render_template("swag.html", swag_json=json.dumps(published),
+                           favs_json=json.dumps(favs), show_cart=True)
 
 @app.route("/swag/product/<pid>")
 @auth.login_required
@@ -370,6 +380,7 @@ def swag_product(pid):
     it = SWAG_BY_ID.get(pid)
     if not it or not it.get("published"):
         abort(404)
+    popularity.view(pid)                       # drives the Crew Favorites ranking
     return render_template("product.html", item=it, item_json=json.dumps(it), show_cart=True)
 
 @app.route("/cart")

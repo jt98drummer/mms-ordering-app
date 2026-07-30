@@ -54,3 +54,30 @@ const ICONS={
 };
 function icon(k){ return ICONS[k]||ICONS.tag; }
 document.addEventListener('DOMContentLoaded', renderCartBadge);
+
+/* ---- Spotlight carousel: auto-rotates every few seconds, pauses on hover ----
+   mountSpotlight(rootId, slidesHTML[], {interval}) renders the track + dots and
+   wires arrows, dots, and the timer. Used by the documents "Trending" band and
+   the swag "Crew favorites" band. */
+function mountSpotlight(rootId, slides, opts){
+  const root=document.getElementById(rootId); if(!root||!slides.length) return;
+  const o=Object.assign({interval:5000}, opts||{});
+  root.querySelector('.spot-track').innerHTML = slides.join('');
+  const dots=root.querySelector('.spot-dots');
+  if(dots) dots.innerHTML = slides.map((_,i)=>'<i data-i="'+i+'"'+(i?'':' class="on"')+'></i>').join('');
+  const track=root.querySelector('.spot-track');
+  let i=0, timer=null;
+  function go(n){ i=(n+slides.length)%slides.length;
+    track.style.transform='translateX(-'+(i*100)+'%)';
+    if(dots) dots.querySelectorAll('i').forEach((d,k)=>d.classList.toggle('on',k===i)); }
+  function start(){ stop(); if(slides.length>1) timer=setInterval(()=>go(i+1), o.interval); }
+  function stop(){ if(timer){ clearInterval(timer); timer=null; } }
+  const prev=root.querySelector('.spot-prev'), next=root.querySelector('.spot-next');
+  if(prev) prev.onclick=()=>{ go(i-1); start(); };
+  if(next) next.onclick=()=>{ go(i+1); start(); };
+  if(dots) dots.onclick=e=>{ const t=e.target.closest('i'); if(t){ go(+t.dataset.i); start(); } };
+  root.addEventListener('mouseenter', stop);
+  root.addEventListener('mouseleave', start);
+  if(slides.length<2){ [prev,next].forEach(b=>{ if(b) b.style.display='none'; }); }
+  go(0); start();
+}

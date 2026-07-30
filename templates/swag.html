@@ -16,9 +16,21 @@
     </div>
   </div>
 
-  <!-- popular picks -->
-  <div class="section"><div class="eyebrow2">Popular this month</div><h2 class="h">Crew favorites</h2>
-    <div class="pgrid" id="popular"></div></div>
+  <!-- Crew favorites: ranked by what's actually been ordered, falling back to
+       most-viewed while order volume is low (see popularity.py) -->
+  <div class="spot" id="favSpot">
+    <div class="spot-head">
+      <span class="spot-eyebrow">&#128293; Crew favorites</span>
+      <h3 class="spot-title">What the team is actually ordering</h3>
+      <div class="spot-sub">Ranked by real orders across MMS &mdash; updates on its own as people buy.</div>
+    </div>
+    <div class="spot-view">
+      <button class="spot-nav spot-prev" aria-label="Previous">&#8249;</button>
+      <div class="spot-track"></div>
+      <button class="spot-nav spot-next" aria-label="Next">&#8250;</button>
+    </div>
+    <div class="spot-dots"></div>
+  </div>
 
   <!-- full catalog -->
   <div class="section" id="allitems"><div class="eyebrow2">Full catalog</div><h2 class="h" id="allTitle">All items</h2>
@@ -43,6 +55,7 @@
 </style>
 <script>
 const SWAG = {{ swag_json|safe }};
+const FAVS = {{ favs_json|safe if favs_json else '[]' }};
 let G='all', C='all';
 function imgFallback(img,ic){ const p=img.parentNode; if(p){ p.classList.add('icon'); p.innerHTML=icon(ic); } }
 function cardHTML(it){
@@ -77,7 +90,19 @@ function goShop(g,c){ G=g;C=c;
   renderCats(); render();
   document.getElementById('allitems').scrollIntoView({behavior:'smooth'});
 }
-(function(){ const ids=['ap3','ap1','ap8','ap10','sw2'];
-  document.getElementById('popular').innerHTML = ids.map(id=>SWAG.find(x=>x.id===id)).filter(Boolean).map(cardHTML).join(''); })();
+function favSlide(it){
+  const dots=(it.colors||[]).slice(0,7).map(c=>'<span style="width:15px;height:15px;border-radius:50%;display:inline-block;'+
+    'border:1px solid rgba(255,255,255,.35);background:'+((it.color_hex&&it.color_hex[c])||'#8a9299')+'" title="'+c+'"></span>').join(' ');
+  return '<div class="spot-slide">'+
+    '<div class="spot-shot sq"><img src="'+it.image+'" alt="'+it.name+'"></div>'+
+    '<div class="spot-body">'+
+      '<div class="spot-meta">'+it.category+' &middot; '+it.group+'</div>'+
+      '<h4>'+it.name+'</h4>'+
+      '<p><b style="color:#fff">$'+it.price.toFixed(2)+'</b> each &middot; shipping calculated at checkout'+
+        '<br><span style="display:inline-flex;gap:6px;margin-top:9px">'+dots+'</span></p>'+
+      '<a class="spot-cta" href="/swag/product/'+it.id+'">View &amp; customize</a>'+
+    '</div></div>';
+}
+mountSpotlight('favSpot', FAVS.map(favSlide), {interval:4500});
 renderCats(); render();
 </script>{% endblock %}
