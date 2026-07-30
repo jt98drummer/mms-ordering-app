@@ -25,12 +25,15 @@ STORE = config.BUDGET_STORE   # resolves from DATA_DIR / BUDGET_STORE env (see c
 
 
 def budget_for(role):
-    """Dollar budget for a role, or None for unlimited (manager)."""
+    """Swag budget for a role, or None when the role has no budget.
+
+    ONLY FSEs have a budget. Managers order freely; employees have no dollar
+    budget either — every company-card order of theirs needs manager approval
+    instead (see app.approval_needed), so a budget would be redundant.
+    """
     if role == config.ROLE_FSE:
         return config.FSE_BUDGET_USD
-    if role == config.ROLE_EMPLOYEE:
-        return config.EMPLOYEE_BUDGET_USD
-    return None                                   # manager / unknown -> unlimited
+    return None
 
 
 def _now():
@@ -187,16 +190,19 @@ def release(email, amount, cap=None, dt=None):
 
 
 def status(user):
-    """Budget snapshot for the storefront banner."""
+    """Budget snapshot for the storefront banner.
+
+    Returns None when the role has no budget (managers, employees) so the UI
+    simply shows nothing rather than announcing "no limit".
+    """
     if not user:
         return None
     role = user.get("role")
     cap = budget_for(role)
+    if cap is None:
+        return None
     email = user.get("email", "")
     s = round(spent(email), 2)
-    if cap is None:
-        return {"role": role, "unlimited": True, "spent": s,
-                "reset_h": reset_human(), "reset": reset_date().isoformat()}
     remaining = round(cap - s, 2)
     pct = 0 if cap <= 0 else max(0, min(100, int(round(s / cap * 100))))
     return {"role": role, "unlimited": False, "budget": cap, "spent": s,

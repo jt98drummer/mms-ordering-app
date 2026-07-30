@@ -77,7 +77,9 @@ DOC_MAX_QTY              = int(_get("DOC_MAX_QTY", "25"))          # sheets per 
 # an order that would exceed it routes to the manager for approval. Managers are
 # unlimited. These replace the old per-order unit/$ caps.
 FSE_BUDGET_USD           = float(_get("FSE_BUDGET_USD", "250"))
-EMPLOYEE_BUDGET_USD      = float(_get("EMPLOYEE_BUDGET_USD", "100"))
+# Employees have NO dollar budget — every company-card order of theirs needs
+# manager approval instead. Kept only so an existing env var is harmless.
+EMPLOYEE_BUDGET_USD      = float(_get("EMPLOYEE_BUDGET_USD", "0"))
 
 # --- Business-card quantity limits by role (manager = unlimited) ---
 CARD_MAX_QTY_EMPLOYEE    = int(_get("CARD_MAX_QTY_EMPLOYEE", "100"))

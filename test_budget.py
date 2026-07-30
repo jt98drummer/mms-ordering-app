@@ -49,9 +49,19 @@ SHIP = {"addressLine1": "1 Main", "city": "DSM", "state": "IA", "postCode": "502
         "country": "US", "firstName": "A", "lastName": "B", "email": "x@y.com", "phone": "5"}
 CTX = {"purpose": "Customer visit", "recipient": "x", "justification": "y"}
 
+def _swag(j):
+    """Status of the swag order in a unified-checkout response."""
+    if not j.get("ok"):
+        return j
+    for o in j.get("orders", []):
+        if o["store"] == "Swag & Apparel":
+            return dict(j, status=o["status"], order_id=o["order_id"])
+    return dict(j, status="none")
+
+
 def order(items, payment="company"):
-    return c.post("/api/checkout/swag", json={"items": items, "context": CTX,
-                                              "payment": payment, "ship": SHIP}).get_json()
+    return _swag(c.post("/api/checkout", json={"items": items, "context": CTX,
+                                              "payment": payment, "ship": SHIP}).get_json())
 
 def line(id="ap3", price=16.0, qty=1, color="Navy", size="L", logo="white"):
     return {"type": "swag", "id": id, "name": "Tee", "price": price, "qty": qty,
@@ -59,7 +69,7 @@ def line(id="ap3", price=16.0, qty=1, color="Navy", size="L", logo="white"):
 
 print("\n=== 1. PRICE TAMPERING (client price must be ignored) ===")
 budget._save({})
-as_user("mallory@mms.com", "employee")           # $100 budget; tee really costs $16
+as_user("mallory@mms.com", "fse")                # FSE: $250 budget; tee really costs $16
 j = order([line(price=0.01, qty=5)])             # claims 5 tees cost $0.05
 check("tampered cheap price -> charged real catalog cost + shipping",
       budget.spent("mallory@mms.com"), expected("ap3", 5, "L"))
@@ -82,23 +92,24 @@ check("nothing charged by rejects", budget.spent("mallory@mms.com"), 0.0)
 
 print("\n=== 3. BUDGET GATE EXACTNESS ===")
 budget._save({})
-as_user("edge@mms.com", "employee")              # $100
-e6 = expected("ap3", 6, "L")                     # fits inside $100
+as_user("edge@mms.com", "fse")                   # $250
+e6 = expected("ap3", 6, "L")                     # fits inside $250
 j = order([line(qty=6)])
 check("in-budget order placed", j.get("status"), "placed")
 check("spent == real cost + shipping", budget.spent("edge@mms.com"), e6)
-j = order([line(qty=6)])                         # another 6 would exceed the rest
+budget._save({"edge@mms.com": {budget.period_key(): 245.0}})   # nearly spent
+j = order([line(qty=6)])                         # now exceeds the remainder
 check("over remaining -> pending", j.get("status"), "pending")
-check("pending did NOT accrue", budget.spent("edge@mms.com"), e6)
+check("pending did NOT accrue", budget.spent("edge@mms.com"), 245.0)
 
 budget._save({})
-as_user("exact@mms.com", "employee")
+as_user("exact@mms.com", "fse")
 # leave EXACTLY the cost of one unit-order remaining, then order it
 e1 = expected("ap3", 1, "L")
-budget._save({"exact@mms.com": {budget.period_key(): round(100.0 - e1, 2)}})
+budget._save({"exact@mms.com": {budget.period_key(): round(250.0 - e1, 2)}})
 j = order([line(qty=1)])                         # exact fit -> allowed
 check("exact-to-the-penny fit allowed", j.get("status"), "placed")
-check("spent exactly the $100 cap", budget.spent("exact@mms.com"), 100.0)
+check("spent exactly the $250 cap", budget.spent("exact@mms.com"), 250.0)
 j = order([line(qty=1)])
 check("$0 remaining -> next order pending", j.get("status"), "pending")
 
@@ -111,9 +122,9 @@ def fire():
     with cl.session_transaction() as s:
         s["user"] = {"name": "race", "email": "race@mms.com", "initials": "R",
                      "role": "fse", "manager_email": "mgr@mms.com"}
-    r = cl.post("/api/checkout/swag", json={"items": [line(qty=5)],  # $80 each order
-                                            "context": CTX, "payment": "company", "ship": SHIP})
-    results.append(r.get_json().get("status"))
+    r = cl.post("/api/checkout", json={"items": [line(qty=5)],       # ~$80 each order
+                                       "context": CTX, "payment": "company", "ship": SHIP})
+    results.append(_swag(r.get_json()).get("status"))
 ts = [threading.Thread(target=fire) for _ in range(6)]
 [t.start() for t in ts]; [t.join() for t in ts]
 placed = results.count("placed"); pending = results.count("pending")
@@ -128,33 +139,37 @@ check("spend == placed x cost", spent, round(placed * each, 2))
 print("\n=== 5. PER-PERSON ISOLATION + APPROVAL ATTRIBUTION ===")
 budget._save({})
 as_user("ann@mms.com", "fse");   order([line(qty=5)])
-as_user("ben@mms.com", "employee"); order([line(qty=2)])
+as_user("ben@mms.com", "fse"); order([line(qty=2)])
 as_user("cam@mms.com", "manager");  order([line(qty=50)])      # unlimited
 ann_exp = expected("ap3", 5, "L"); ben_exp = expected("ap3", 2, "L")
 check("ann charged her own order", budget.spent("ann@mms.com"), ann_exp)
 check("ben charged his own order", budget.spent("ben@mms.com"), ben_exp)
 check("manager never accrues", budget.spent("cam@mms.com"), 0.0)
-as_user("ben@mms.com", "employee")
+as_user("ben@mms.com", "fse")
+# push ben near his cap so the next order must go for approval
+budget._save(dict(budget._load(), **{"ben@mms.com": {budget.period_key(): 245.0}}))
 j = order([line(qty=10)])                                      # exceeds his remaining -> pending
+check("over-remaining order is pending", j.get("status"), "pending")
 oid = j["order_id"]
 big = expected("ap3", 10, "L")
+after = round(245.0 + big, 2)                                  # 245 pre-loaded + the approved order
 c.get("/approve/%s/%s" % (oid, app._sig(oid)))
-check("approval accrues to BEN", budget.spent("ben@mms.com"), round(ben_exp + big, 2))
+check("approval accrues to BEN", budget.spent("ben@mms.com"), after)
 check("ann untouched by ben's approval", budget.spent("ann@mms.com"), ann_exp)
 # double-approval must not double-charge
 c.get("/approve/%s/%s" % (oid, app._sig(oid)))
-check("re-approving does NOT double-charge", budget.spent("ben@mms.com"), round(ben_exp + big, 2))
+check("re-approving does NOT double-charge", budget.spent("ben@mms.com"), after)
 
 print("\n=== 6. PERSONAL CARD NEVER TOUCHES BUDGET ===")
 budget._save({})
-as_user("pers@mms.com", "employee")
-c.post("/api/checkout/swag", json={"items": [line(qty=5)], "context": CTX,
+as_user("pers@mms.com", "fse")
+c.post("/api/checkout", json={"items": [line(qty=5)], "context": CTX,
                                    "payment": "personal", "ack_not_reimbursable": True, "ship": SHIP})
 check("personal card accrues nothing", budget.spent("pers@mms.com"), 0.0)
 
 print("\n=== 7. REFUND ON FULFILLMENT FAILURE ===")
 budget._save({})
-as_user("fail@mms.com", "employee")
+as_user("fail@mms.com", "fse")
 orig = app._fulfill_swag
 app._fulfill_swag = lambda o: (_ for _ in ()).throw(RuntimeError("printer down"))
 j = order([line(qty=3)])                                        # $48

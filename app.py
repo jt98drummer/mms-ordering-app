@@ -408,105 +408,9 @@ def health():
 
 
 # ---------------- checkout: BUSINESS CARDS (company card only) ----------------
-@app.route("/api/checkout/cards", methods=["POST"])
-@auth.login_required
-def checkout_cards():
-    u = auth.current_user()
-    body = request.get_json(force=True)
-    ctx = body.get("context", {})
-    if not _ctx_ok(ctx):
-        return jsonify(ok=False, error="Please fill in the purpose and the justification."), 400
-    ship, nm = _recipient(body.get("ship", {}))
-    if not ship["addressLine1"] or not ship["city"]:
-        return jsonify(ok=False, error="Please add at least a shipping address line 1 and city."), 400
-    card = body.get("card", {})
-    qty = int(card.get("qty", 250))
-    card_max = _card_max_qty(u.get("role", config.DEFAULT_ROLE))
-    if qty < 1:
-        return jsonify(ok=False, error="Quantity must be at least 1."), 400
-    if card_max and qty > card_max:
-        return jsonify(ok=False, error="Your role can order up to %d business cards per order. "
-                       "Please reduce the quantity." % card_max), 400
-    oid = _oid("CARD")
-    emp = {k: card.get(k, "") for k in ("name", "title", "email", "phone", "role", "territory")}
-    pdf_name = oid + ".pdf"
-    generate_card_pdf(emp, os.path.join(config.FILES_DIR, pdf_name))
-    print_items = [{"itemReferenceId": oid + "-1", "productUid": config.CARD_PRODUCT_UID,
-                    "files": [{"type": "default", "url": config.PUBLIC_BASE_URL + "/files/" + pdf_name}],
-                    "quantity": qty}]
-    # quote first so the receipt carries the real cost, not "priced by printer"
-    q = gelato.quote_summary(oid + "-q", [dict(print_items[0], itemReferenceId="q1")], ship)
-    status, result, gid = _place_print(oid, ship, print_items)
-    lines = [{"desc": "Business cards - " + emp.get("name", ""), "qty": qty,
-              "line": _money(q["items"]) if q.get("ok") else "priced by printer"}]
-    if q.get("ok"):
-        lines.append({"desc": "Shipping (%s)" % (q.get("method") or "standard"),
-                      "qty": "", "line": _money(q["shipping"])})
-    order = _mk_order("Business Cards", oid, u, "company", qty, lines, ctx, ship, nm,
-                      status="placed",
-                      total=_money(q["total"]) if q.get("ok") else "priced by printer")
-    if q.get("ok"):
-        order["quote"] = q
-    _send_receipt(order)
-    _log(order, status, gid)
-    ok = status in (0, 200, 201)
-    return jsonify(ok=ok, order_id=oid, status="placed", receipt_to=config.ACCOUNTING_EMAIL,
-                   receipt_sent=order.get("receipt_sent"), gelato_status=status,
-                   quote=q if q.get("ok") else None,
-                   gelato=None if ok else result)
-
-
-# ---------------- checkout: DOCUMENTS (company card only, max 25) ----------------
-@app.route("/api/checkout/documents", methods=["POST"])
-@auth.login_required
-def checkout_documents():
-    u = auth.current_user()
-    body = request.get_json(force=True)
-    ctx = body.get("context", {})
-    if not _ctx_ok(ctx):
-        return jsonify(ok=False, error="Please fill in the purpose and the justification."), 400
-    # Accepts a document CART: items=[{id, qty}, ...]. A single {id, qty} body
-    # still works so older clients don't break.
-    raw = body.get("items")
-    if not raw:
-        raw = [{"id": body.get("id"), "qty": body.get("qty", config.DOC_MAX_QTY)}]
-    lines_in, err = _doc_items(raw)
-    if err:
-        return jsonify(ok=False, error=err), 400
-    ship, nm = _recipient(body.get("ship", {}))
-    if not ship["addressLine1"] or not ship["city"]:
-        return jsonify(ok=False, error="Please add at least a shipping address line 1 and city."), 400
-    oid = _oid("DOC")
-    print_items = [{"itemReferenceId": "%s-%d" % (oid, n),
-                    "productUid": d.get("gelato_product", config.FLYER_PRODUCT_UID),
-                    "files": [{"type": "default", "url": config.PUBLIC_BASE_URL + "/flyerpdf/" + d["id"]}],
-                    "quantity": qty}
-                   for n, (d, qty) in enumerate(lines_in, 1)]
-    # quote first so the receipt shows real cost + shipping
-    q = gelato.quote_summary(oid + "-q",
-                             [dict(p, itemReferenceId="q%d" % n) for n, p in enumerate(print_items, 1)],
-                             ship)
-    status, result, gid = _place_print(oid, ship, print_items)
-    qty_total = sum(qty for _d, qty in lines_in)
-    lines = [{"desc": "%s (%s)" % (d["title"], d.get("division", "")), "qty": qty,
-              "line": "-"} for d, qty in lines_in]
-    if q.get("ok"):
-        lines.append({"desc": "Printing (%d sheet%s)" % (qty_total, "" if qty_total == 1 else "s"),
-                      "qty": "", "line": _money(q["items"])})
-        lines.append({"desc": "Shipping (%s)" % (q.get("method") or "standard"),
-                      "qty": "", "line": _money(q["shipping"])})
-    order = _mk_order("Documents", oid, u, "company", qty_total, lines, ctx, ship, nm,
-                      status="placed",
-                      total=_money(q["total"]) if q.get("ok") else "priced by printer")
-    if q.get("ok"):
-        order["quote"] = q
-    _send_receipt(order)
-    _log(order, status, gid)
-    ok = status in (0, 200, 201)
-    return jsonify(ok=ok, order_id=oid, status="placed", receipt_to=config.ACCOUNTING_EMAIL,
-                   receipt_sent=order.get("receipt_sent"), gelato_status=status,
-                   docs=len(lines_in), quote=q if q.get("ok") else None,
-                   gelato=None if ok else result)
+# Business cards + documents no longer have their own checkout endpoints — the
+# unified /api/checkout below handles the whole cart so role rules can never
+# be bypassed by posting straight to a per-store route.
 
 
 # ---------------- live cost quotes (cards + documents, printed by Gelato) ----------------
@@ -554,11 +458,134 @@ def quote_documents():
     return jsonify(dict(q, sheets=sum(qty for _d, qty in lines)))
 
 
-def _card_max_qty(role):
-    """Business-card quantity cap for a role; 0/None = unlimited (manager)."""
+CARD_FIELDS = ("name", "title", "email", "phone", "role", "territory")
+
+
+def _split_cart(raw, role):
+    """Validate a MIXED cart and return (print_lines, swag_items, error).
+
+    print_lines are card/doc lines kept as data (not Gelato payload) so the
+    Gelato items — and any business-card PDF — are built at PLACEMENT time,
+    which may be after a manager approves. Everything is re-derived from the
+    catalog server-side; the client's prices and titles are never trusted.
+    """
+    cards = [i for i in raw if i.get("type") == "card"]
+    docs = [i for i in raw if i.get("type") == "doc"]
+    swag = [i for i in raw if i.get("type") == "swag"]
+    if not (cards or docs or swag):
+        return None, None, "Your cart is empty."
+
+    print_lines = []
+    cmax = _card_max_qty(role)
+    for c in cards:
+        try:
+            qty = int(c.get("qty", 250))
+        except (TypeError, ValueError):
+            return None, None, "Invalid business-card quantity."
+        if qty < 1:
+            return None, None, "Business-card quantity must be at least 1."
+        if cmax and qty > cmax:
+            return None, None, ("Your role can order up to %d business cards per order. "
+                                "Please reduce the quantity." % cmax)
+        emp = {k: (c.get(k) or "").strip() for k in CARD_FIELDS}
+        if not emp["name"]:
+            return None, None, "Business cards need at least a name."
+        print_lines.append({"kind": "card", "emp": emp, "qty": qty,
+                            "title": "Business cards - " + emp["name"],
+                            "uid": config.CARD_PRODUCT_UID})
+
+    if docs:
+        pairs, err = _doc_items(docs)
+        if err:
+            return None, None, err
+        for d, qty in pairs:
+            print_lines.append({"kind": "doc", "id": d["id"], "qty": qty,
+                                "title": "%s (%s)" % (d["title"], d.get("division", "")),
+                                "uid": d.get("gelato_product", config.FLYER_PRODUCT_UID)})
+
+    swag_items = []
+    if swag:
+        swag_items, err = _price_items(swag)
+        if err:
+            return None, None, err
+    return print_lines, swag_items, None
+
+
+def _print_quote_products(print_lines):
+    """Gelato quote payload for print lines. The file URL doesn't affect price
+    (verified against the live quote API), so this needs no PDF to exist yet."""
+    out = []
+    for n, l in enumerate(print_lines, 1):
+        url = (config.PUBLIC_BASE_URL + "/flyerpdf/" + l["id"]) if l["kind"] == "doc" \
+            else (config.PUBLIC_BASE_URL + "/asset/print/quote-placeholder.pdf")
+        out.append({"itemReferenceId": "q%d" % n, "productUid": l["uid"],
+                    "quantity": l["qty"], "files": [{"type": "default", "url": url}]})
+    return out
+
+
+def _build_print_items(oid, print_lines):
+    """Turn stored print lines into real Gelato items, generating each business
+    card PDF now. Called at placement time — immediately, or after approval."""
+    items = []
+    for n, l in enumerate(print_lines, 1):
+        if l["kind"] == "card":
+            pdf = "%s-c%d.pdf" % (oid, n)
+            generate_card_pdf(l["emp"], os.path.join(config.FILES_DIR, pdf))
+            url = config.PUBLIC_BASE_URL + "/files/" + pdf
+        else:
+            url = config.PUBLIC_BASE_URL + "/flyerpdf/" + l["id"]
+        items.append({"itemReferenceId": "%s-%d" % (oid, n), "productUid": l["uid"],
+                      "files": [{"type": "default", "url": url}], "quantity": l["qty"]})
+    return items
+
+
+def _place_print_lines(order):
+    """Place the card/document half of an order with Gelato."""
+    lines = order.get("print_lines") or []
+    if not lines:
+        return None, None, ""
+    items = _build_print_items(order["oid"], lines)
+    return _place_print(order["oid"], order.get("_ship", {}), items)
+
+
+def approver_for(u):
+    """Who approves this person's orders."""
+    role = u.get("role", config.DEFAULT_ROLE)
+    if role == config.ROLE_MANAGER:               # a manager escalates above themselves
+        return config.ESCALATION_EMAIL
+    return u.get("manager_email") or config.NOTIFY_EMAIL
+
+
+def print_needs_approval(role):
+    """Cards + documents (always company card).
+
+    Employees need manager approval for anything on the company card.
+    FSEs and managers place print orders immediately.
+    """
+    return role not in (config.ROLE_FSE, config.ROLE_MANAGER)
+
+
+def swag_needs_approval(role, email, total):
+    """Swag on the COMPANY card. Returns (needs_approval, reserved, remaining).
+
+    - employee : always needs approval (no budget involved)
+    - fse      : within the $250 bimonthly budget places now (and is reserved
+                 atomically); over budget needs approval
+    - manager  : always places now
+    """
     if role == config.ROLE_MANAGER:
-        return 0
-    if role == config.ROLE_FSE:
+        return False, False, None
+    if role != config.ROLE_FSE:                   # employee -> approval, never reserve
+        return True, False, None
+    cap = budget.budget_for(role)
+    reserved, remaining, _left = budget.try_reserve(email, total, cap)
+    return (not reserved), reserved, remaining
+
+
+def _card_max_qty(role):
+    """Business-card quantity cap per order: 500 for FSEs and managers,
+    100 for everyone else. Documents are capped separately at DOC_MAX_QTY each."""
+    if role in (config.ROLE_FSE, config.ROLE_MANAGER):
         return config.CARD_MAX_QTY_FSE
     return config.CARD_MAX_QTY_EMPLOYEE
 
@@ -653,127 +680,164 @@ def estimate_shipping(items):
 
 
 # ---------------- checkout: SWAG/APPAREL (role-based, approval net) ----------------
-@app.route("/api/checkout/swag", methods=["POST"])
+@app.route("/api/checkout", methods=["POST"])
 @auth.login_required
-def checkout_swag():
+def checkout_all():
+    """ONE checkout for the whole cart (business cards + documents + swag).
+
+    Fulfillment is split by line type (Gelato for print, Printful/vendor for
+    swag) and the approval rules are applied per half:
+
+      employee : every company-card line needs manager approval -> one request
+      fse      : print places now; swag places now within the $250 bimonthly
+                 budget, otherwise the SWAG HALF alone goes for approval
+      manager  : everything places now
+
+    `payment: "personal"` applies to the SWAG lines only — cards and documents
+    are always company card — so a mixed cart can split payment.
+    """
     u = auth.current_user()
     role = u.get("role", config.DEFAULT_ROLE)
     body = request.get_json(force=True)
     ctx = body.get("context", {})
-    payment = body.get("payment", "company")
-    items = [i for i in body.get("items", []) if i.get("type") == "swag"]
-    if not items:
-        return jsonify(ok=False, error="Your cart is empty."), 400
     if not _ctx_ok(ctx):
         return jsonify(ok=False, error="Please fill in the purpose and the justification."), 400
     ship, nm = _recipient(body.get("ship", {}))
     if not ship["addressLine1"] or not ship["city"]:
         return jsonify(ok=False, error="Please add at least a shipping address line 1 and city."), 400
-
-    # ---- authoritative server-side pricing ----
-    # NEVER trust the client's price/name: money decisions (budget gating and
-    # accrual) must come from the catalog. Rebuild every line from
-    # swag_catalog.json by id, validating colour/size/qty; reject anything that
-    # doesn't match a real, published product.
-    items, err = _price_items(items)
+    payment = body.get("payment", "company")
+    print_lines, swag_items, err = _split_cart(body.get("items") or [], role)
     if err:
         return jsonify(ok=False, error=err), 400
-    units = sum(i["qty"] for i in items)
-    goods_val = round(sum(i["price"] * i["qty"] for i in items), 2)
-    ship_val = estimate_shipping(items)
-    # Budget is charged the TRUE spend: goods + shipping (both are company money).
-    total_val = round(goods_val + ship_val, 2)
-    lines = [{"desc": "%s (%s%s · %s)" % (i["name"], i["color"],
-                                          "/" + i["size"] if i.get("size") else "",
-                                          branding.label(i.get("logo"))),
-              "qty": i["qty"], "line": _money(i["price"] * i["qty"])} for i in items]
-    lines.append({"desc": "Shipping (estimated)", "qty": "", "line": _money(ship_val)})
-    oid = _oid("SWAG")
+    if payment == "personal" and swag_items and not body.get("ack_not_reimbursable"):
+        return jsonify(ok=False,
+                       error="Please acknowledge that personal-card swag is NOT reimbursable."), 400
 
-    # ---- personal card: no approval, no accounting receipt, must acknowledge ----
-    if payment == "personal":
-        if not body.get("ack_not_reimbursable"):
-            return jsonify(ok=False,
-                           error="Please acknowledge that personal-card orders are NOT reimbursable."), 400
+    results, oids = [], []
 
-        # When Stripe is configured, actually charge the card via hosted Checkout;
-        # the order is fulfilled only after Stripe confirms payment (see _finalize_paid).
-        if stripe_pay.enabled():
-            if total_val < 0.50:
-                return jsonify(ok=False,
-                               error="Card checkout needs an order total of at least $0.50. "
-                                     "Add items or use the company card."), 400
-            order = _mk_order("Swag & Apparel", oid, u, "personal", units, lines, ctx, ship, nm,
-                              status="awaiting_payment", total=_money(total_val))
-            order["items"] = items
-            success_url = (config.PUBLIC_BASE_URL + "/swag/pay/return?oid=" + oid
-                           + "&session_id={CHECKOUT_SESSION_ID}")
-            cancel_url = config.PUBLIC_BASE_URL + "/swag/pay/cancel?oid=" + oid
-            checkout_url, ref = stripe_pay.create_checkout_session(order, success_url, cancel_url)
-            if not checkout_url:
-                return jsonify(ok=False,
-                               error="Card checkout is temporarily unavailable. Please try again "
-                                     "or use the company card."), 502
-            order["stripe_session_id"] = ref
-            _save_pending(order)
-            _log(order)
-            return jsonify(ok=True, order_id=oid, status="awaiting_payment", stripe=True,
-                           checkout_url=checkout_url,
-                           message="Redirecting you to secure card checkout...")
+    # ---------- print half: business cards + documents (always company card) ----------
+    if print_lines:
+        oid = _oid("PRNT")
+        q = gelato.quote_summary(oid + "-q", _print_quote_products(print_lines), ship)
+        lines = [{"desc": l["title"], "qty": l["qty"], "line": "-"} for l in print_lines]
+        if q.get("ok"):
+            lines.append({"desc": "Printing", "qty": "", "line": _money(q["items"])})
+            lines.append({"desc": "Shipping (%s)" % (q.get("method") or "standard"),
+                          "qty": "", "line": _money(q["shipping"])})
+        qty_total = sum(l["qty"] for l in print_lines)
+        store = "Business Cards & Documents" if any(l["kind"] == "card" for l in print_lines) \
+            and any(l["kind"] == "doc" for l in print_lines) else \
+            ("Business Cards" if print_lines[0]["kind"] == "card" else "Documents")
+        need = print_needs_approval(role)
+        order = _mk_order(store, oid, u, "company", qty_total, lines, ctx, ship, nm,
+                          status=("pending" if need else "placed"),
+                          total=_money(q["total"]) if q.get("ok") else "priced by printer")
+        order["print_lines"] = print_lines
+        if q.get("ok"):
+            order["quote"] = q
+            order["_total_usd"] = q["total"]
+        if need:
+            approver = approver_for(u)
+            order["approver_pending"] = approver
+            _save_pending(order); _log(order)
+            sent, _ = _notify_approver(order, approver)
+            results.append({"store": store, "order_id": oid, "status": "pending",
+                            "approver": approver, "notified": sent,
+                            "total": order["total"]})
+        else:
+            st, res, gid = _place_print_lines(order)
+            _send_receipt(order); _log(order, st, gid)
+            results.append({"store": store, "order_id": oid, "status": "placed",
+                            "total": order["total"], "gelato_status": st,
+                            "delivery": (q.get("delivery_min"), q.get("delivery_max")) if q.get("ok") else None})
+        oids.append(oid)
 
-        # No Stripe configured -> demo path: place directly, nothing is charged.
+    # ---------- swag half ----------
+    if swag_items:
+        oid = _oid("SWAG")
+        goods = round(sum(i["price"] * i["qty"] for i in swag_items), 2)
+        shipv = estimate_shipping(swag_items)
+        total_val = round(goods + shipv, 2)
+        units = sum(i["qty"] for i in swag_items)
+        lines = [{"desc": "%s (%s%s · %s)" % (i["name"], i["color"],
+                                              "/" + i["size"] if i.get("size") else "",
+                                              branding.label(i.get("logo"))),
+                  "qty": i["qty"], "line": _money(i["price"] * i["qty"])} for i in swag_items]
+        lines.append({"desc": "Shipping (estimated)", "qty": "", "line": _money(shipv)})
+
+        if payment == "personal":
+            r = _place_personal_swag(oid, u, units, lines, ctx, ship, nm, swag_items, total_val)
+            results.append(r)
+            oids.append(oid)
+        else:
+            need, reserved, remaining = swag_needs_approval(role, u.get("email", ""), total_val)
+            order = _mk_order("Swag & Apparel", oid, u, "company", units, lines, ctx, ship, nm,
+                              status=("pending" if need else "placed"), total=_money(total_val))
+            order["items"] = swag_items
+            order["_total_usd"] = total_val
+            if need:
+                approver = approver_for(u)
+                order["approver_pending"] = approver
+                order["over_budget"] = (role == config.ROLE_FSE)
+                _save_pending(order); _log(order)
+                sent, _ = _notify_approver(order, approver)
+                msg = ("This swag order is %s and would exceed your remaining budget (%s)."
+                       % (_money(total_val), _money(remaining))) if role == config.ROLE_FSE \
+                    else "Swag on the company card needs your manager's approval."
+                results.append({"store": "Swag & Apparel", "order_id": oid, "status": "pending",
+                                "approver": approver, "notified": sent,
+                                "total": order["total"], "note": msg})
+            else:
+                try:
+                    _fulfill_swag(order)
+                except Exception:
+                    if reserved:
+                        budget.release(u.get("email", ""), total_val, budget.budget_for(role))
+                    app.logger.exception("swag fulfillment failed for %s", oid)
+                    return jsonify(ok=False, error="We couldn't submit the swag part of your order "
+                                                   "to the printer. Nothing was charged - please try again."), 502
+                _send_receipt(order); _log(order)
+                results.append({"store": "Swag & Apparel", "order_id": oid, "status": "placed",
+                                "total": order["total"]})
+            oids.append(oid)
+
+    pending = [r for r in results if r["status"] == "pending"]
+    placed = [r for r in results if r["status"] == "placed"]
+    stripe_r = next((r for r in results if r.get("checkout_url")), None)
+    return jsonify(ok=True, orders=results, order_ids=oids,
+                   any_pending=bool(pending), any_placed=bool(placed),
+                   checkout_url=(stripe_r or {}).get("checkout_url"),
+                   receipt_to=config.ACCOUNTING_EMAIL)
+
+
+def _place_personal_swag(oid, u, units, lines, ctx, ship, nm, items, total_val):
+    """Personal-card swag: Stripe hosted Checkout when configured (fulfilled only
+    after payment), else the safe demo path. Never touches the budget."""
+    if stripe_pay.enabled():
+        if total_val < 0.50:
+            return {"store": "Swag & Apparel", "order_id": oid, "status": "error",
+                    "note": "Card checkout needs a total of at least $0.50."}
         order = _mk_order("Swag & Apparel", oid, u, "personal", units, lines, ctx, ship, nm,
-                          status="placed", total=_money(total_val))
+                          status="awaiting_payment", total=_money(total_val))
         order["items"] = items
-        _fulfill_swag(order)
-        _log(order)
-        return jsonify(ok=True, order_id=oid, status="placed", paid="personal",
-                       message="Order placed on your personal card. This is NOT reimbursable "
-                               "and was not sent to accounting.")
-
-    # ---- company card: budget-gated (manager = unlimited) ----
-    # Within the remaining budget places immediately; an order that would push
-    # the user over their 2-month budget goes to the manager for one approval.
-    cap = budget.budget_for(role)                 # None => manager / unlimited
-    # Atomically check-and-reserve: if there's room the spend is recorded in the
-    # SAME locked step, so two concurrent orders can never both slip through.
-    reserved, remaining, left_after = budget.try_reserve(u.get("email", ""), total_val, cap)
-    need_approval = not reserved
-
-    order = _mk_order("Swag & Apparel", oid, u, "company", units, lines, ctx, ship, nm,
-                      status=("pending" if need_approval else "placed"), total=_money(total_val))
+        success = (config.PUBLIC_BASE_URL + "/swag/pay/return?oid=" + oid
+                   + "&session_id={CHECKOUT_SESSION_ID}")
+        cancel = config.PUBLIC_BASE_URL + "/swag/pay/cancel?oid=" + oid
+        url, ref = stripe_pay.create_checkout_session(order, success, cancel)
+        if not url:
+            return {"store": "Swag & Apparel", "order_id": oid, "status": "error",
+                    "note": "Card checkout is temporarily unavailable."}
+        order["stripe_session_id"] = ref
+        _save_pending(order); _log(order)
+        return {"store": "Swag & Apparel", "order_id": oid, "status": "awaiting_payment",
+                "checkout_url": url, "total": _money(total_val)}
+    order = _mk_order("Swag & Apparel", oid, u, "personal", units, lines, ctx, ship, nm,
+                      status="placed", total=_money(total_val))
     order["items"] = items
-    order["_total_usd"] = round(total_val, 2)     # numeric, for budget accrual on approval
-
-    if need_approval:
-        approver = config.ESCALATION_EMAIL if role == config.ROLE_MANAGER else \
-            (u.get("manager_email") or config.NOTIFY_EMAIL)
-        order["approver_pending"] = approver
-        order["over_budget"] = True
-        _save_pending(order)
-        sent, _ = _notify_approver(order, approver)
-        _log(order)
-        return jsonify(ok=True, order_id=oid, status="pending", approver=approver, notified=sent,
-                       message="This order is %s and would exceed your remaining swag budget (%s). "
-                               "Sent to %s for approval; it places automatically once approved."
-                               % (_money(total_val), _money(remaining), approver))
-    # within budget -> the spend was already reserved atomically above.
-    # If fulfillment blows up, release the reservation so the user isn't charged
-    # budget for an order that never happened.
-    try:
-        _fulfill_swag(order)
-    except Exception as e:
-        budget.release(u.get("email", ""), total_val, cap)
-        app.logger.exception("swag fulfillment failed for %s", oid)
-        return jsonify(ok=False, error="We couldn't submit your order to the printer. "
-                                       "Nothing was charged against your budget - please try again."), 502
-    _send_receipt(order)
-    _log(order)
-    left = "" if cap is None else " You have %s of your %s budget left." % (
-        _money(left_after), _money(cap))
-    return jsonify(ok=True, order_id=oid, status="placed", receipt_to=config.ACCOUNTING_EMAIL,
-                   receipt_sent=order.get("receipt_sent"),
-                   message="Placed within your budget. Receipt sent to accounting." + left)
+    _fulfill_swag(order); _log(order)
+    return {"store": "Swag & Apparel", "order_id": oid, "status": "placed",
+            "total": _money(total_val), "paid": "personal",
+            "note": "Placed on your personal card - NOT reimbursable."}
 
 
 # ---------------- approvals (signed links from the approver email) ----------------
@@ -794,13 +858,19 @@ def approve(oid, sig):
         return _approval_page("Already processed", "Order %s is already %s." % (oid, o.get("status")), "#5b6b78")
     o["status"] = "placed"
     o["approver"] = o.get("approver_pending", "approver")
-    # accrue the approved spend against the requester's budget (company-card swag)
-    if o.get("payment") == "company" and o.get("_total_usd"):
+    # Accrue the approved spend against the requester's SWAG budget. Only FSEs
+    # have a budget, and only swag draws on it — print orders don't.
+    if (o.get("payment") == "company" and o.get("_total_usd") and o.get("items")
+            and budget.budget_for(o.get("role")) is not None):
         budget.add_spend(o.get("orderer_email", ""), o.get("_total_usd"))
-    _fulfill_swag(o)
+    gstatus, gid = "", ""
+    if o.get("print_lines"):                       # business cards / documents
+        gstatus, _res, gid = _place_print_lines(o)
+    if o.get("items"):                             # swag
+        _fulfill_swag(o)
     _send_receipt(o)
     _save_pending(o)
-    _log(o)
+    _log(o, gstatus, gid)
     return _approval_page("Approved", "Order %s approved and placed. Receipt sent to accounting." % oid, "#2f7a34")
 
 @app.route("/reject/<oid>/<sig>")
