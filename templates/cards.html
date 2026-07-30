@@ -3,33 +3,14 @@
 {% block content %}
 <div class="wrap">
   <div class="subhead"><a href="/"><button class="back">&larr; Hub</button></a>
-    <h2>Business Cards</h2><span class="sub">personalized, auto-branded &middot; company card only</span></div>
+    <h2>Business Cards</h2><span class="sub">personalized, auto-branded &middot; company card only</span>
+    <a href="/cart" style="margin-left:auto"><button class="cartbtn">Cart <span class="badge" data-cart-count style="display:none">0</span></button></a></div>
 
-  <div class="placenow">
-    <b>&#9889; This order places immediately.</b> Business cards are not added to a cart &mdash;
-    when you press <b>Place card order</b> below, it goes straight to the printer on the company card
-    and a receipt is emailed to accounting.
-  </div>
+  {% include "_rules_callout.html" %}
 
   <div class="grid2">
     <div class="panel">
-      <div class="ctxbox" style="margin-top:0">
-        <h4>1. Order context <span class="req">*required</span></h4>
-        <div class="fineprint" style="margin:-4px 0 8px">Accounting needs the reason on file &mdash; please fill this in first.</div>
-        <div class="field"><label>Purpose</label>
-          <select id="x_purpose">
-            <option value="">Select a purpose...</option>
-            <option>New hire / onboarding</option>
-            <option>Replacement / reprint</option>
-            <option>Ran out of cards</option>
-            <option>Title or info change</option>
-            <option>Other</option>
-          </select></div>
-        <div class="field"><label>For whom (name / role)</label><input id="x_recipient" placeholder="e.g. new AE starting 8/1"></div>
-        <div class="field"><label>Justification</label><textarea id="x_just" rows="2" placeholder="Why these cards are needed"></textarea></div>
-      </div>
-
-      <h3>2. Your details</h3>
+      <h3>1. Your details</h3>
       <div class="field"><label>Full name</label><input id="c_name" value="John Doe" oninput="pv()"></div>
       <div class="field"><label>Job title</label><input id="c_title" value="Account Manager" oninput="pv()"></div>
       <div class="row2">
@@ -41,27 +22,18 @@
         <button id="t_north" onclick="setTerr('north')">North &middot; MN/WI/Dakotas</button>
         <button id="t_both" onclick="setTerr('both')">Both &middot; N &amp; S</button></div>
         <div class="fineprint" id="terrNote"></div></div>
-      {% if user.role == 'manager' %}{% set card_max = 0 %}{% elif user.role == 'fse' %}{% set card_max = caps.card_fse %}{% else %}{% set card_max = caps.card_emp %}{% endif %}
-      <div class="field"><label>Quantity <span class="fineprint" style="font-weight:600;color:#6b7884">({{ 'no limit for managers' if not card_max else 'max ' ~ card_max ~ ' for your role' }})</span></label>
+      {% set card_max = caps.card_fse if user.role in ('fse','manager') else caps.card_emp %}
+      <div class="field"><label>Quantity <span class="fineprint" style="font-weight:600;color:#6b7884">(max {{ card_max }} per order for your role)</span></label>
         <select id="c_qty">
-        {% for q in [25,50,100,250,500,1000,2500] %}{% if not card_max or q <= card_max %}<option{% if (card_max and q == card_max) or (not card_max and q == 500) %} selected{% endif %}>{{ q }}</option>{% endif %}{% endfor %}
+        {% for q in [25,50,100,250,500] %}{% if q <= card_max %}<option{% if q == card_max %} selected{% endif %}>{{ q }}</option>{% endif %}{% endfor %}
         </select></div>
 
-      <h3 style="margin-top:6px">3. Ship to</h3>
-      <div class="row2"><div class="field"><label>First name</label><input id="s_fn" value="Jayce"></div><div class="field"><label>Last name</label><input id="s_ln" value="Tomlin"></div></div>
-      <div class="field"><label>Address line 1</label><input id="s_a1" placeholder="123 Main St"></div>
-      <div class="field"><label>Address line 2</label><input id="s_a2" placeholder="Suite (optional)"></div>
-      <div class="row2"><div class="field"><label>City</label><input id="s_ct"></div><div class="field"><label>State</label><input id="s_st" placeholder="IA"></div></div>
-      <div class="row2"><div class="field"><label>ZIP</label><input id="s_zp"></div><div class="field"><label>Phone</label><input id="s_ph" value="555-123-4567"></div></div>
-
-      <h3 style="margin-top:6px">4. Cost</h3>
-      <div class="quotebox" id="quoteBox">
-        <div class="qmuted">Fill in the shipping address above to see the exact cost and delivery date.</div>
+      <button class="btn gold full" style="margin-top:14px" id="addBtn" onclick="addCards()">Add to cart</button>
+      <div class="fineprint" style="text-align:center;margin-top:6px">
+        Exact printing cost, shipping and delivery date are shown in your cart, where you'll
+        add the shipping address and the reason for the order.
       </div>
-
-      <div class="paynote">Company card (MMS) &middot; auto-charged. A receipt is emailed to accounting automatically. Personal cards are not accepted for business cards.</div>
-      <button class="btn gold full" style="margin-top:12px" id="placeBtn" onclick="placeOrder()">Place card order now</button>
-      <div class="fineprint" style="text-align:center;margin-top:6px">Places immediately &mdash; no cart, no approval step.</div>
+      <a class="btn full" style="margin-top:8px;background:#eef1f5;color:#1e2d3b" href="/cart">Go to cart &rarr;</a>
     </div>
 
     <div>
@@ -96,67 +68,19 @@ function flip(s){ $('pf').classList.toggle('on',s=='f'); $('pb').classList.toggl
   $('frontWrap').style.display=s=='f'?'block':'none'; $('backWrap').style.display=s=='b'?'block':'none'; }
 function modal(t,b){ $('mTitle').textContent=t; $('mBody').innerHTML=b; $('modalBg').classList.add('show'); }
 
-// ---- live cost + delivery quote (real Gelato pricing) ----
-function shipObj(){
+function addCards(){
   const g=id=>$(id).value;
-  return {firstName:g('s_fn'),lastName:g('s_ln'),addressLine1:g('s_a1'),addressLine2:g('s_a2'),
-          city:g('s_ct'),state:g('s_st'),postCode:g('s_zp'),country:'US',
-          email:'{{ user.email }}',phone:g('s_ph')};
-}
-let qTmr=null, lastQ=null;
-function fmtRange(a,b){
-  if(!a) return '';
-  const o={month:'short',day:'numeric'};
-  const d1=new Date(a+'T12:00:00'), d2=b?new Date(b+'T12:00:00'):null;
-  const s1=d1.toLocaleDateString(undefined,o);
-  return (d2 && b!==a) ? s1+' – '+d2.toLocaleDateString(undefined,o) : s1;
-}
-function quoteSoon(){ clearTimeout(qTmr); qTmr=setTimeout(runQuote, 600); }
-async function runQuote(){
-  const s=shipObj(), box=$('quoteBox');
-  if(!s.addressLine1 || !s.city || !s.postCode){
-    box.innerHTML='<div class="qmuted">Fill in the shipping address above to see the exact cost and delivery date.</div>';
-    lastQ=null; return;
-  }
-  box.innerHTML='<div class="qmuted">Getting exact price from the printer…</div>';
-  try{
-    const r=await fetch('/api/quote/cards',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({qty:parseInt($('c_qty').value,10),ship:s})});
-    const j=await r.json();
-    if(!j.ok || !j.items){ box.innerHTML='<div class="qmuted">'+(j.error||'Price unavailable right now — your order can still be placed.')+'</div>'; lastQ=null; return; }
-    lastQ=j;
-    box.innerHTML=
-      '<div class="qrow"><span>'+j.qty+' business cards</span><span>$'+j.items.toFixed(2)+'</span></div>'+
-      '<div class="qrow"><span>Shipping ('+(j.method||'standard')+')</span><span>$'+j.shipping.toFixed(2)+'</span></div>'+
-      '<div class="qrow qtot"><span>Total MMS pays</span><span>$'+j.total.toFixed(2)+'</span></div>'+
-      (j.delivery_min?'<div class="qdel">&#128666; Estimated delivery <b>'+fmtRange(j.delivery_min,j.delivery_max)+'</b>'+
-        (j.days_max?' ('+j.days_min+'–'+j.days_max+' business days)':'')+'</div>':'');
-  }catch(e){ box.innerHTML='<div class="qmuted">Price unavailable right now — your order can still be placed.</div>'; lastQ=null; }
-}
-['s_a1','s_a2','s_ct','s_st','s_zp'].forEach(id=>$(id).addEventListener('input', quoteSoon));
-$('c_qty').addEventListener('change', runQuote);
-async function placeOrder(){
-  const g=id=>$(id).value;
-  const ctx={purpose:g('x_purpose'),recipient:g('x_recipient'),justification:g('x_just')};
-  if(!ctx.purpose || !ctx.justification.trim()){ modal('Context required','Please choose a purpose and add a short justification so accounting has the reason on file.'); return; }
-  const ship={firstName:g('s_fn'),lastName:g('s_ln'),addressLine1:g('s_a1'),addressLine2:g('s_a2'),city:g('s_ct'),state:g('s_st'),postCode:g('s_zp'),country:'US',email:'{{ user.email }}',phone:g('s_ph')};
-  if(!ship.addressLine1||!ship.city){ modal('Add a shipping address','Please fill in at least address line 1 and city.'); return; }
-  const card={name:g('c_name'),title:g('c_title'),email:g('c_email'),phone:g('c_phone'),role:isTech()?'technician':'sales',territory:backKind(),qty:parseInt(g('c_qty'),10)};
-  $('placeBtn').textContent='Placing order...';
-  try{
-    const r=await fetch('/api/checkout/cards',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({card,context:ctx,ship})});
-    const j=await r.json();
-    if(j.ok){
-      const q=j.quote||lastQ;
-      const cost = q ? ('<br><br><b>Cost:</b> $'+q.items.toFixed(2)+' printing + $'+q.shipping.toFixed(2)+
-                        ' shipping = <b>$'+q.total.toFixed(2)+'</b>'+
-                        (q.delivery_min?'<br><b>Est. delivery:</b> '+fmtRange(q.delivery_min,q.delivery_max):'')) : '';
-      modal('Order placed!','Business card order <b>'+j.order_id+'</b> ('+'{{mode|upper}}'+') has been sent to the printer.'+cost+
-            '<br><br>A receipt was routed to <b>accounting</b> with your name, quantity, pricing, and reason.<br><br><i>(Demo - nothing was really produced or charged.)</i>');
-    }
-    else { modal('Could not place order', j.error||('Gelato status '+j.gelato_status)); }
-  }catch(e){ modal('Error', String(e)); }
-  $('placeBtn').textContent='Place card order';
+  const name=g('c_name').trim();
+  if(!name){ modal('Name required','Please enter the full name that should appear on the card.'); return; }
+  const qty=parseInt(g('c_qty'),10);
+  cartAdd({type:'card', name, title:g('c_title'), email:g('c_email'), phone:g('c_phone'),
+           role:isTech()?'technician':'sales', territory:backKind(), qty,
+           label:'Business cards - '+name,
+           detail:qty+' cards · '+(g('c_title')||'')+' · '+backKind()+' territory',
+           thumb:frontURL()});
+  toast('Added '+qty+' business cards to your cart');
+  $('addBtn').textContent='Added ✓';
+  setTimeout(()=>{ $('addBtn').textContent='Add to cart'; }, 1400);
 }
 $('frontImg').src=frontURL(); updateBack();
 </script>{% endblock %}

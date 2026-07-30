@@ -348,10 +348,9 @@ def documents():
                            doc_max=config.DOC_MAX_QTY)
 
 @app.route("/documents/cart")
-@auth.login_required
 def documents_cart():
-    """Document-only cart + checkout (kept separate from the swag cart)."""
-    return render_template("documents_cart.html", doc_max=config.DOC_MAX_QTY)
+    """Documents used to have their own cart; everything shares /cart now."""
+    return redirect("/cart")
 
 
 @app.route("/flyers")
@@ -414,48 +413,25 @@ def health():
 
 
 # ---------------- live cost quotes (cards + documents, printed by Gelato) ----------------
-@app.route("/api/quote/cards", methods=["POST"])
+@app.route("/api/quote/print", methods=["POST"])
 @auth.login_required
-def quote_cards():
-    """Real item cost + shipping + estimated delivery for a business-card order,
-    so the price is visible BEFORE the order is placed."""
+def quote_print():
+    """Real cost + shipping + estimated delivery for the PRINT half of the cart
+    (business cards and documents together — they ship as one Gelato order, so
+    quoting them together is both accurate and cheaper than quoting separately).
+    """
     body = request.get_json(force=True)
     u = auth.current_user()
-    qty = max(1, int(body.get("qty") or 250))
-    cap = _card_max_qty(u.get("role"))
-    if cap and qty > cap:
-        return jsonify(ok=False, error="Your role is limited to %d cards per order." % cap), 400
     ship, _nm = _recipient(body.get("ship", {}))
     if not ship["addressLine1"] or not ship["city"]:
         return jsonify(ok=False, error="Enter a shipping address to see the price."), 400
-    products = [{"itemReferenceId": "q1", "productUid": config.CARD_PRODUCT_UID,
-                 "quantity": qty,
-                 "files": [{"type": "default",
-                            "url": config.PUBLIC_BASE_URL + "/asset/print/mms_white.png"}]}]
-    q = gelato.quote_summary(_oid("QCARD"), products, ship)
-    return jsonify(dict(q, qty=qty))
-
-
-@app.route("/api/quote/documents", methods=["POST"])
-@auth.login_required
-def quote_documents():
-    """Real item cost + shipping + estimated delivery for a document cart."""
-    body = request.get_json(force=True)
-    ship, _nm = _recipient(body.get("ship", {}))
-    if not ship["addressLine1"] or not ship["city"]:
-        return jsonify(ok=False, error="Enter a shipping address to see the price."), 400
-    lines, err = _doc_items(body.get("items") or [])
+    raw = [i for i in (body.get("items") or []) if i.get("type") in ("card", "doc")]
+    print_lines, _swag, err = _split_cart(raw, u.get("role", config.DEFAULT_ROLE))
     if err:
         return jsonify(ok=False, error=err), 400
-    products = []
-    for n, (d, qty) in enumerate(lines, 1):
-        products.append({"itemReferenceId": "q%d" % n,
-                         "productUid": d.get("gelato_product", config.FLYER_PRODUCT_UID),
-                         "quantity": qty,
-                         "files": [{"type": "default",
-                                    "url": config.PUBLIC_BASE_URL + "/flyerpdf/" + d["id"]}]})
-    q = gelato.quote_summary(_oid("QDOC"), products, ship)
-    return jsonify(dict(q, sheets=sum(qty for _d, qty in lines)))
+    q = gelato.quote_summary(_oid("QPRN"), _print_quote_products(print_lines), ship)
+    return jsonify(dict(q, lines=len(print_lines),
+                        units=sum(l["qty"] for l in print_lines)))
 
 
 CARD_FIELDS = ("name", "title", "email", "phone", "role", "territory")

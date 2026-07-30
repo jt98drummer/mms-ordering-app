@@ -4,15 +4,9 @@
 <div class="wrap">
   <div class="subhead"><a href="/"><button class="back">&larr; Hub</button></a>
     <h2>Swag &amp; Apparel</h2><span class="sub">MMS-branded gear</span>
-    <a href="/cart" style="margin-left:auto"><button class="cartbtn">Swag cart <span class="badge" data-cart-count style="display:none">0</span></button></a></div>
+    <a href="/cart" style="margin-left:auto"><button class="cartbtn">Cart <span class="badge" data-cart-count style="display:none">0</span></button></a></div>
 
-  {% if user.role == 'manager' %}
-  <div class="rolehint fse"><b>MANAGER.</b> No budget or quantity limits &mdash; company-card orders place immediately. You also approve FSE/employee orders that would exceed their budget.</div>
-  {% elif user.role in PRIVILEGED %}
-  <div class="rolehint fse"><b>FSE store.</b> Company-card swag places immediately while you're within your budget (shown above). An order that would push you over goes to your manager for one approval. Personal card is always available &mdash; not reimbursable.</div>
-  {% else %}
-  <div class="rolehint"><b>Employee store.</b> Company-card swag places immediately while you're within your budget (shown above). An order that would push you over goes to your manager for approval. Personal card is always available &mdash; not reimbursable.</div>
-  {% endif %}
+  {% include "_rules_callout.html" %}
 
   <!-- shop by category -->
   <div class="section"><div class="eyebrow2">Shop by category</div><h2 class="h">What are you looking for?</h2>

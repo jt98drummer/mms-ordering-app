@@ -4,13 +4,9 @@
 <div class="wrap">
   <div class="subhead"><a href="/"><button class="back">&larr; Hub</button></a>
     <h2>Print Materials &amp; Documents</h2><span class="sub">approved MMS &amp; Signal collateral &middot; company card only &middot; max {{ doc_max }} sheets each</span>
-    <a href="/documents/cart" style="margin-left:auto"><button class="cartbtn">Document cart <span class="badge" data-doc-count style="display:none">0</span></button></a></div>
+    <a href="/cart" style="margin-left:auto"><button class="cartbtn">Cart <span class="badge" data-cart-count style="display:none">0</span></button></a></div>
 
-  <div class="placenow" style="background:#eef4fa;border-color:#9fc0dd;border-left-color:#2f6f9f;color:#1e3d57">
-    <b>Documents have their own cart.</b> Add as many documents as you need here, then review cost,
-    shipping and delivery in the <a href="/documents/cart" style="color:#1e3d57;font-weight:800">document cart</a>
-    and place one order. This is separate from the swag cart.
-  </div>
+  {% include "_rules_callout.html" %}
 
   <div class="section" id="allitems"><div class="eyebrow2">Full library</div><h2 class="h" id="docCount"></h2>
     <div class="filterbar">
@@ -35,9 +31,9 @@
     <div class="drow"><img id="dThumb" src=""><div><div class="dnm" id="dName"></div><div class="dsub" id="dSub"></div></div></div>
     <div class="field"><label>How many sheets? (max {{ doc_max }})</label>
       <input id="d_qty" type="number" min="1" max="{{ doc_max }}" value="25" oninput="capQty()"></div>
-    <div class="fineprint">Cost, shipping and delivery are shown in the document cart once you've added everything you need.</div>
-    <button class="btn gold full" style="margin-top:12px" id="dPlace" onclick="addDoc()">Add to document cart</button>
-    <a class="btn full" style="margin-top:8px;background:#eef1f5;color:#1e2d3b" href="/documents/cart">Go to document cart &rarr;</a>
+    <div class="fineprint">Cost, shipping and delivery are shown in the cart once you've added everything you need.</div>
+    <button class="btn gold full" style="margin-top:12px" id="dPlace" onclick="addDoc()">Add to cart</button>
+    <a class="btn full" style="margin-top:8px;background:#eef1f5;color:#1e2d3b" href="/cart">Go to cart &rarr;</a>
   </div>
 </div></div>
 {% endblock %}
@@ -61,13 +57,13 @@ function render(){
 }
 function capQty(){ const el=document.getElementById('d_qty'); let v=parseInt(el.value||'1',10); if(v>DOC_MAX)el.value=DOC_MAX; if(v<1)el.value=1; }
 function openD(id){ cur=DOCS.find(x=>x.id===id);
-  const existing=docGet().find(i=>i.id===id);
+  const existing=cartOfType("doc").find(i=>i.id===id);
   document.getElementById('dTitle').textContent=(existing?'Update: ':'Add: ')+cur.title;
   document.getElementById('dThumb').src='/static/thumbs/'+cur.thumb;
   document.getElementById('dName').textContent=cur.title;
   document.getElementById('dSub').textContent=cur.division+' · '+cur.doc_type;
   document.getElementById('d_qty').value=existing?existing.qty:Math.min(25,DOC_MAX);
-  document.getElementById('dPlace').textContent=existing?'Update quantity':'Add to document cart';
+  document.getElementById('dPlace').textContent=existing?'Update quantity':'Add to cart';
   document.getElementById('dbg').classList.add('show');
 }
 function closeD(){ document.getElementById('dbg').classList.remove('show'); }
@@ -76,9 +72,9 @@ function addDoc(){
   if(!cur) return;
   const qty=parseInt(document.getElementById('d_qty').value,10);
   if(!qty||qty<1||qty>DOC_MAX){ modal('Check quantity','Enter between 1 and '+DOC_MAX+' sheets.'); return; }
-  docAdd(cur.id, cur.title, qty, cur.thumb, cur.division+' · '+cur.doc_type);
+  cartAddDoc(cur.id, cur.title, qty, cur.thumb, cur.division+' · '+cur.doc_type);
   closeD(); render();
-  toast('Added to document cart');
+  toast('Added to cart');
 }
-render(); renderDocBadge();
+render(); renderCartBadge();
 </script>{% endblock %}

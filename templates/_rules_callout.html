@@ -1,0 +1,25 @@
+{# The ONE callout design used at the top of every store (yellow, lightning bolt).
+   Wording is driven by the signed-in role so the rules are stated in the place
+   people actually order. Include with: {% include "_rules_callout.html" %} #}
+<div class="placenow">
+  {% if user.role == 'manager' %}
+    <b>&#9889; Manager &mdash; everything places immediately.</b>
+    Business cards, documents and swag all go straight to the printer on the company card,
+    with no budget or approval step. Receipts are emailed to accounting automatically.
+    You also approve orders from your team that need it.
+  {% elif user.role == 'fse' %}
+    <b>&#9889; FSE &mdash; cards &amp; documents place immediately.</b>
+    Business cards and documents go straight to the printer on the company card.
+    Swag &amp; apparel places immediately too, as long as it fits your
+    <b>{{ '$%.0f'|format(budget.budget) if budget else '$250' }} swag budget</b>{% if budget %}
+    (<b>{{ '$%.2f'|format(budget.remaining) }}</b> left, resets {{ budget.reset_h }}){% endif %} &mdash;
+    anything over that goes to your manager for one approval. You can always use your own card
+    for swag instead, but it is <b>not reimbursable</b>.
+  {% else %}
+    <b>&#9889; Your manager approves company-card orders.</b>
+    Anything you add here &mdash; business cards, documents or swag &mdash; is sent to your manager
+    for approval when you check out, then places automatically once approved.
+    For swag only, you can skip the wait by paying with your own card, but that is
+    <b>not reimbursable</b>. Business cards and documents are always on the company card.
+  {% endif %}
+</div>

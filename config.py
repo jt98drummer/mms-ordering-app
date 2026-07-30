@@ -5,6 +5,28 @@ Copy .env.example to .env and fill in your values, OR set env vars in your host.
 """
 import os
 
+# Local dev convenience: load a .env sitting next to this file so the keys
+# documented in .env.example actually take effect when running `python app.py`.
+# Real environment variables always win, so hosted config (Render) is untouched.
+def _load_dotenv():
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    try:
+        with open(path, encoding="utf-8") as f:
+            for raw in f:
+                line = raw.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+    except FileNotFoundError:
+        pass
+    except Exception:
+        pass
+
+
+_load_dotenv()
+
+
 def _get(name, default=""):
     return os.environ.get(name, default)
 

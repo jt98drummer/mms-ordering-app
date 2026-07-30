@@ -1,31 +1,35 @@
-/* MMS Material Ordering Hub - shared cart + icons */
-const CART_KEY = "mms_cart_v2";
+/* MMS Material Ordering Hub - ONE cart for all three stores + icons.
+   A line is {type:"card"|"doc"|"swag", ...}. Checkout posts the whole cart to
+   /api/checkout, which splits fulfillment and applies the approval rules. */
+const CART_KEY = "mms_cart_v3";
 function cartGet(){ try{return JSON.parse(localStorage.getItem(CART_KEY))||[];}catch(e){return [];} }
 function cartSave(c){ localStorage.setItem(CART_KEY, JSON.stringify(c)); renderCartBadge(); }
 function cartAdd(item){ const c=cartGet(); c.push(item); cartSave(c); }
-function cartCount(){ return cartGet().reduce((n,i)=>n+(i.qty||1),0); }
+function cartCount(){ return cartGet().length; }          // line count, mixed units
+function cartOfType(t){ return cartGet().filter(i=>i.type===t); }
 function renderCartBadge(){
   document.querySelectorAll('[data-cart-count]').forEach(el=>{
     const n=cartCount(); el.textContent=n; el.style.display=n?'inline-flex':'none';
   });
 }
-/* ---- DOCUMENT cart: deliberately a SEPARATE store from the swag cart so
-   documents and swag can never end up in the same checkout ---- */
-const DOC_KEY = "mms_doccart_v1";
-function docGet(){ try{return JSON.parse(localStorage.getItem(DOC_KEY))||[];}catch(e){return [];} }
-function docSave(c){ localStorage.setItem(DOC_KEY, JSON.stringify(c)); renderDocBadge(); }
-function docAdd(id, title, qty, thumb, meta){
-  const c=docGet(); const ex=c.find(i=>i.id===id);
-  if(ex){ ex.qty=qty; } else { c.push({id, title, qty, thumb, meta}); }
-  docSave(c);
+/* Documents are keyed by id+qty: adding the same doc twice updates it. */
+function cartAddDoc(id, title, qty, thumb, meta){
+  const c=cartGet(); const ex=c.find(i=>i.type==='doc' && i.id===id);
+  if(ex){ ex.qty=qty; ex.meta=meta; } else { c.push({type:'doc', id, title, qty, thumb, meta}); }
+  cartSave(c);
 }
-function docCount(){ return docGet().length; }
-function renderDocBadge(){
-  document.querySelectorAll('[data-doc-count]').forEach(el=>{
-    const n=docCount(); el.textContent=n; el.style.display=n?'inline-flex':'none';
-  });
-}
-document.addEventListener('DOMContentLoaded', renderDocBadge);
+/* One-time migration from the two old carts so nobody loses a basket. */
+(function migrateCarts(){
+  try{
+    if(localStorage.getItem(CART_KEY)) return;
+    const out=[];
+    const oldSwag=JSON.parse(localStorage.getItem("mms_cart_v2")||"[]");
+    oldSwag.forEach(i=>{ if(i && i.type==='swag') out.push(i); });
+    const oldDocs=JSON.parse(localStorage.getItem("mms_doccart_v1")||"[]");
+    oldDocs.forEach(i=>{ if(i && i.id) out.push({type:'doc', id:i.id, title:i.title, qty:i.qty, thumb:i.thumb, meta:i.meta}); });
+    if(out.length) localStorage.setItem(CART_KEY, JSON.stringify(out));
+  }catch(e){}
+})();
 
 function toast(msg){
   let t=document.getElementById('mms-toast');

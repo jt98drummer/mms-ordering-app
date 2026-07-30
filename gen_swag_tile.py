@@ -117,28 +117,28 @@ def build():
 
     # The real, complete MMS logo (never typed text, never cropped)
     lg = brand_logo()
-    lw = 330
+    lw = 300
     lg = lg.resize((lw, max(1, int(lg.height * lw / lg.width))), Image.LANCZOS)
     ly = 152
-    base.alpha_composite(lg, (66, ly))
+    base.alpha_composite(lg, (40, ly))
 
     d = ImageDraw.Draw(base)
     # Auto-fit the strapline to the left column so it can never run under the
     # product cluster (the products start around x=430).
-    label, maxw = "BRANDED APPAREL & SWAG", 408
+    label, maxw = "BRANDED APPAREL & SWAG", 360
     size = 34
     while size > 16:
         fnt = ImageFont.truetype(FB, size)
         if d.textlength(label, font=fnt) <= maxw:
             break
         size -= 1
-    d.text((70, ly + lg.height + 20), label, font=fnt, fill=GOLD)
+    d.text((44, ly + lg.height + 20), label, font=fnt, fill=GOLD)
 
     # (file, centre x, centre y, height, rotation) - real store mockups
-    layout = [("ap3.png", 566, 258, 340, -3),    # tee
-              ("ap10.png", 768, 162, 152, 4),    # cap
-              ("ev4.png", 800, 336, 252, 0),     # insulated tumbler
-              ("ev7.png", 912, 232, 208, 4)]     # hardcover journal
+    layout = [("ap3.png", 596, 258, 336, -3),    # tee
+              ("ap10.png", 790, 162, 150, 4),    # cap
+              ("ev4.png", 818, 336, 248, 0),     # insulated tumbler
+              ("ev7.png", 926, 232, 204, 4)]     # hardcover journal
     for fn, cx, cy, th, ang in layout:
         p = os.path.join(PROD, fn)
         if os.path.exists(p):

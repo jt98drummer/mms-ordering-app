@@ -1,121 +1,212 @@
 {% extends "base.html" %}
-{% block title %}Swag Cart - MMS{% endblock %}
+{% block title %}Your Cart - MMS{% endblock %}
 {% block content %}
 <div class="wrap">
-  <div class="subhead"><a href="/swag"><button class="back">&larr; Swag</button></a><h2>Your Swag Cart</h2><span class="sub" id="ccount"></span></div>
+  <div class="subhead"><a href="/"><button class="back">&larr; Hub</button></a>
+    <h2>Your Cart</h2><span class="sub" id="ccount"></span></div>
+  {% include "_rules_callout.html" %}
   <div id="cartArea"></div>
 </div>
 {% endblock %}
 {% block scripts %}<script>
 const ROLE='{{ user.role }}';
-const PRIV={{ 'true' if user.role in PRIVILEGED else 'false' }};
-const BUDGET={{ budget|tojson }};
 const STRIPE_ON={{ 'true' if stripe_enabled else 'false' }};
-let pm='company', ack=false;
+const BUDGET={{ budget|tojson }};
+const DOC_MAX={{ caps.doc_max }};
+let pm='company', ack=false, printQ=null, qTmr=null;
 
-function imgFallback(img,ic){ const p=img.parentNode; if(p){ p.innerHTML=icon(ic); } }
-function line(it,i){
-  const stepper='<div class="qtybox"><button onclick="chg('+i+',-1)">-</button><span>'+it.qty+'</span><button onclick="chg('+i+',1)">+</button></div>';
-  const ic = it.image
-    ? '<img src="'+it.image+'" alt="'+(it.label||'')+'" onerror="imgFallback(this,\''+(it.icon||'tag')+'\')">'
-    : icon(it.icon);
+function money(n){ return '$'+(Number(n)||0).toFixed(2); }
+function imgFallback(img,ic){ const p=img.parentNode; if(p){ p.innerHTML=icon(ic||'tag'); } }
+function groups(){
+  const c=cartGet();
+  return {card:c.filter(i=>i.type==='card'), doc:c.filter(i=>i.type==='doc'), swag:c.filter(i=>i.type==='swag')};
+}
+function swagGoods(){ return groups().swag.reduce((s,i)=>s+(i.price||0)*(i.qty||1),0); }
+function swagShip(){
+  const sw=groups().swag; if(!sw.length) return 0;
+  let first=0, addl=0, units=0;
+  sw.forEach(i=>{ first=Math.max(first, i.ship_first||0); units+=(i.qty||1); addl+=(i.ship_addl||0)*(i.qty||1); });
+  const top=sw.reduce((m,i)=>(i.ship_first||0)>(m.ship_first||0)?i:m, sw[0]);
+  return first + Math.max(0, units-1)*(top.ship_addl||0);
+}
+
+function lineRow(it, idx){
+  const thumb = it.thumb || it.image;
+  const ic = thumb ? '<img src="'+thumb+'" alt="" onerror="imgFallback(this,\''+(it.icon||'tag')+'\')">' : icon(it.icon||'doc');
+  let right='';
+  if(it.type==='swag') right=money((it.price||0)*(it.qty||1));
+  else if(it.type==='doc') right='<span class="sub">priced at checkout</span>';
+  else right='<span class="sub">priced at checkout</span>';
+  const stepper = (it.type==='swag' || it.type==='doc' || it.type==='card')
+    ? '<div class="qtybox"><button onclick="chg('+idx+',-1)">-</button><span>'+(it.qty||1)+'</span><button onclick="chg('+idx+',1)">+</button></div>' : '';
   return '<div class="citem"><div class="ci-ic">'+ic+'</div>'+
-    '<div class="ci-main"><div class="ci-t">'+it.label+'</div><div class="ci-d">'+it.detail+'</div></div>'+
-    '<div class="ci-r">'+stepper+'<button class="ci-remove" onclick="rm('+i+')">Remove</button></div></div>';
+    '<div class="ci-main"><div class="ci-t">'+(it.label||it.name||it.title||'Item')+'</div>'+
+    '<div class="ci-d">'+(it.detail||it.meta||'')+'</div></div>'+
+    '<div class="ci-r"><div style="font-weight:800;color:var(--navy);margin-bottom:6px">'+right+'</div>'+
+    stepper+'<button class="ci-remove" onclick="rm('+idx+')">Remove</button></div></div>';
 }
-function swagItems(){ return cartGet().filter(i=>i.type==='swag'); }
+
+function sectionHTML(title, note, items, offset){
+  if(!items.length) return '';
+  return '<div style="margin:0 0 6px"><div class="eyebrow2" style="margin-bottom:6px">'+title+'</div>'+
+    (note?'<div class="fineprint" style="margin:-2px 0 8px">'+note+'</div>':'')+
+    items.map((it,n)=>lineRow(it, offset+n)).join('')+'</div>';
+}
+
 function draw(){
-  const c=swagItems(); const a=document.getElementById('cartArea');
-  document.getElementById('ccount').textContent=c.length?c.length+' item type(s)':'';
-  if(!c.length){ a.innerHTML='<div class="empty"><h3 style="color:#1e2d3b;margin:0 0 8px">Your cart is empty</h3><p style="margin:0 0 16px">The cart is just for swag &amp; apparel. Cards and documents check out on their own pages.</p><a class="btn" href="/swag">Back to swag</a></div>'; return; }
-  const units=c.reduce((n,i)=>n+(i.qty||1),0);
-  const goods=c.reduce((s,i)=>s+(i.price||0)*(i.qty||1),0);
-  // shipping mirrors the server: highest first-item rate + additional per extra unit
-  let shipEst=0;
-  if(c.length){
-    const lead=c.reduce((a,b)=>((b.ship_first||0)>(a.ship_first||0)?b:a), c[0]);
-    shipEst=(lead.ship_first||0);
-    c.forEach(i=>{ const n=(i.qty||1)-(i===lead?1:0); shipEst+=Math.max(0,n)*(i.ship_addl||0); });
+  const c=cartGet(), g=groups(), a=document.getElementById('cartArea');
+  document.getElementById('ccount').textContent = c.length? c.length+' line item(s)' : '';
+  if(!c.length){
+    a.innerHTML='<div class="empty"><h3 style="color:#1e2d3b;margin:0 0 8px">Your cart is empty</h3>'+
+      '<p style="margin:0 0 16px">Add business cards, documents, or swag &amp; apparel — they all check out together here.</p>'+
+      '<a class="btn" href="/cards">Business cards</a> <a class="btn" href="/documents">Documents</a> '+
+      '<a class="btn" href="/swag">Swag &amp; apparel</a></div>';
+    return;
   }
-  const sub=Math.round((goods+shipEst)*100)/100;   // true spend = goods + shipping
-  const unlimited = !BUDGET || BUDGET.unlimited;
-  const remaining = unlimited ? null : BUDGET.remaining;
-  const overBudget = (!unlimited) && (sub > remaining);
+  // cart order: cards, documents, swag (indices must match cartGet())
+  const idx={}; let n=0; cartGet().forEach((it,i)=>{ idx[i]=i; });
+  const cardIdx=[], docIdx=[], swagIdx=[];
+  cartGet().forEach((it,i)=>{ (it.type==='card'?cardIdx:it.type==='doc'?docIdx:swagIdx).push(i); });
+  const sec=(title,note,list)=>list.length? '<div class="eyebrow2" style="margin:14px 0 6px">'+title+'</div>'+
+      (note?'<div class="fineprint" style="margin:-2px 0 8px">'+note+'</div>':'')+
+      list.map(i=>lineRow(cartGet()[i], i)).join('') : '';
 
-  // company-card description reflects the budget gate
-  const coDesc = unlimited
-    ? 'Places immediately &mdash; no budget limit. Receipt to accounting.'
-    : (overBudget
-        ? 'Over your remaining budget ($'+remaining.toFixed(2)+') &mdash; goes to your manager for one approval, then places automatically.'
-        : 'Within your budget ($'+remaining.toFixed(2)+' left) &mdash; places now, receipt to accounting.');
-  const empCapMsg = overBudget
-    ? '<div class="capwarn">This order ($'+sub.toFixed(2)+') exceeds your remaining swag budget ($'+remaining.toFixed(2)+'). It will go to your manager for approval &mdash; or use your personal card to skip the wait.</div>' : '';
-  const selfDesc = STRIPE_ON
-    ? 'Pay now by card on Stripe (secure) - <b>NOT reimbursable</b>, no approval needed'
-    : 'Instant - <b>NOT reimbursable</b>, no approval needed';
+  const goods=swagGoods(), sship=swagShip();
+  const hasPrint = cardIdx.length||docIdx.length;
+  const swagTotal = goods+sship;
 
-  a.innerHTML='<div class="cartwrap"><div class="panel">'+c.map(line).join('')+'</div>'+
-   '<div class="summary"><h3>Checkout</h3>'+
-     '<div class="sumrow"><span>Items ('+units+')</span><span>$'+goods.toFixed(2)+'</span></div>'+
-     '<div class="sumrow"><span>Shipping (estimated)</span><span>$'+shipEst.toFixed(2)+'</span></div>'+
-     '<div class="sumrow" style="border-top:1px solid var(--line);margin-top:4px;padding-top:8px;font-weight:800;color:#1e2d3b"><span>Total MMS pays</span><span>$'+sub.toFixed(2)+'</span></div>'+
-     '<div class="fineprint" style="margin:2px 0 10px">Item costs are the real Printful price for the size chosen; shipping is estimated from Printful\'s rates. The total is what counts against your budget.</div>'+
-     '<div class="ctxbox"><h4>Order context <span class="req">*required</span></h4>'+
-       '<div class="field"><label>Purpose</label><select id="x_purpose"><option value="">Select a purpose...</option>'+
-         '<option>Customer visit</option><option>Trade show / event</option><option>Customer gift</option><option>New hire kit</option><option>Internal / team</option><option>Other</option></select></div>'+
-       '<div class="field"><label>For whom / event</label><input id="x_recipient" placeholder="e.g. ACME site visit, or booth at Process Expo"></div>'+
-       '<div class="field"><label>Justification</label><textarea id="x_just" rows="2" placeholder="Why these items are needed and for whom"></textarea></div>'+
-     '</div>'+
-     '<label style="font-weight:800;color:#1e2d3b;font-size:13px">Payment</label>'+
-     '<label class="pay sel" id="payCo"><input type="radio" name="pay" checked onchange="setPm(\'company\')"><span><span class="pt">Company card (MMS)</span><br><span class="pd">'+coDesc+'</span></span></label>'+
-     '<label class="pay" id="paySelf"><input type="radio" name="pay" onchange="setPm(\'personal\')"><span><span class="pt">My own card</span><br><span class="pd">'+selfDesc+'</span></span></label>'+
-     '<div id="ackWrap" style="display:none"><label class="ack"><input type="checkbox" id="ackBox" onchange="ack=this.checked"><span>I understand a personal-card order is <b>NOT reimbursable</b> and will not be sent to accounting for repayment.</span></label></div>'+
-     empCapMsg+
-     '<h3 style="margin:14px 0 8px">Ship to</h3>'+
-     '<div class="row2"><div class="field"><label>First name</label><input id="s_fn" value="Jayce"></div><div class="field"><label>Last name</label><input id="s_ln" value="Tomlin"></div></div>'+
-     '<div class="field"><label>Address line 1</label><input id="s_a1" placeholder="123 Main St"></div>'+
-     '<div class="row2"><div class="field"><label>City</label><input id="s_ct"></div><div class="field"><label>State</label><input id="s_st" placeholder="IA"></div></div>'+
-     '<div class="row2"><div class="field"><label>ZIP</label><input id="s_zp"></div><div class="field"><label>Phone</label><input id="s_ph" value="555-123-4567"></div></div>'+
-     '<button class="btn full gold" style="margin-top:14px" id="placeBtn" onclick="checkout()">Place swag order</button>'+
-     '<div class="fineprint">Swag &amp; apparel is routed to the MMS swag vendor. Context is required so accounting has the reason on file.</div>'+
-   '</div></div>';
-  psel();
+  a.innerHTML='<div class="cartwrap"><div class="panel">'+
+      sec('Business cards','Printed by Gelato · always on the company card', cardIdx)+
+      sec('Documents','Printed by Gelato · max '+DOC_MAX+' sheets per document · always on the company card', docIdx)+
+      sec('Swag &amp; apparel','Branded by Printful', swagIdx)+
+    '</div>'+
+    '<div class="summary"><h3>Checkout</h3>'+
+      (swagIdx.length? '<div class="sumrow"><span>Swag items</span><span>'+money(goods)+'</span></div>'+
+        '<div class="sumrow"><span>Swag shipping (est.)</span><span>'+money(sship)+'</span></div>' : '')+
+      (hasPrint? '<div id="printQuote"><div class="sumrow"><span>Printing + shipping</span><span class="sub">enter address below</span></div></div>' : '')+
+      '<div class="ctxbox"><h4>Order context <span class="req">*required</span></h4>'+
+        '<div class="fineprint" style="margin:-4px 0 8px">Accounting needs the reason on file for the whole order.</div>'+
+        '<div class="field"><label>Purpose</label><select id="x_purpose"><option value="">Select a purpose...</option>'+
+          '<option>Customer visit</option><option>Trade show / event</option><option>Customer gift</option>'+
+          '<option>New hire / onboarding</option><option>Replacement / reprint</option>'+
+          '<option>Ran out of stock</option><option>Internal / team</option><option>Other</option></select></div>'+
+        '<div class="field"><label>For whom / event</label><input id="x_recipient" placeholder="e.g. ACME site visit, or booth at Process Expo"></div>'+
+        '<div class="field"><label>Justification</label><textarea id="x_just" rows="2" placeholder="Why this order is needed"></textarea></div>'+
+      '</div>'+
+      payHTML(swagIdx.length, swagTotal)+
+      '<h3 style="margin:14px 0 8px">Ship to</h3>'+
+      '<div class="row2"><div class="field"><label>First name</label><input id="s_fn" value="{{ user.name.split(' ')[0] if user.name else '' }}"></div>'+
+        '<div class="field"><label>Last name</label><input id="s_ln" value="{{ user.name.split(' ')[-1] if user.name else '' }}"></div></div>'+
+      '<div class="field"><label>Address line 1</label><input id="s_a1" placeholder="123 Main St"></div>'+
+      '<div class="field"><label>Address line 2</label><input id="s_a2" placeholder="Suite (optional)"></div>'+
+      '<div class="row2"><div class="field"><label>City</label><input id="s_ct"></div><div class="field"><label>State</label><input id="s_st" placeholder="IA"></div></div>'+
+      '<div class="row2"><div class="field"><label>ZIP</label><input id="s_zp"></div><div class="field"><label>Phone</label><input id="s_ph" placeholder="555-123-4567"></div></div>'+
+      '<button class="btn full gold" style="margin-top:14px" id="placeBtn" onclick="checkout()">'+btnLabel()+'</button>'+
+      '<div class="fineprint" style="margin-top:8px">'+footNote()+'</div>'+
+    '</div></div>';
+  ['s_a1','s_a2','s_ct','s_st','s_zp'].forEach(id=>{ const e=document.getElementById(id); if(e) e.addEventListener('input', quoteSoon); });
+  psel(); quoteSoon();
 }
-function setPm(v){ pm=v; document.getElementById('ackWrap').style.display=(v==='personal')?'block':'none'; psel(); }
-function psel(){ const a=document.getElementById('payCo'),b=document.getElementById('paySelf'); if(a&&b){a.classList.toggle('sel',pm==='company');b.classList.toggle('sel',pm==='personal');} }
-// map the i-th swag row to its real index in the full cart (cartGet() re-parses
-// localStorage each call, so we must resolve the index within ONE array)
-function swagIndex(c,i){ const idxs=[]; c.forEach((it,ix)=>{ if(it.type==='swag') idxs.push(ix); }); return idxs[i]; }
-function rm(i){ const c=cartGet(); const idx=swagIndex(c,i); if(idx==null) return; c.splice(idx,1); cartSave(c); draw(); }
-function chg(i,d){ const c=cartGet(); const idx=swagIndex(c,i); if(idx==null) return;
-  c[idx].qty=Math.max(1,(c[idx].qty||1)+d); if(c[idx].detail){c[idx].detail=c[idx].detail.replace(/^\d+/,c[idx].qty);} cartSave(c); draw(); }
-function modal(t,b){ document.getElementById('mTitle').textContent=t; document.getElementById('mBody').innerHTML=b; document.getElementById('modalBg').classList.add('show'); }
-async function checkout(){
-  const g=id=>document.getElementById(id).value;
-  const ctx={purpose:g('x_purpose'),recipient:g('x_recipient'),justification:g('x_just')};
-  if(!ctx.purpose||!ctx.justification.trim()){ modal('Context required','Please choose a purpose and add a short justification - both groups need this on file.'); return; }
-  if(pm==='personal' && !ack){ modal('Please acknowledge','Tick the box confirming personal-card orders are NOT reimbursable.'); return; }
-  const ship={firstName:g('s_fn'),lastName:g('s_ln'),addressLine1:g('s_a1'),city:g('s_ct'),state:g('s_st'),postCode:g('s_zp'),country:'US',email:'{{ user.email }}',phone:g('s_ph')};
-  if(!ship.addressLine1||!ship.city){ modal('Add a shipping address','Please fill in at least address line 1 and city.'); return; }
-  const goStripe=(pm==='personal' && STRIPE_ON);
-  document.getElementById('placeBtn').textContent=goStripe?'Redirecting to secure checkout...':'Placing order...';
+
+function payHTML(hasSwag, swagTotal){
+  if(!hasSwag) return '<div class="paynote">Company card (MMS). Business cards and documents are always charged to the company card.</div>';
+  const overBudget = BUDGET && swagTotal > BUDGET.remaining;
+  const coDesc = (ROLE==='manager') ? 'Places immediately — no budget or approval.'
+    : (ROLE==='fse'
+        ? (overBudget ? 'Over your remaining budget ('+money(BUDGET?BUDGET.remaining:0)+') — swag goes to your manager for one approval.'
+                      : 'Within your budget ('+money(BUDGET?BUDGET.remaining:0)+' left) — places immediately.')
+        : 'Sent to your manager for approval, then places automatically.');
+  return '<label style="font-weight:800;color:#1e2d3b;font-size:13px">Payment for swag</label>'+
+    '<label class="pay sel" id="payCo"><input type="radio" name="pay" checked onchange="setPm(\'company\')"><span>'+
+      '<span class="pt">Company card (MMS)</span><br><span class="pd">'+coDesc+'</span></span></label>'+
+    '<label class="pay" id="paySelf"><input type="radio" name="pay" onchange="setPm(\'personal\')"><span>'+
+      '<span class="pt">My own card</span><br><span class="pd">'+
+      (STRIPE_ON?'Pay now by card on Stripe':'Instant')+' — <b>NOT reimbursable</b>, skips approval</span></span></label>'+
+    '<div id="ackWrap" style="display:none"><label class="ack"><input type="checkbox" id="ackBox" onchange="ack=this.checked">'+
+      '<span>I understand a personal-card order is <b>NOT reimbursable</b>.</span></label></div>'+
+    '<div class="fineprint" style="margin:6px 0 0">Business cards and documents in this cart are always on the company card.</div>';
+}
+function btnLabel(){ const g=groups(); return (g.card.length||g.doc.length||g.swag.length)?'Place order':'Place order'; }
+function footNote(){
+  if(ROLE==='manager') return 'Everything places immediately. Receipt emailed to accounting.';
+  if(ROLE==='fse') return 'Cards and documents place immediately. Swag places immediately while it fits your budget.';
+  return 'Your manager receives one approval request for this order; it places automatically once approved.';
+}
+function setPm(v){ pm=v; const w=document.getElementById('ackWrap'); if(w) w.style.display=(v==='personal')?'block':'none'; psel(); }
+function psel(){ const a=document.getElementById('payCo'),b=document.getElementById('paySelf');
+  if(a&&b){a.classList.toggle('sel',pm==='company');b.classList.toggle('sel',pm==='personal');} }
+function rm(i){ const c=cartGet(); c.splice(i,1); cartSave(c); draw(); }
+function chg(i,d){ const c=cartGet(); if(i<0||i>=c.length) return;
+  let q=(c[i].qty||1)+d;
+  if(c[i].type==='doc') q=Math.min(DOC_MAX, Math.max(1,q));
+  else if(c[i].type==='card') q=Math.max(25, q);            // cards step in the sensible range
+  else q=Math.max(1,q);
+  c[i].qty=q;
+  if(c[i].type==='swag'&&c[i].detail) c[i].detail=c[i].detail.replace(/^\d+/,q);
+  if(c[i].type==='doc'&&c[i].meta) c[i].meta=q+' sheets';
+  if(c[i].type==='card') c[i].detail=q+' cards'+(c[i].title?' · '+c[i].title:'');
+  cartSave(c); draw(); }
+function modal(t,b){ document.getElementById('mTitle').textContent=t; document.getElementById('mBody').innerHTML=b;
+  document.getElementById('modalBg').classList.add('show'); }
+
+function shipObj(){ const g=id=>(document.getElementById(id)||{}).value||'';
+  return {firstName:g('s_fn'),lastName:g('s_ln'),addressLine1:g('s_a1'),addressLine2:g('s_a2'),
+          city:g('s_ct'),state:g('s_st'),postCode:g('s_zp'),country:'US',email:'{{ user.email }}',phone:g('s_ph')}; }
+function fmtRange(a,b){ if(!a) return '';
+  const o={month:'short',day:'numeric'}, d1=new Date(a+'T12:00:00'), d2=b?new Date(b+'T12:00:00'):null;
+  const s1=d1.toLocaleDateString(undefined,o);
+  return (d2&&b!==a)? s1+' – '+d2.toLocaleDateString(undefined,o) : s1; }
+function quoteSoon(){ clearTimeout(qTmr); qTmr=setTimeout(runQuote, 650); }
+async function runQuote(){
+  const box=document.getElementById('printQuote'); if(!box) return;
+  const g=groups(); if(!(g.card.length||g.doc.length)) return;
+  const s=shipObj();
+  if(!s.addressLine1||!s.city||!s.postCode){
+    box.innerHTML='<div class="sumrow"><span>Printing + shipping</span><span class="sub">enter address below</span></div>'; printQ=null; return; }
+  box.innerHTML='<div class="sumrow"><span>Printing + shipping</span><span class="sub">getting price…</span></div>';
   try{
-    const r=await fetch('/api/checkout/swag',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({items:swagItems(),context:ctx,payment:pm,ack_not_reimbursable:ack,ship})});
+    const r=await fetch('/api/quote/print',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({items:cartGet().filter(i=>i.type==='card'||i.type==='doc'),ship:s})});
     const j=await r.json();
-    if(j.ok && j.stripe && j.checkout_url){ window.location.href=j.checkout_url; return; }
+    if(!j.ok){ box.innerHTML='<div class="sumrow"><span>Printing + shipping</span><span class="sub">'+(j.error||'unavailable')+'</span></div>'; printQ=null; return; }
+    printQ=j;
+    box.innerHTML='<div class="sumrow"><span>Printing (cards + documents)</span><span>'+money(j.items)+'</span></div>'+
+      '<div class="sumrow"><span>Print shipping ('+(j.method||'standard')+')</span><span>'+money(j.shipping)+'</span></div>'+
+      (j.delivery_min?'<div class="fineprint" style="margin:2px 0 0">&#128666; Est. delivery <b>'+fmtRange(j.delivery_min,j.delivery_max)+'</b></div>':'');
+  }catch(e){ printQ=null; }
+}
+
+async function checkout(){
+  const g=id=>(document.getElementById(id)||{}).value||'';
+  const ctx={purpose:g('x_purpose'),recipient:g('x_recipient'),justification:g('x_just')};
+  if(!ctx.purpose||!ctx.justification.trim()){ modal('Context required','Please choose a purpose and add a short justification.'); return; }
+  const gs=groups();
+  if(pm==='personal' && gs.swag.length && !ack){ modal('Please acknowledge','Tick the box confirming personal-card swag is NOT reimbursable.'); return; }
+  const ship=shipObj();
+  if(!ship.addressLine1||!ship.city){ modal('Add a shipping address','Please fill in at least address line 1 and city.'); return; }
+  const btn=document.getElementById('placeBtn'); btn.textContent='Placing order...';
+  try{
+    const r=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({items:cartGet(),context:ctx,payment:pm,ack_not_reimbursable:ack,ship})});
+    const j=await r.json();
+    if(j.ok && j.checkout_url){ window.location.href=j.checkout_url; return; }
     if(j.ok){
-      let msg='Order <b>'+j.order_id+'</b>. ';
-      if(j.status==='pending') msg+='<br><br>'+j.message;
-      else if(j.paid==='personal') msg+='<br><br>'+j.message;
-      else msg+='<br><br>'+(j.message||'Placed. Receipt sent to accounting.');
-      msg+='<br><br><i>(Demo - nothing was really produced or charged.)</i>';
-      // clear only swag items
-      cartSave(cartGet().filter(i=>i.type!=='swag'));
-      modal(j.status==='pending'?'Sent for approval':'Order placed!', msg);
+      let msg='';
+      (j.orders||[]).forEach(o=>{
+        const badge = o.status==='placed' ? '<b style="color:#2f7a34">placed</b>'
+                    : o.status==='pending' ? '<b style="color:#b8860b">sent for approval</b>'
+                    : '<b>'+o.status+'</b>';
+        msg+='<div style="margin:6px 0"><b>'+o.store+'</b> — '+badge+'<br>'+
+             '<span style="color:#6b7884;font-size:12.5px">'+o.order_id+(o.total?' · '+o.total:'')+
+             (o.approver?' · approver: '+o.approver:'')+(o.note?'<br>'+o.note:'')+'</span></div>';
+      });
+      cartSave([]);
+      modal(j.any_pending? (j.any_placed?'Partly placed, partly sent for approval':'Sent for approval') : 'Order placed!',
+            msg+'<br><i>(Demo — nothing was really produced or charged.)</i>');
+      draw();
     } else { modal('Could not place order', j.error||'Something went wrong.'); }
   }catch(e){ modal('Error', String(e)); }
-  const b=document.getElementById('placeBtn'); if(b) b.textContent='Place swag order';
+  const b=document.getElementById('placeBtn'); if(b) b.textContent='Place order';
 }
 draw();
 </script>{% endblock %}
