@@ -6,3 +6,5 @@ files/*.pdf
 files/*.json
 files/outbox/
 files/pending/
+files/*.lock
+files/popularity.json
