@@ -1170,5 +1170,556 @@
     "fulfillment": "vendor",
     "image": "/asset/products/sw9.png",
     "published": false
+  },
+  {
+    "id": "ev10",
+    "name": "MMS Embroidered Patch (3\")",
+    "group": "Swag",
+    "category": "Giveaways",
+    "icon": "tag",
+    "colors": [
+      "Black",
+      "White"
+    ],
+    "sizes": [
+      "Square 3\u2033\u00d73\u2033"
+    ],
+    "price": 9.13,
+    "decoration": "embroidery",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "embroidery",
+      "product_id": 516,
+      "color_map": {
+        "Black": "Black",
+        "White": "White"
+      },
+      "print_style": "flat",
+      "print_fill": 0.95,
+      "print_placement": "embroidery_patch_front",
+      "print_position": {
+        "area_width": 900,
+        "area_height": 900,
+        "width": 855,
+        "height": 278,
+        "top": 311,
+        "left": 22
+      },
+      "thread_option": "thread_colors_patch_front"
+    },
+    "price_by_size": {},
+    "color_hex": {
+      "Black": "#0a0a0a",
+      "White": "#ffffff"
+    },
+    "image": "/asset/products/ev10.png",
+    "ship_first": 4.29,
+    "ship_addl": 0.05
+  },
+  {
+    "id": "ev11",
+    "name": "MMS Pin Buttons (set of 5)",
+    "group": "Swag",
+    "category": "Giveaways",
+    "icon": "tag",
+    "colors": [
+      "White"
+    ],
+    "sizes": [
+      "2.25\u2033"
+    ],
+    "price": 8.5,
+    "decoration": "print",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "print",
+      "product_id": 660,
+      "color_map": {
+        "White": "White"
+      },
+      "print_style": "flat",
+      "print_fill": 0.95,
+      "print_placement": "front",
+      "print_position": {
+        "area_width": 787,
+        "area_height": 787,
+        "width": 747,
+        "height": 243,
+        "top": 272,
+        "left": 20
+      }
+    },
+    "price_by_size": {},
+    "color_hex": {
+      "White": "#ffffff"
+    },
+    "image": "/asset/products/ev11.png",
+    "ship_first": 4.5,
+    "ship_addl": 0.99
+  },
+  {
+    "id": "ev12",
+    "name": "MMS Cork-Back Coaster",
+    "group": "Swag",
+    "category": "Giveaways",
+    "icon": "tag",
+    "colors": [
+      "White"
+    ],
+    "sizes": [
+      "3.74\u2033\u00d73.74\u2033"
+    ],
+    "price": 5.44,
+    "decoration": "print",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "print",
+      "product_id": 611,
+      "color_map": {
+        "White": "White"
+      },
+      "print_style": "flat",
+      "print_fill": 0.95,
+      "print_placement": "default",
+      "print_position": {
+        "area_width": 1181,
+        "area_height": 1181,
+        "width": 1121,
+        "height": 365,
+        "top": 408,
+        "left": 30
+      }
+    },
+    "price_by_size": {},
+    "image": "/asset/products/ev12.png",
+    "ship_first": 3.99,
+    "ship_addl": 0.75
+  },
+  {
+    "id": "ev13",
+    "name": "MMS Luggage Tag",
+    "group": "Swag",
+    "category": "Giveaways",
+    "icon": "tag",
+    "colors": [
+      "White"
+    ],
+    "sizes": [
+      "2.4\u2033\u00d74\u2033"
+    ],
+    "price": 13.2,
+    "decoration": "print",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "print",
+      "product_id": 938,
+      "color_map": {
+        "White": "White"
+      },
+      "print_style": "flat",
+      "print_fill": 0.95,
+      "print_placement": "default",
+      "print_position": {
+        "area_width": 750,
+        "area_height": 1237,
+        "width": 712,
+        "height": 231,
+        "top": 503,
+        "left": 19
+      }
+    },
+    "price_by_size": {},
+    "image": "/asset/products/ev13.png",
+    "ship_first": 5.99,
+    "ship_addl": 0.99
+  },
+  {
+    "id": "ev14",
+    "name": "MMS Car Magnet (10\"\u00d73\")",
+    "group": "Swag",
+    "category": "Giveaways",
+    "icon": "tag",
+    "colors": [
+      "White"
+    ],
+    "sizes": [
+      "10\u2033\u00d73\u2033"
+    ],
+    "price": 4.03,
+    "decoration": "print",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "print",
+      "product_id": 874,
+      "color_map": {
+        "White": "White"
+      },
+      "print_style": "flat",
+      "print_fill": 0.95,
+      "print_placement": "front",
+      "print_position": {
+        "area_width": 3150,
+        "area_height": 1050,
+        "width": 2992,
+        "height": 973,
+        "top": 38,
+        "left": 79
+      }
+    },
+    "price_by_size": {},
+    "color_hex": {
+      "White": "#ffffff"
+    },
+    "image": "/asset/products/ev14.png",
+    "ship_first": 4.5,
+    "ship_addl": 0.99
+  },
+  {
+    "id": "ev15",
+    "name": "MMS Pint Glass (16oz)",
+    "group": "Swag",
+    "category": "Drinkware",
+    "icon": "cup",
+    "colors": [
+      "White"
+    ],
+    "sizes": [
+      "16 oz"
+    ],
+    "price": 14.96,
+    "decoration": "print",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "print",
+      "product_id": 653,
+      "color_map": {
+        "White": "White"
+      },
+      "print_style": "wrap",
+      "print_fill": 0.32,
+      "print_placement": "default",
+      "print_position": {
+        "area_width": 2874,
+        "area_height": 1512,
+        "width": 919,
+        "height": 299,
+        "top": 606,
+        "left": 977
+      }
+    },
+    "price_by_size": {},
+    "image": "/asset/products/ev15.png",
+    "ship_first": 10.49,
+    "ship_addl": 4.5
+  },
+  {
+    "id": "ap12",
+    "name": "MMS Women's Performance Polo",
+    "group": "Apparel",
+    "category": "Polos",
+    "icon": "shirt",
+    "colors": [
+      "Navy",
+      "Black",
+      "Grey",
+      "White"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL"
+    ],
+    "price": 50.95,
+    "decoration": "embroidery",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "embroidery",
+      "product_id": 771,
+      "color_map": {
+        "Navy": "Navy",
+        "Black": "Black",
+        "Grey": "Grey",
+        "White": "White"
+      },
+      "print_style": "chest_left",
+      "print_fill": 0.95,
+      "print_placement": "embroidery_chest_left",
+      "print_position": {
+        "area_width": 1200,
+        "area_height": 1200,
+        "width": 1140,
+        "height": 370,
+        "top": 415,
+        "left": 30
+      },
+      "thread_option": "thread_colors_chest_left"
+    },
+    "price_by_size": {
+      "S": 50.95,
+      "M": 50.95,
+      "L": 50.95,
+      "XL": 50.95,
+      "2XL": 52.95
+    },
+    "color_hex": {
+      "Navy": "#222745",
+      "Black": "#1a1a1a",
+      "Grey": "#5c5e5d",
+      "White": "#ffffff"
+    },
+    "image": "/asset/products/ap12.png",
+    "ship_first": 4.75,
+    "ship_addl": 2.2
+  },
+  {
+    "id": "ap13",
+    "name": "MMS Long Sleeve Tee",
+    "group": "Apparel",
+    "category": "T-Shirts",
+    "icon": "shirt",
+    "colors": [
+      "Navy",
+      "Black",
+      "Grey",
+      "White"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL"
+    ],
+    "price": 18.29,
+    "decoration": "print",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "print",
+      "product_id": 356,
+      "color_map": {
+        "Navy": "Navy",
+        "Black": "Black",
+        "Grey": "Athletic Heather",
+        "White": "White"
+      },
+      "print_style": "front",
+      "print_fill": 0.64,
+      "print_placement": "front",
+      "print_position": {
+        "area_width": 1800,
+        "area_height": 2400,
+        "width": 1152,
+        "height": 374,
+        "top": 576,
+        "left": 324
+      }
+    },
+    "price_by_size": {
+      "S": 18.29,
+      "M": 18.29,
+      "L": 18.29,
+      "XL": 18.29,
+      "2XL": 20.29
+    },
+    "color_hex": {
+      "Navy": "#161324",
+      "Black": "#131313",
+      "Grey": "#b5b4b4",
+      "White": "#ffffff"
+    },
+    "image": "/asset/products/ap13.png",
+    "ship_first": 4.75,
+    "ship_addl": 2.2
+  },
+  {
+    "id": "ap14",
+    "name": "MMS Adidas Quarter-Zip",
+    "group": "Apparel",
+    "category": "Outerwear",
+    "icon": "jacket",
+    "colors": [
+      "Navy",
+      "Black",
+      "White"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL"
+    ],
+    "price": 61.2,
+    "decoration": "embroidery",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "embroidery",
+      "product_id": 531,
+      "color_map": {
+        "Navy": "Collegiate Navy",
+        "Black": "Black",
+        "White": "White"
+      },
+      "print_style": "chest_left",
+      "print_fill": 0.95,
+      "print_placement": "embroidery_chest_left",
+      "print_position": {
+        "area_width": 1200,
+        "area_height": 1200,
+        "width": 1140,
+        "height": 370,
+        "top": 415,
+        "left": 30
+      },
+      "thread_option": "thread_colors_chest_left"
+    },
+    "price_by_size": {
+      "S": 61.2,
+      "M": 61.2,
+      "L": 61.2,
+      "XL": 61.2,
+      "2XL": 63.2
+    },
+    "color_hex": {
+      "Navy": "#020b26",
+      "Black": "#0b0b0b",
+      "White": "#ffffff"
+    },
+    "image": "/asset/products/ap14.png",
+    "ship_first": 8.49,
+    "ship_addl": 2.5
+  },
+  {
+    "id": "ap15",
+    "name": "MMS Quarter-Zip Pullover",
+    "group": "Apparel",
+    "category": "Outerwear",
+    "icon": "jacket",
+    "colors": [
+      "Navy",
+      "Black",
+      "Grey",
+      "Red"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL"
+    ],
+    "price": 23.27,
+    "decoration": "print",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "print",
+      "product_id": 903,
+      "color_map": {
+        "Navy": "True Navy",
+        "Black": "Black",
+        "Grey": "Iron Grey",
+        "Red": "True Red"
+      },
+      "print_style": "front",
+      "print_fill": 0.9,
+      "print_placement": "front",
+      "print_position": {
+        "area_width": 1200,
+        "area_height": 1200,
+        "width": 1080,
+        "height": 351,
+        "top": 288,
+        "left": 60
+      }
+    },
+    "price_by_size": {
+      "S": 23.27,
+      "M": 23.27,
+      "L": 23.27,
+      "XL": 23.27,
+      "2XL": 24.96
+    },
+    "color_hex": {
+      "Navy": "#13162b",
+      "Black": "#141414",
+      "Grey": "#545354",
+      "Red": "#ad0e22"
+    },
+    "image": "/asset/products/ap15.png",
+    "ship_first": 4.75,
+    "ship_addl": 2.2
+  },
+  {
+    "id": "ap16",
+    "name": "MMS Women's Tee",
+    "group": "Apparel",
+    "category": "T-Shirts",
+    "icon": "shirt",
+    "colors": [
+      "Navy",
+      "Black",
+      "Grey",
+      "White"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL"
+    ],
+    "price": 13.69,
+    "decoration": "print",
+    "fulfillment": "printful",
+    "published": true,
+    "printful": {
+      "decoration": "print",
+      "product_id": 360,
+      "color_map": {
+        "Navy": "Navy",
+        "Black": "Black",
+        "Grey": "Athletic Heather",
+        "White": "White"
+      },
+      "print_style": "front",
+      "print_fill": 0.64,
+      "print_placement": "front",
+      "print_position": {
+        "area_width": 1500,
+        "area_height": 1800,
+        "width": 960,
+        "height": 312,
+        "top": 432,
+        "left": 270
+      }
+    },
+    "price_by_size": {
+      "S": 13.69,
+      "M": 13.69,
+      "L": 13.69,
+      "XL": 13.69,
+      "2XL": 15.69
+    },
+    "color_hex": {
+      "Navy": "#161324",
+      "Black": "#171717",
+      "Grey": "#b7b7b7",
+      "White": "#ffffff"
+    },
+    "image": "/asset/products/ap16.png",
+    "ship_first": 4.75,
+    "ship_addl": 2.2
   }
 ]
