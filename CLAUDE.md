@@ -2,11 +2,34 @@
 
 Handoff/context file for continuing this project in Claude Code. Keep it updated as things change.
 
+## 👉 START HERE — where we left off (2026-07-31)
+
+**Everything is committed and pushed.** Working tree clean; local `main` == `origin/main` at **`604e3a8`**.
+
+**The immediate next action is waiting on Jayce, not on code.** I published a browsable pick-list of **all 524 orderable Printful products** (search, category filter, tap-to-select, Copy IDs) so he can choose which products to add to the store:
+**https://claude.ai/code/artifact/4a8f37c7-dd36-4e01-8c72-abd4a637e189**
+When he sends the product IDs → for each one: pull real cost + colours + sizes + **US shippability** (`gen_products.py costs` reports `ship $None` for region-locked items — never publish those), add to `swag_catalog.json`, then `printspec` → `variants` → sync hero → run the three test suites → commit.
+
+⚠️ **A deploy is pending.** He last deployed before the final few commits. Render → **Manual Deploy → Deploy latest commit** (auto-deploy is still disconnected).
+
+**Local dev environment does NOT persist between sessions.** The venv I used lived in the session scratchpad. Recreate one and note that `requirements.txt` pins predate Python 3.14, so install unpinned for local work:
+```
+python -m venv .venv && .venv/Scripts/python -m pip install flask msal requests stripe reportlab qrcode pillow
+```
+Keys are in the repo-local `.env` (gitignored): `PRINTFUL_API_KEY`, `GELATO_API_KEY`, `PUBLIC_BASE_URL`. `config.py` loads `.env` automatically (real env vars win).
+
+**Run these before ANY money- or print-related change** (all currently pass):
+```
+python test_print_accuracy.py                                   # 838 assertions, offline
+DATA_DIR=/tmp/r GELATO_MODE=dry PRINTFUL_MODE=dry python test_rules.py
+DATA_DIR=/tmp/b MAIL_MODE=off GELATO_MODE=dry PRINTFUL_MODE=dry python test_budget.py
+```
+
 ## What this is
-A self-service ordering web app for **Miller Mechanical Specialties (MMS)** with three independent stores, each with its own checkout:
+A self-service ordering web app for **Miller Mechanical Specialties (MMS)**. Three storefronts feed **ONE shared cart** with a single checkout (like any ecommerce site) — the checkout then splits the order by store for fulfillment and applies the role rules:
 - **Business Cards** — personalized, auto-branded card; company card only; printed by Gelato.
-- **Documents** — approved MMS/Signal flyers, line cards, sales guides; company card only; max 25 sheets/doc; printed by Gelato.
-- **Swag / Apparel** — cart-based; role-based checkout with an approval safety net; fulfilled by Printful (apparel), Gelato (mug/tote), or an emailed vendor PO (everything else).
+- **Documents** — approved MMS/Signal flyers, line cards, sales guides; company card only; max 25 sheets each; printed by Gelato.
+- **Swag / Apparel** — 27 published items; fulfilled by Printful (all published items), Gelato (mug, unpublished), or an emailed vendor PO (legacy promo items, unpublished).
 
 Stack: **Python / Flask**, server-rendered Jinja templates, deployed on **Render** with **gunicorn**. Microsoft 365 (Entra) sign-in gates the whole app.
 
@@ -34,12 +57,12 @@ See `.env.example` for the full list. Key ones:
 - **Routing/email:** `ACCOUNTING_EMAIL` (default `accounting@mmsinconline.com`), `NOTIFY_EMAIL`, `ESCALATION_EMAIL`, `VENDOR_EMAIL` (**not set → emailed POs won't send until you add it**), `ARCHIVE_EMAIL` (optional receipt BCC).
 - **SharePoint audit (built, inactive):** `SP_SITE_ID`, `SP_LIST_ID` (needs a `Sites.Selected` app permission + a list).
 - **Stripe (personal-card swag checkout — built):** `STRIPE_SECRET_KEY` (setting it turns the real charge ON; unset → personal card stays in demo mode), `STRIPE_WEBHOOK_SECRET` (`whsec_…`, required to trust the webhook), `STRIPE_PUBLISHABLE_KEY` (unused server-side — hosted Checkout). Test vs live is the key prefix (`sk_test_`/`sk_live_`); no separate mode flag. Webhook URL: `<PUBLIC_BASE_URL>/api/stripe/webhook`, event `checkout.session.completed`.
-- **Budgets & limits:** swag company-card **budget per 2-month calendar period** — `FSE_BUDGET_USD`=250, `EMPLOYEE_BUDGET_USD`=100 (**managers unlimited**); within budget places immediately, over → one manager approval. Business-card qty per order — `CARD_MAX_QTY_EMPLOYEE`=100, `CARD_MAX_QTY_FSE`=500 (managers unlimited). `DOC_MAX_QTY`=25. Per-user spend tracked in `budget.py`; budgets **and** pending approvals live under **`DATA_DIR`** (default `files/`). ⚠️ Render's free-tier filesystem is ephemeral — set `DATA_DIR` to a mounted **persistent disk** (e.g. `/var/data`; requires a paid Render instance) so budgets + in-flight approvals survive redeploys/spin-down. `BUDGET_STORE` can override just the budget file path.
+- **Budgets & limits (rules rewritten 2026-07-31):** **Employees** need manager approval for EVERY company-card order (cards, documents, swag) — no budget, no spend tracking. **FSEs** need no approval for cards/documents and have a `FSE_BUDGET_USD`=250 swag budget per 2-month calendar period; an order that would exceed the remainder goes to their manager. **Managers** need no approval and have no budget. `EMPLOYEE_BUDGET_USD`=0 means "no budget" (employees are gated by approval instead, so nothing accrues for them). Business-card qty per order: `CARD_MAX_QTY_EMPLOYEE`=100, `CARD_MAX_QTY_FSE`=500 (FSEs **and managers**). `DOC_MAX_QTY`=25 per document. Personal card is available for **swag only** and bypasses approval (NOT reimbursable); cards/documents are always company card. Per-user spend lives in `budget.py` under **`DATA_DIR`** (set to the mounted Render disk `/var/data` — verify with `/admin/budget`).
 - **`ADMIN_TOKEN`** (default `mms-discover`) gates the `/admin/*` diagnostics: `/admin/gelato`, `/admin/printful`, and `/admin/budget` (confirms the live budget store path + writability, i.e. that the persistent disk is mounted; `&detail=1` adds per-user spend). ⚠️ Change `ADMIN_TOKEN` from the default in Render since the repo is public.
 - **`ROLE_PREVIEW_EMAILS`** (default `jtomlin@mmsinconline.com`) — comma-separated allowlist of signed-in users who get a **private role-preview toggle** (FSE / Employee / Manager) in the top bar to verify the non-FSE safety net. Gated on the real email; a session `role_override` drives `auth.current_user()`'s effective role only for these users (no-op for everyone else). Reset via `/setrole/reset`.
 
 ## How ordering + approvals work
-- **Cards / Documents:** checkout on their own page, company card only, receipt auto-emailed to `ACCOUNTING_EMAIL` via Microsoft Graph with orderer/qty/price/purpose/justification. Business-card **qty per order is capped by role** (employee 100 / FSE 500 / manager unlimited), enforced in `checkout_cards` + the qty dropdown in `cards.html`.
+- **Cards / Documents:** added to the SHARED cart (no per-store checkout any more), company card only. Receipt auto-emailed to `ACCOUNTING_EMAIL` via Microsoft Graph with orderer/qty/price/purpose/justification. Business-card **qty per order is capped by role** (employee 100 / FSE **and manager** 500), enforced server-side in the checkout + the qty dropdown in `cards.html`. Order context (purpose / for-whom / justification) and the shipping address are collected ONCE in the cart.
 - **Swag storefront (ecommerce-style):** `/swag` shows only **published** items (`published:true` in `swag_catalog.json` — currently 27: 12 apparel (incl. WOMEN'S polo + tee, long sleeve, 2 quarter-zips) and 15 tradeshow/event items ev1-ev9 (stickers, koozie, magnet, insulated + stainless tumbler, water bottle, journal, mouse pad, golf towel); the mug and the old vendor promo items stay in the catalog but unpublished) as **preview-only** cards (image, name, price, colour dots) that link to a **product detail page** `/swag/product/<id>` (route `swag_product`, `templates/product.html`). ALL customization lives on the PDP: colour swatches, size, and a colour-aware **logo picker**, with a large hero image that **swaps to the exact pre-rendered colour×logo mockup in real time**. Add-to-cart happens on the PDP. Pre-rendered combos live at `assets/products/variants/<id>__<colour-slug>__<logo-key>.png` (see `gen_products.py variants`); `app.py` builds each item's `img_variants` map from the files that exist.
 - **Real costs (item vs shipping) — shown everywhere:** each Printful item's `price` (base size), `price_by_size` (2XL+ genuinely costs more), `ship_first` and `ship_addl` are pulled from the live Printful catalog + a real shipping quote and frozen by **`python gen_products.py costs`**. The storefront, PDP (live per size/qty) and cart all show *item cost + estimated shipping = total MMS pays*. `app.item_unit_cost()` prices the chosen size and `app.estimate_shipping()` mirrors Printful's model (highest first-item rate + additional per extra unit). **The budget is charged goods + shipping** (both are company money). ⚠️ Old prices were guesses and understated reality — the UA polo was listed $28 but costs $50.95. Re-run `costs` whenever Printful pricing changes.
 - **Cards / Documents show REAL cost + shipping + delivery** via `gelato.quote_summary()` and `/api/quote/cards` / `/api/quote/documents` (needs `GELATO_API_KEY` and a non-dry `GELATO_MODE`). The quote picks the cheapest shipment method of the same *type* we order with (`SHIPMENT_METHOD`), so quoted shipping matches what's charged; receipts carry the real total. **Documents have their own cart** (`/documents/cart`, localStorage `mms_doccart_v1`). Each store's cart button lives in that store's own **subhead next to the products** (never in the top nav), so the two stores look and behave the same and nobody thinks cards/documents drop into the swag cart; `show_cart` now only gates the swag budget bar — `checkout_documents` takes `items=[{id,qty}]`. Business cards place immediately (no cart); order context is section 1 on both.
@@ -75,18 +98,32 @@ Draft = orders appear in the Printful/Gelato dashboards for review; not produced
 - `git` operations failed on the Cowork Windows-mounted folder; clone into a native path to work. (Not an issue in Claude Code on your machine.)
 
 ## Open / remaining work
-1. ✅ **DONE — Removed the `/admin/testorder` endpoint** from `app.py` (2026-07-22). `/admin/gelato` + `/admin/printful` diagnostics remain (read-only, token-gated).
-2. **Delete the test draft orders** (~4 in Printful, 1 in Gelato) from those dashboards.
-3. **Reconnect Render ↔ GitHub** so auto-deploy works again.
-4. **Set `VENDOR_EMAIL`** so promo/embroidery-vendor POs actually send; optionally `ARCHIVE_EMAIL`. (Code already reads it; just set the env var in Render — no key = no PO sent.)
-5. ✅ **DONE — Stripe personal-card swag checkout built** (2026-07-22) — `stripe_pay.py` + hosted Checkout + webhook + return/cancel pages; see "Personal-card Stripe flow" above. **To activate:** set `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` in Render, create the Stripe webhook (`/api/stripe/webhook`, `checkout.session.completed`), redeploy. Until then the personal-card path stays in safe demo mode. Verified locally with the Flask test client (demo path + Stripe branch + webhook signature rejection).
-6. **SharePoint audit list** — `graph.log_to_sharepoint()` is built and gated; add the `Sites.Selected` app permission, create the list (columns in `.env.example`), set `SP_SITE_ID`/`SP_LIST_ID`.
-7. ✅ **DONE — Branded product images in the swag storefront** (2026-07-22). Every item now has an `image` in `swag_catalog.json` (served from `assets/products/<id>.png`), rendered in the grid + cart with an automatic fallback to the SVG `icon`. Two sources (see `gen_products.py`): the **7 Printful apparel items get photorealistic Printful Mockup Generator renders** (the real MMS logo print file composited onto the garment — left-chest for embroidery polos/beanie, centered front for DTG tee/hoodie/crew, front panel for the cap), and **the other 17 (vendor apparel + promo + drinkware) get clean generated PIL images** (colored product silhouette + logo on a studio backdrop). Mockups are flattened onto the same studio backdrop for a cohesive grid. To regenerate: `python gen_products.py fallback` (no key) / `python gen_products.py printful [ids...]` (needs `PRINTFUL_API_KEY` in `.env`; mockup gen creates NO order). **Swap for real vendor photos later** by dropping a file at `assets/products/<id>.png`.
-8. **Refinements:** set precise Printful mockup/print placements per garment (polo left-chest, cap front, beanie cuff) if the auto-chosen placements need nudging; scope app-only `Mail.Send` with an Exchange Application Access Policy. (Colour maps + the cap Navy/Red mismatch are now fixed — see item 10.)
-9. **Go live:** flip `PRINTFUL_MODE` and `GELATO_MODE` to `live` when ready for real fulfillment.
-10. ✅ **DONE — Ecommerce redesign: preview storefront + product detail pages + real-time colour×logo preview** (2026-07-23). `/swag` is now preview-only (published items only); each card opens `/swag/product/<id>` (`product.html`) where ALL customization lives (colour swatches, size, logo picker) and the hero image swaps to the exact **pre-rendered colour×logo mockup** in real time. Combos generated by `python gen_products.py variants` → `assets/products/variants/<id>__<colour>__<logo>.png` (batched one create-task per (product,logo) to beat the rate limit; ~83 combos). Only the 7 apparel + tote are `published`; the mug + promo items are unpublished until they have real imagery. The Gelato **tote uses a Printful product for imagery only** (`MOCKUP_SRC` in `gen_products.py`: tote Natural=Oyster/Navy=Black on prod 367) while **fulfillment stays Gelato** — a deliberate imagery≠fulfillment split; swap for true Gelato/vendor photos later by dropping files in `assets/products/variants/`. **⚠️ The mug (`sw2`) is unpublished:** its Printful stand-ins (prod 19/403) are *white-bodied* mugs with a coloured handle, so (a) the wide MMS logo wraps off the angled mockup and clips, and (b) a "Navy" mug has no coloured print body (white-logo default is invisible). Needs real Gelato mug photos or a hand-tuned single-image treatment before republishing — set `published:true` on `sw2` when ready.
-11. **Promo items (unpublished):** tumbler, water bottle, backpack, cooler, tech, office, koozie, keychain remain in `swag_catalog.json` with `published:false` (generated PIL graphics). Publish each once it has real imagery + a confirmed vendor link.
-12. ✅ **DONE — Catalog reconciled to Printful reality + colour-aware logo picker** (2026-07-22). Every Printful item's `colors`/`sizes`/`color_map` in `swag_catalog.json` now matches real orderable variants (**validated 135/135 colour-size combos resolve**): the perf polo dropped Red, caps/beanies are One size, "Grey" maps to each product's real grey name, etc. Adopted the 4 brand-guide logos and added `branding.py` + a per-item logo picker (see the logos bullet under Product mappings). Regenerate images after catalog/logo changes: `python gen_products.py fallback` then `python gen_products.py printful` (mockups fetch the new logos from `raw.githubusercontent.com/.../main/assets/print/` via `MOCKUP_LOGO_BASE`, so push logo changes before regenerating mockups).
+Ordered by what matters. Items completed in earlier sessions were removed from this
+list once verified — the behaviour they added is documented in the sections above.
+
+### Waiting on Jayce
+1. **Pick products from the pick-list** (see START HERE) — then add them following the flow in that section.
+2. **Deploy the pending commits** — Render → Manual Deploy → Deploy latest commit.
+
+### Config / ops (no code needed)
+3. **Rotate `ADMIN_TOKEN`** in Render — still the default `mms-discover`, and the repo is PUBLIC, so anyone could hit `/admin/budget?...&detail=1` and read per-user spend.
+4. **Set `VENDOR_EMAIL`** so emailed vendor POs actually send (code reads it; unset = silently no PO). Optionally `ARCHIVE_EMAIL` for a durable receipt BCC.
+5. **Reconnect Render ↔ GitHub** so auto-deploy works again (Settings → reconnect repo → Auto-Deploy: On Commit). Removes the manual-deploy step from every change.
+6. **Go live when ready:** flip `PRINTFUL_MODE` and `GELATO_MODE` from `draft` to `live`. Nothing is produced or charged until then.
+7. **Activate Stripe** (personal-card swag) — set `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET`, create the webhook (`/api/stripe/webhook`, `checkout.session.completed`). Built and tested; dormant until keys exist.
+8. **SharePoint audit list** — `graph.log_to_sharepoint()` is built and gated; needs a `Sites.Selected` app permission, the list created (columns in `.env.example`), and `SP_SITE_ID`/`SP_LIST_ID` set.
+
+### Product decisions Jayce may want to revisit
+9. **Adidas quarter-zip `ap14` costs $61.20** — one item eats a quarter of an FSE's $250 budget. Consider dropping it, or raising the budget.
+10. **Stainless tumbler `ev5` logo is 7.1" tall** (fills the body). Deliberately bold; easy to reduce via `printful.print_fill`.
+11. **Apparel front prints sit at 7.7"/9.0"**, not their 12"/14" maximum — a deliberate choice so the tee isn't a full-front print. Say the word to enlarge.
+12. **Mug `sw2` is unpublished** — Printful's stand-ins (prod 19/403) are white-bodied mugs, so the wide logo clips on the angled mockup and a "Navy" mug has no coloured print area. Needs real Gelato mug photos before republishing.
+13. **Tote `sw4` is unpublished** at Jayce's request (he didn't want it in the store). Real Printful mappings intact if wanted back.
+
+### Known hard limits (don't re-research — already exhausted)
+14. **Pens, stress balls, pop-sockets, phone wallets, keychain lights cannot be ordered through ANY self-serve API.** Printful/Printify/Gelato/Prodigi are print-on-demand only; Printify has no mockup endpoint (breaks the 1:1 rule); Printfection's API can't place orders; SwagUp only mocks up after an order request; Safsira has the right API but gates access behind industry approval. These must go through the emailed-PO `vendor` route with supplier-supplied photos. See the Gotchas section.
+15. **Budget durability depends on the Render disk.** `DATA_DIR=/var/data` is mounted and verified. A disk binds the service to ONE instance — that's what makes `budget.py`'s file lock sufficient. **Never enable autoscaling / multiple instances without moving the spend store to a database first**, or concurrent orders can overspend. At 65 employees this is nowhere near a concern.
+16. **Cards/documents costs are real but per-order**, quoted live from Gelato at checkout; there is no frozen per-item price for them like swag has.
 
 ## File map
 - `app.py` — routes, per-store checkout, swag storefront + `swag_product` PDP route (`/swag/product/<id>`), per-item `img_variants` map, `_fulfill_swag()` dispatch, `_finalize_paid()` (Stripe), `/admin/*` discovery + `/health`.
